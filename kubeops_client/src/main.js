@@ -8,6 +8,9 @@ import router from "./router";
 
 //导入 axios
 import axiosjs from './utils/request.js';
+
+//导入 auth
+import auth from './authorization/auth.js';
 //导入 ElementPlus 以及 Css 文件
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
@@ -30,3 +33,4 @@ for (let iconName in ElIcons) {
 // 引用 element-plus
 app.use(ElementPlus)
 app.config.globalProperties.$ajax = axiosjs
+app.config.globalProperties.$auth = auth

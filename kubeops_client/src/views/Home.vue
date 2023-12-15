@@ -41,8 +41,8 @@ export default {
         }
       }).then((res) => {
         this.content = JSON.stringify(res.data, null, 2)
-      }).catch(function (res) {
-        console.log(res.data);
+      }).catch((res) => {
+        console.log(res);
       })
     },
     yamlFormat() {

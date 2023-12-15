@@ -5,9 +5,26 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1c9e6155-8b5c-406b-970a-8620e29aa5b8" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/controller/register.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dao/register.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/service/register.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/GenRandNum.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/md5pass.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/router/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/router/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/utils/request.js" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/utils/request.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/Home.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/Home.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/jsonedit/index.vue" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/login/Login.vue" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/controller/login.go" beforeDir="false" afterPath="$PROJECT_DIR$/controller/login.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/controller/router.go" beforeDir="false" afterPath="$PROJECT_DIR$/controller/router.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dao/login.go" beforeDir="false" afterPath="$PROJECT_DIR$/dao/login.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/middle/jwt.go" beforeDir="false" afterPath="$PROJECT_DIR$/middle/jwt.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/model/User.go" beforeDir="false" afterPath="$PROJECT_DIR$/model/User.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/login.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/login.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,7 +72,7 @@
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
     &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/Tools/workspaces/goproject/open-sdk-go-220616&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Tools/workspaces/k8sops/kubeops_server&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
@@ -71,7 +88,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-gosdk-467a64f6063b-ee0e143f3e2b-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-233.11799.228" />
+        <option value="bundled-gosdk-467a64f6063b-ee0e143f3e2b-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-233.11799.286" />
       </set>
     </attachedChunks>
   </component>

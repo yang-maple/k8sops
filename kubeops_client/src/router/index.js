@@ -256,9 +256,18 @@ const routes = [
     {
         path: '/login',
         name: '登陆',
-        component: () => import('@/views/login/Login.vue'),
+        component: () => import('@/views/user/Login.vue'),
         meta: {
             title: "登陆",
+            requireAuth: false
+        }
+    },
+    {
+        path: '/register',
+        name: '注册',
+        component: () => import('@/views/user/Register.vue'),
+        meta: {
+            title: "注册",
             requireAuth: false
         }
     }
@@ -288,8 +297,20 @@ router.beforeEach((to, from, next) => {
     } else {
         document.title = "Kubernetes"
     }
-    //放行
-    next()
+    //to 满足条件放过 login register resetpasswd
+    if (to.path == "/login" || to.path == "/register") {
+        next()
+    } else {
+        //不满足条件 做token 校验
+        const user_token = localStorage.getItem("user_token")
+        if (user_token == "" || user_token == null || user_token == '') {
+            //重定向到登录页面
+            next("/login")
+        } else {
+            //放行
+            next()
+        }
+    }
 })
 
 router.afterEach(() => {

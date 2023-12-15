@@ -117,10 +117,11 @@ func (router *router) InitApiRouter(r *gin.Engine) {
 		v13.DELETE("/delete", Workflow.DeleteWorkflow)
 		v13.POST("/create", Workflow.CreateWorkflow)
 	}
-	v14 := r.Group("/v1/api/login")
+	v14 := r.Group("/v1/api/user")
 	{
-		v14.GET("/captcha", Login.ImageId)
-		v14.GET("/captchaId/:captchaId", Login.CaptchaImage)
-		v14.POST("/user/verifyInfo", Login.VerifyInfo)
+		v14.GET("/getCaptcha", Login.CaptchaImage)
+		v14.POST("/login", Login.VerifyInfo)
+		v14.POST("/register", Register.RegisterUser)
+		v14.POST("/register/email", Register.SendEmail)
 	}
 }

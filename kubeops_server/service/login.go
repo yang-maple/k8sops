@@ -12,10 +12,10 @@ type login struct {
 }
 
 type LoginInfo struct {
-	Username        string `json:"username"`
-	Password        string `json:"password"`
-	CaptchaId       string `json:"captchaId"`
-	CaptchaSolution string `json:"captchaSolution"`
+	Username    string `json:"username"`
+	Password    string `json:"password"`
+	CaptchaId   string `json:"captcha_id"`
+	VerifyValue string `json:"verify_value"`
 }
 
 // VerifyUserInfo 验证用户身份信息

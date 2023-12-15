@@ -3,21 +3,21 @@
         <Particles id="tsparticles" class="login__particles" :options="options" />
         <div class="loginPart">
             <h2>登录</h2>
-            <el-form ref="ruleFormRef" :model="user" status-icon :rules="rules" label-width="100px" class="demo-ruleForm"
+            <el-form ref="user" :rules="rules" :model="user" status-icon label-width="100px" class="demo-ruleForm"
                 style="transform:translate(-30px);">
-                <el-form-item label="账号：" prop="account">
-                    <el-input v-model="username" placeholder="请输入账号" maxlength="20" clearable />
+                <el-form-item label="账号：" prop="username">
+                    <el-input v-model="user.username" placeholder="请输入账号" maxlength="20" clearable />
                 </el-form-item>
                 <el-form-item label="密码：" prop="password">
-                    <el-input v-model="password" type="password" placeholder="请输入密码" maxlength="20" show-password
+                    <el-input v-model="user.password" type="password" placeholder="请输入密码" maxlength="20" show-password
                         clearable />
                 </el-form-item>
                 <el-form-item label="验证码：" prop="verifyCode">
-                    <el-input style="width: 120px;" v-model="user.verifyCode" placeholder="请输入验证码" maxlength="4"
-                        clearable />
+                    <el-input style="width: 140px; padding-right: 10px;" v-model="user.verifyCode" placeholder="请输入验证码"
+                        maxlength="4" clearable />
                     <img id="image" class="verifyCodeImg" :src="imgUrl" @click="GetCaptcha()">
                 </el-form-item>
-                <el-button class="btn" type="primary" @click="handleSubmit">登录</el-button>
+                <el-button class="btn" type="primary" @click="handleSubmit('user')">登录</el-button>
                 <div style="text-align: right;transform:translate(0,30px);">
                     <el-link type="warning">没有账号？去注册</el-link>
                 </div>
@@ -32,10 +32,8 @@
 export default {
     data() {
         return {
-            username: null,
-            password: null,
             user: {
-                account: '',
+                username: '',
                 password: '',
                 verifyCode: ''
             },
@@ -120,7 +118,20 @@ export default {
                     }
                 },
                 detectRetina: true
+            },
+            rules: {
+                username: [
+                    { required: true, message: '用户名不能为空', trigger: 'blur' },
+                ],
+                password: [
+                    { required: true, message: '密码不能为空', trigger: 'blur' },
+                    { min: 6, message: '长度至少为6个字符', trigger: 'blur' }
+                ],
+                verifyCode: [
+                    { required: true, message: '验证码不能为空', trigger: 'blur' },
+                ],
             }
+
         }
     },
     created() {
@@ -130,30 +141,47 @@ export default {
         GetCaptcha() {
             this.$ajax({
                 method: 'get',
-                url: '/login/captcha',
+                url: '/user/getCaptcha',
             }).then((res) => {
                 this.captchaId = res.captchaId
-                this.imgUrl = "http://localhost:8090/v1/api/login/captchaId/" + this.captchaId
+                this.imgUrl = res.imageUrl
             }).catch(function (res) {
                 console.log(res.data);
             })
         },
-        handleSubmit() {
-            this.$ajax.post(
-                '/login/user/verifyInfo',
-                {
-                    username: this.username,
-                    password: this.password,
-                    captchaId: this.captchaId,
-                    captchaSolution: this.user.verifyCode
-                },
-            ).then((res) => {
-                console.log(res)
-            }).catch((res) => {
-                this.GetCaptcha();
-                console.log(res);
-            })
-        }
+        handleSubmit(form) {
+            this.$refs[form].validate((valid) => {
+                if (valid) {
+                    this.$ajax.post(
+                        '/user/login',
+                        {
+                            username: this.user.username,
+                            password: this.user.password,
+                            captcha_id: this.captchaId,
+                            verify_value: this.user.verifyCode
+                        },
+                    ).then((res) => {
+                        this.notify("success", "登录成功", res.msg)
+                        this.$auth.setUserAuth(res.username, res.token)
+                        this.$router.push("/home")
+                        console.log(res)
+                    }).catch((res) => {
+                        this.notify("error", "登录失败", res.msg)
+                        this.GetCaptcha();
+                        console.log(res);
+                    })
+                } else {
+                    return false;
+                }
+            });
+        },
+        notify(status, info, msg) {
+            this.$notify({
+                title: info,
+                message: msg,
+                type: status
+            });
+        },
 
     }
 };
@@ -211,5 +239,10 @@ h2 {
     width: 80px;
     height: 40px;
     font-size: 15px;
+}
+
+.verifyCodeImg {
+    background-color: #fff;
+    cursor: pointer;
 }
 </style>
