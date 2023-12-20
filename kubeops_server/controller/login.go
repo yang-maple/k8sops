@@ -19,7 +19,7 @@ var store = base64Captcha.DefaultMemStore
 func (l *login) CaptchaImage(c *gin.Context) {
 	//定义图片格式为 string
 	driverConfig := base64Captcha.DriverString{
-		Height:          32,                                     //高度
+		Height:          30,                                     //高度
 		Width:           110,                                    //宽度
 		NoiseCount:      0,                                      //数字干扰项，数字越大，
 		ShowLineOptions: 0,                                      //竖线干扰项

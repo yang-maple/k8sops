@@ -123,5 +123,7 @@ func (router *router) InitApiRouter(r *gin.Engine) {
 		v14.POST("/login", Login.VerifyInfo)
 		v14.POST("/register", Register.RegisterUser)
 		v14.POST("/register/email", Register.SendEmail)
+		v14.POST("/resetPassword/email", ResetPassword.verifyIdentity)
+		v14.POST("/resetPassword", ResetPassword.reset)
 	}
 }

@@ -1,73 +1,89 @@
 <template>
     <el-row>
-        <el-col :span="24">
-            <div class="grid-content bg-purple">
-                <el-table :data="namespacesItem" :header-cell-style="{ background: '#e6e7e9' }" size="small">
-                    <el-table-column label="Name" width="200">
-                        <template #default="scope">
-                            <div style="display: flex; align-items: center">
-                                <span slot="reference" v-if="scope.row.status == 'Active'">
-                                    <el-tooltip placement="bottom" effect="light"><template #content>Ready</template>
-                                        <i class="dotClass" style="background-color: springgreen"></i></el-tooltip>
-                                </span>
-                                <span slot="reference" v-if="scope.row.status != 'Active'">
-                                    <el-tooltip placement="bottom" effect="light"><template #content> NotReady </template>
-                                        <i class="dotClass" style="background-color: red"></i></el-tooltip>
-                                </span>
-                                <el-link style="margin-left: 10px" type="primary" :underline="false"
-                                    @click="handle(scope.row)">{{
-                                        scope.row.name
-                                    }}</el-link>
-                            </div>
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="Lables" width="360" align="center">
-                        <template #default="scope">
-                            <el-tag type="info" style="margin-left: 5px;" size="small" v-for="(v, k) in scope.row.labels "
-                                :key="k">{{ k }}:{{ v
-                                }}<br></el-tag>
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="Status" prop="status" width="200" align="center" />
-                    <el-table-column label="Age" prop="age" width="200" align="center" />
-                    <el-table-column label="Operations" align="center">
-                        <template #default="scope">
-                            <el-button type="primary" icon="Edit" plain
-                                @click="dialogFormVisible = true, handleEdit(scope.$index, scope.row)" />
-                            <el-popconfirm confirm-button-text="YES" cancel-button-text="No" icon="InfoFilled"
-                                icon-color="#626AEF" title="delete this?" @confirm="handleDelete(scope.row)"><template
-                                    #reference>
-                                    <el-button type="danger" icon="Delete" plain />
-                                </template>
-                            </el-popconfirm>
-                        </template>
-                    </el-table-column>
-                </el-table>
-                <el-row>
-                    <el-col :span="6">
-                        <div>
-                            <el-button type="primary" @click="dialogcreatens = true">
-                                创建名称空间
-                            </el-button>
-                        </div>
-                    </el-col>
-                    <el-col :span="6">
-                        <div class="grid-content ep-bg-purple-light" />
-                    </el-col>
-                    <el-col :span="4">
-                        <div class="grid-content ep-bg-purple" />
-                    </el-col>
-                    <el-col :span="8">
-                        <div class="demo-pagination-block">
-                            <el-pagination v-model:current-page="page" v-model:page-size="limit" :page-sizes="page_size"
-                                small background layout="sizes, prev, pager, next" :total="total" :pager-count="5"
-                                @size-change="handleSizeChange" @current-change="handleCurrentChange" />
-                        </div>
-                    </el-col>
-                </el-row>
+        <el-col :span="8">
+            <div class="header-grid-content">
+                <el-input v-model="filter_name" placeholder="Please input" clearable>
+                    <template #prepend>
+                        <el-button icon="Search"><span style="font-size: 15px;">
+                                搜索
+                            </span></el-button>
+                    </template>
+                </el-input>
+            </div>
+        </el-col>
+        <el-col :span="10">
+            <div class="header-grid-content" style="min-height: 32px;"></div>
+        </el-col>
+        <el-col :span="6">
+            <div class="header-grid-content" style="text-align: center;">
+                <el-button type="info" @click="Loading(`Refresh`)" round>
+                    <el-icon>
+                        <Refresh />
+                    </el-icon>
+                </el-button>
+                <el-button type="info" @click="dialogcreatens = true" round>
+                    创建
+                </el-button>
             </div>
         </el-col>
     </el-row>
+    <div class="table-bg-purple">
+        <el-table :data="namespacesItem" :header-cell-style="{ background: '#e6e7e9' }" size="small">
+            <el-table-column label="Name" width="200">
+                <template #default="scope">
+                    <div style="display: flex; align-items: center">
+                        <span slot="reference" v-if="scope.row.status == 'Active'">
+                            <el-tooltip placement="bottom" effect="light"><template #content>Ready</template>
+                                <i class="dotClass" style="background-color: springgreen"></i></el-tooltip>
+                        </span>
+                        <span slot="reference" v-if="scope.row.status != 'Active'">
+                            <el-tooltip placement="bottom" effect="light"><template #content> NotReady </template>
+                                <i class="dotClass" style="background-color: red"></i></el-tooltip>
+                        </span>
+                        <el-link style="margin-left: 10px" type="primary" :underline="false" @click="handle(scope.row)">{{
+                            scope.row.name
+                        }}</el-link>
+                    </div>
+                </template>
+            </el-table-column>
+            <el-table-column label="Lables" width="360" align="center">
+                <template #default="scope">
+                    <el-tag type="info" style="margin-left: 5px;" size="small" v-for="(v, k) in scope.row.labels "
+                        :key="k">{{ k }}:{{ v
+                        }}<br></el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column label="Status" prop="status" width="200" align="center" />
+            <el-table-column label="Age" prop="age" width="200" align="center" />
+            <el-table-column label="Operations" align="center">
+                <template #default="scope">
+                    <el-button type="primary" icon="Edit" plain
+                        @click="dialogFormVisible = true, handleEdit(scope.$index, scope.row)" />
+                    <el-popconfirm confirm-button-text="YES" cancel-button-text="No" icon="InfoFilled" icon-color="#626AEF"
+                        title="delete this?" @confirm="handleDelete(scope.row)"><template #reference>
+                            <el-button type="danger" icon="Delete" plain />
+                        </template>
+                    </el-popconfirm>
+                </template>
+            </el-table-column>
+        </el-table>
+        <el-row>
+            <el-col :span="1.5">
+
+                <div class="demo-pagination-block">
+                    <el-text type="info">Total:{{ total }}</el-text>
+                </div>
+
+            </el-col>
+            <el-col :span="22.5">
+                <div class="demo-pagination-block">
+                    <el-pagination v-model:current-page="page" v-model:page-size="limit" :page-sizes="page_size" small
+                        background layout="sizes, prev, pager, next" :total="total" :pager-count="5"
+                        @size-change="handleSizeChange" @current-change="handleCurrentChange" />
+                </div>
+            </el-col>
+        </el-row>
+    </div>
     <el-dialog v-model="dialogFormVisible" title="实例详情/json" center>
         <el-tabs v-model="activeName" type="border-card" @tab-click="handleClick">
             <el-tab-pane label="Yaml" name="yaml"><v-ace-editor v-model:value="content" :lang="aceConfig.lang"
@@ -246,6 +262,7 @@ export default {
         },
         handleSizeChange(limit) {
             this.limit = limit
+            this.page = 1
         },
         handleCurrentChange(page) {
             this.page = page
@@ -286,38 +303,32 @@ export default {
 
 <style>
 .el-row {
-    margin-bottom: 10px;
-
-    &:last-child {
-        margin-bottom: 0;
-    }
-}
-
-.el-col {
-    border-radius: 4px;
-}
-
-.bg-purple {
-    background: #f0f2f5;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1)
-}
-
-.grid-content {
-    border-radius: 4px;
-    min-height: 10px;
-    padding: 10px;
+    margin-bottom: 0px;
 }
 
 .el-row:last-child {
     margin-bottom: 0;
 }
 
-.grid-content3 {
+.el-col {
     border-radius: 4px;
 }
 
-.grid-content3 .el-select {
-    width: 100px;
+.header-grid-content {
+    padding-top: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-bottom: 5px;
+    border-radius: 4px;
+    background: #f0f2f5;
+}
+
+
+.table-bg-purple {
+    padding-right: 2px;
+    padding-left: 2px;
+    border-radius: 4px;
+    background: #f0f2f5;
 }
 
 .el-table,
@@ -347,8 +358,10 @@ export default {
     min-height: 100px;
 }
 
-.demo-pagination-block+.demo-pagination-block {
-    margin-top: 10px;
+.demo-pagination-block {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    padding-left: 10px;
 }
 
 .dotClass {

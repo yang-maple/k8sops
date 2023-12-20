@@ -20,10 +20,10 @@ type CustomClaims struct {
 
 // SECRET 加解密因子
 const (
-	UserSecret          = "devops"         //普通用户加密因子
-	UserExpireDuration  = time.Minute * 30 //普通用户过期时间30min
-	AdminSecret         = "admin_devops"   //管理员用户加密因子
-	AdminExpireDuration = time.Hour * 2    //管理员用户过期时间2H
+	UserSecret          = "devops"       //普通用户加密因子
+	UserExpireDuration  = time.Hour * 2  //普通用户过期时间2h
+	AdminSecret         = "admin_devops" //管理员用户加密因子
+	AdminExpireDuration = time.Hour * 2  //管理员用户过期时间2H
 )
 
 // ParseToken 解析token

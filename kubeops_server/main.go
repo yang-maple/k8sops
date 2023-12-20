@@ -15,6 +15,8 @@ func main() {
 	service.K8s.Init()
 	//初始化db
 	db.Init()
+	//初始化redis
+	db.InitRedis()
 	//初始化 gin
 	r := gin.Default()
 	//使用全局中间件
@@ -31,4 +33,6 @@ func main() {
 	_ = r.Run(config.ListenAddr) // 监听并在 0.0.0.0:9090 上启动服务
 	// 关闭数据库连接
 	_ = db.Close()
+	// 关闭redis连接
+	_ = db.CloseRedis()
 }

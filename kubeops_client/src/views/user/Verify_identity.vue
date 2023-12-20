@@ -2,28 +2,13 @@
     <div class="login">
         <div class="login__particles"></div>
         <div class="loginPart">
-            <h2>注册</h2>
+            <h2>找回密码</h2>
             <el-form ref="user" :rules="rules" :model="user" status-icon label-width="100px" class="demo-ruleForm"
                 style="transform:translate(-30px);">
-                <el-form-item label="账号：" prop="username">
-                    <el-input v-model="user.username" placeholder="请输入账号" maxlength="20" clearable />
-                </el-form-item>
-                <el-form-item label="密码：" prop="password">
-                    <el-input v-model="user.password" type="password" placeholder="请输入密码" maxlength="20" show-password
-                        clearable />
-                </el-form-item>
-                <el-form-item label="确认密码：" prop="checkpassword">
-                    <el-input v-model="user.checkpassword" type="password" placeholder="请再次输入密码" maxlength="20"
-                        show-password clearable />
-                </el-form-item>
                 <el-form-item label="电子邮箱：" prop="email">
-                    <el-input v-model="user.email" placeholder="请输入邮箱地址" clearable />
+                    <el-input v-model="user.email" placeholder="请输入注册账号的邮箱地址" clearable />
                 </el-form-item>
                 <el-form-item label="验证码：" prop="verifycode">
-                    <!-- <el-input style="width: 145px; padding-right: 5px;" v-model="user.verifycode" placeholder="请输入验证码"
-                        maxlength="4" clearable>
-                        <el-button slot="append">发送验证码</el-button>
-                    </el-input> -->
                     <el-input v-model="user.verifycode" maxlength="6" placeholder="请输入验证码">
                         <template #append>
                             <el-button :disabled="button.disabled" @click="sendemail()">{{
@@ -31,10 +16,15 @@
                         </template>
                     </el-input>
                 </el-form-item>
-                <el-button class="btn" type="primary" @click="handleSubmit('user')">注册</el-button>
-                <div style="text-align: right;transform:translate(0,30px);">
-                    <el-link type="warning" href="http://localhost:7070/login">已有账号，去登陆</el-link>
-                </div>
+                <el-form-item label="新密码：" prop="password">
+                    <el-input v-model="user.password" type="password" placeholder="请输入新密码" maxlength="20" show-password
+                        clearable />
+                </el-form-item>
+                <el-form-item label="确认密码：" prop="checkpassword">
+                    <el-input v-model="user.checkpassword" type="password" placeholder="请再次输入密码" maxlength="20"
+                        show-password clearable />
+                </el-form-item>
+                <el-button class="btn" type="primary" @click="handleSubmit('user')">修改密码</el-button>
             </el-form>
         </div>
 
@@ -57,11 +47,10 @@ export default {
         };
         return {
             user: {
-                username: '',
-                password: '',
-                checkpassword: '',
                 email: '',
                 verifycode: '',
+                password: '',
+                checkpassword: '',
             },
             button: {
                 text: '获取验证码',
@@ -70,8 +59,12 @@ export default {
                 timer: null
             },
             rules: {
-                username: [
-                    { required: true, message: '用户名不能为空', trigger: 'blur' },
+                email: [
+                    { required: true, message: '邮箱不能为空', trigger: 'blur' },
+                    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+                ],
+                verifycode: [
+                    { required: true, message: '验证码不能为空', trigger: 'blur' },
                 ],
                 password: [
                     { required: true, message: '密码不能为空', trigger: 'blur' },
@@ -80,13 +73,6 @@ export default {
                 checkpassword: [
                     { required: true, message: '密码不能为空', trigger: 'blur' },
                     { validator: validatePass2, }
-                ],
-                email: [
-                    { required: true, message: '邮箱不能为空', trigger: 'blur' },
-                    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
-                ],
-                verifycode: [
-                    { required: true, message: '验证码不能为空', trigger: 'blur' },
                 ],
             }
 
@@ -106,7 +92,7 @@ export default {
             this.button.timer && clearInterval(this.button.timer)
             if (this.user.email != "") {
                 this.$ajax.post(
-                    '/user/register/email',
+                    '/user/resetPassword/email',
                     {
                         email: this.user.email,
                     },
@@ -138,19 +124,18 @@ export default {
             this.$refs[form].validate((valid) => {
                 if (valid) {
                     this.$ajax.post(
-                        '/user/register',
+                        '/user/resetPassword',
                         {
-                            username: this.user.username,
                             password: this.user.password,
                             email: this.user.email,
                             verify_code: this.user.verifycode,
                         },
                     ).then((res) => {
-                        this.notify("success", "注册成功", res.msg)
+                        this.notify("success", "重置成功", res.msg)
                         this.$router.push("/login")
                         console.log(res)
                     }).catch((res) => {
-                        this.notify("error", "注册失败", res.msg)
+                        this.notify("error", "重置失败", res.msg)
                         console.log(res);
                     })
                 } else {

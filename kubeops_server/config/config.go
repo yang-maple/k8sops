@@ -21,4 +21,15 @@ const (
 	MaxIdleConns = 10
 	MaxOpenConns = 100
 	MaxLifeTime  = 30 * time.Second
+
+	//邮箱配置
+	HostSmtp = "smtp.qq.com"
+	Username = "499968985@qq.com"
+	Password = "neledrmpyyzzbjce"
+	Port     = 587
+	Address  = "499968985@qq.com"
+
+	/*redis 配置*/
+	RedisHost     = "10.1.131.32:6379"
+	RedisPassword = "123456"
 )

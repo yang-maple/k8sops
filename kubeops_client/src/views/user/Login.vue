@@ -19,7 +19,10 @@
                 </el-form-item>
                 <el-button class="btn" type="primary" @click="handleSubmit('user')">登录</el-button>
                 <div style="text-align: right;transform:translate(0,30px);">
-                    <el-link type="warning">没有账号？去注册</el-link>
+                    <el-link style="padding-right: 60px;" type="warning" href="http://localhost:7070/register"
+                        :underline="false">没有账号？去注册</el-link>
+                    <el-link type="warning" href="http://localhost:7070/verify_identity"
+                        :underline="false">忘记密码？去找回</el-link>
                 </div>
             </el-form>
         </div>

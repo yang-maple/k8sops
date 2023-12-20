@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"kubeops/service"
 	"net/http"
@@ -11,6 +10,7 @@ var Register register
 
 type register struct{}
 
+// RegisterUser 注册用户
 func (r *register) RegisterUser(c *gin.Context) {
 	var registerInfo service.RegisterInfo
 	err := c.ShouldBindJSON(&registerInfo)
@@ -21,7 +21,7 @@ func (r *register) RegisterUser(c *gin.Context) {
 		})
 		return
 	}
-	fmt.Println(&registerInfo)
+
 	err = service.Register.RegisterUser(&registerInfo)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -32,10 +32,11 @@ func (r *register) RegisterUser(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": 1,
-		"msg":  "success",
+		"msg":  "用户" + registerInfo.Username + "注册成功",
 	})
 }
 
+// SendEmail 注册用户时发送邮件
 func (r *register) SendEmail(c *gin.Context) {
 	params := new(struct {
 		Email string `json:"email"`
@@ -58,6 +59,6 @@ func (r *register) SendEmail(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": 1,
-		"msg":  "success",
+		"msg":  "验证码已发送至邮箱",
 	})
 }

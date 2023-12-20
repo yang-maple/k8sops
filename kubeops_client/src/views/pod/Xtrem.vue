@@ -1,47 +1,50 @@
 <template>
-    <el-row>
-        <el-col :span="24">
-            <div class="grid-content bg-purple">
-                <el-row>
-                    <el-col :span="1">
-                        <div class="grid-content3">shell</div>
-                    </el-col>
-                    <el-col :span="3">
-                        <div class="grid-content ">
-                            <el-select v-model="container_name" filterable placeholder="Select Container"
-                                @change="switchContainer()">
-                                <el-option v-for="(value, index) in containerItem" :key="index" :label="value"
-                                    :value="value" style="width:100%" />
-                            </el-select>
-                        </div>
-                    </el-col>
-                    <el-col :span="1" class="grid-content2">
-                        In
-                    </el-col>
-                    <el-col :span="5" class="grid-content ">
-                        <el-input v-model="pod_name" disabled placeholder="Pod Name" />
-                    </el-col>
-                    <el-col :span="7">
-                    </el-col>
-                    <el-col :span="6">
-                    </el-col>
-                </el-row>
-                <div id="terminal" ref="terminal"></div>
-            </div>
-        </el-col>
-    </el-row>
+    <div class="header-grid-content">
+        <el-row>
+            <el-col :span="1" style="text-align: center;padding-top: 5px;">
+                <el-text size="large" type="info">Shell</el-text>
+            </el-col>
+            <el-col :span="4">
+                <div>
+                    <el-select v-model="container_name" filterable placeholder="Select Container"
+                        @change="switchContainer()">
+                        <el-option v-for="(value, index) in containerItem" :key="index" :label="value" :value="value"
+                            style="width:100%" />
+                    </el-select>
+                </div>
+            </el-col>
+            <el-col :span="1" style="text-align: center;padding-top: 5px;">
+                <el-text size="large" type="info">In</el-text>
+            </el-col>
+            <el-col :span="6">
+                <el-input v-model="pod_name" disabled placeholder="Pod Name" />
+            </el-col>
+            <el-col :span="12">
+                <div class="header-grid-content" style="text-align: left; padding-top: 0px;">
+                    <el-button type="info" @click="refresh()" round>
+                        <el-icon>
+                            <Refresh />
+                        </el-icon>
+                    </el-button>
+                </div>
+            </el-col>
+        </el-row>
+    </div>
+    <div id="terminal" ref="terminal"></div>
 </template>
 <script>
+import { ElLoading } from 'element-plus'
 import { Terminal } from "xterm"
 import { FitAddon } from 'xterm-addon-fit'
 import { AttachAddon } from 'xterm-addon-attach'
 import "xterm/css/xterm.css"
 export default {
+    inject: ['reload'],
     data() {
         return {
             term: "", // 保存terminal实例
             socketUri: 'ws://127.0.0.1:8081/ws?namespace=test&pod_name=ops-64786f5c8f-np5q7&container_name=qqq',
-            rows: 100,
+            rows: 31,
             cols: 135,
             data: '',
             submitdata: '',
@@ -214,45 +217,40 @@ export default {
                 console.log(res);
             })
         },
+        refresh() {
+            const loading = ElLoading.service({
+                lock: true,
+                text: "Refresh.....",
+                background: 'rgba(0, 0, 0, 0.7)',
+            })
+            setTimeout(() => {
+                loading.close()
+                this.reload()
+            }, 2000)
+        }
     }
 }
 </script>
 
 <style>
 .el-row {
-    margin-bottom: 10px;
+    margin-bottom: 0px;
+}
 
-    &:last-child {
-        margin-bottom: 0;
-    }
+.el-row:last-child {
+    margin-bottom: 0;
 }
 
 .el-col {
     border-radius: 4px;
 }
 
-.bg-purple {
-    background: #f0f2f5;
-    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1)
-}
-
-.grid-content3 {
-    margin-left: 5px;
-    margin-top: 10px;
-}
-
-.grid-content2 {
-    margin-left: 30px;
-    margin-top: 10px;
-}
-
-.grid-content {
-    margin-top: 5px;
+.header-grid-content {
+    padding-top: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-bottom: 5px;
     border-radius: 4px;
-    min-height: 10px;
-}
-
-.el-row:last-child {
-    margin-bottom: 0;
+    background: #f0f2f5;
 }
 </style>

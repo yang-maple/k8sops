@@ -67,15 +67,14 @@
                             </div>
                         </el-col>
                         <!-- 面包屑组件 -->
-                        <el-col :span="10">
+                        <el-col :span="8">
                             <div class="header-breadcrumb">
                                 <el-breadcrumb separator="/">
                                     <!-- 最外层 固定 -->
                                     <el-breadcrumb-item :to="{ path: '/' }">工作台</el-breadcrumb-item>
                                     <!-- 循环内层 name -->
                                     <template v-for="(matched, m) in this.$route.matched" :key="m">
-                                        <el-breadcrumb-item :to="{ path: this.$route.path }"
-                                            v-if="matched.name != undefined">
+                                        <el-breadcrumb-item v-if="matched.name != undefined">
                                             {{ matched.name }}
                                         </el-breadcrumb-item>
                                     </template>
@@ -83,12 +82,16 @@
                             </div>
                         </el-col>
                         <!-- 用户信息 -->
-                        <el-col :span="13">
+                        <el-col :span="15">
                             <div class="header-user">
                                 <el-dropdown>
-                                    <div class="header-dropdown">
+                                    <div class="header-dropdown header-username" @mouseover="isOver = true"
+                                        @mouseleave="isOver = false">
                                         <el-image class="avator-image" :src="avator" />
-                                        <span class="header-username"> {{ username }}</span>
+                                        <span style="font-size: 20px;">{{ username }}</span>
+                                        <el-icon size="16" style="padding-left: 5px; padding-bottom: 5px;">
+                                            <component :is="isOver?'ArrowDown':'ArrowLeft'" />
+                                        </el-icon>
                                     </div>
                                     <!-- 下拉框内容 -->
                                     <template #dropdown>
@@ -102,7 +105,7 @@
                         </el-col>
                     </el-row>
                 </el-header>
-                <el-main class="main">
+                <el-main>
                     <router-view></router-view>
                 </el-main>
                 <el-footer class="footer">
@@ -126,12 +129,13 @@ export default {
             avator: require('@/assets/img/user.png'),
             asideWidth: '220px',
             isCollapse: false,
+            isOver: false,
             routers: [],
         }
     },
     computed: {
         username() {
-            let username = localStorage.getItem('username')
+            let username = localStorage.getItem('user_name')
             return username ? username : '未知'
         }
     },
@@ -149,9 +153,12 @@ export default {
             }
         },
         logout() {
-            localStorage.removeItem("username")
-            localStorage.removeItem("token")
+            localStorage.removeItem("user_name")
+            localStorage.removeItem("user_token")
             this.$router.push('/login')
+        },
+        mouseover() {
+            this.isOver = true
         }
     }
 }
@@ -194,11 +201,6 @@ export default {
     padding-left: 20px;
 }
 
-.aside-menu {
-    background-color: #131b27;
-    border-right-width: 0;
-}
-
 .aside-menu:not(.el-menu--collapse) {
     background-color: #131b27;
     border-right-width: 0;
@@ -210,10 +212,6 @@ export default {
 
 /* 概要菜单栏背景色 */
 .aside-menu-item {
-    background-color: #131b27;
-}
-
-.aside-menu-item:not(.el-menu--collapse) {
     background-color: #131b27;
 }
 
@@ -231,11 +229,9 @@ export default {
 
 }
 
-
 .aside-children.is-active {
     background-color: #263448;
 }
-
 
 .header {
     z-index: 1200;
@@ -275,16 +271,12 @@ export default {
     cursor: pointer;
 }
 
-.main {
-    padding: 10px;
-}
-
 .footer {
     z-index: 1200;
     color: rgb(187, 184, 184);
     font-size: 14px;
     text-align: center;
-    line-height: 60px;
+    line-height: 30px;
 }
 
 
@@ -300,8 +292,13 @@ export default {
     background-color: rgba(3, 60, 174, 0.81);
 }
 
+.el-main {
+    width: 100%;
+    height: 100%;
+    padding: 5px !important;
+}
 
-.el-sub-menu .el-sub-menu__icon-arrow:not(.el-menu--collapse) {
-    display: none;
+.el-footer {
+    height: 30px !important
 }
 </style>

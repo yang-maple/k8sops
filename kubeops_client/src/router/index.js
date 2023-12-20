@@ -270,7 +270,16 @@ const routes = [
             title: "注册",
             requireAuth: false
         }
-    }
+    },
+    {
+        path: '/verify_identity',
+        name: '重置密码',
+        component: () => import('@/views/user/Verify_identity.vue'),
+        meta: {
+            title: "重置密码",
+            requireAuth: false
+        }
+    },
 ]
 
 // 创建路由实例
@@ -298,7 +307,7 @@ router.beforeEach((to, from, next) => {
         document.title = "Kubernetes"
     }
     //to 满足条件放过 login register resetpasswd
-    if (to.path == "/login" || to.path == "/register") {
+    if (to.path == "/login" || to.path == "/register" || to.path == "/verify_identity") {
         next()
     } else {
         //不满足条件 做token 校验

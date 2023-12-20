@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -116,12 +115,11 @@ func (d *dataselector) Pagination() *dataselector {
 	startindex := limit * (page - 1)
 	endindex := limit*page - 1
 	// 判断数组长度和 分页最后一页索引的大小
-	if endindex > len(d.GenericDataList) {
+	if endindex >= len(d.GenericDataList) {
 		endindex = len(d.GenericDataList) - 1
 	}
 	// 取出在 startindex 和 endindex 直接的数据 并返回
 	d.GenericDataList = d.GenericDataList[startindex : endindex+1]
-	fmt.Println(startindex, endindex, len(d.GenericDataList))
 	return d
 }
 
