@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/wonderivan/logger"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,7 +35,7 @@ type CreateService struct {
 	Namespace    string            `json:"namespace"`
 	Labels       map[string]string `json:"labels"`
 	Type         string            `json:"type"`
-	ServicePorts []Port            `json:"service_ports"`
+	ServicePorts Port              `json:"service_ports"`
 }
 type Port struct {
 	PortName   string          `json:"port_name"`
@@ -134,7 +133,6 @@ func (s *service) GetSvcDetail(Namespace, svcName string) (*svcDetail, error) {
 
 // CreateSvc 创建 services
 func (s *service) CreateSvc(data *CreateService) (err error) {
-	fmt.Println(data)
 	createSvc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   data.Name,
@@ -146,25 +144,22 @@ func (s *service) CreateSvc(data *CreateService) (err error) {
 		},
 		Status: corev1.ServiceStatus{},
 	}
-	for i := range data.ServicePorts {
-		specPort := corev1.ServicePort{
-			Name:     data.ServicePorts[i].PortName,
-			Protocol: data.ServicePorts[i].Protocol,
-			Port:     data.ServicePorts[i].Port,
-			TargetPort: intstr.IntOrString{
-				Type:   0,
-				IntVal: data.ServicePorts[i].TargetPort,
-			},
-			NodePort: 0,
-		}
-		if data.Type == "NodePort" && data.ServicePorts[i].NodePort != 0 {
-			createSvc.Spec.Type = "NodePort"
-			specPort.NodePort = data.ServicePorts[i].NodePort
-			fmt.Println(i, data.ServicePorts[i].NodePort)
-		}
-		createSvc.Spec.Ports = append(createSvc.Spec.Ports, specPort)
+	specPort := corev1.ServicePort{
+		Name:     data.ServicePorts.PortName,
+		Protocol: data.ServicePorts.Protocol,
+		Port:     data.ServicePorts.Port,
+		TargetPort: intstr.IntOrString{
+			Type:   0,
+			IntVal: data.ServicePorts.TargetPort,
+		},
+		NodePort: 0,
 	}
-	fmt.Println(createSvc)
+	if data.Type == "NodePort" && data.ServicePorts.NodePort != 0 {
+		createSvc.Spec.Type = "NodePort"
+		specPort.NodePort = data.ServicePorts.NodePort
+	}
+	createSvc.Spec.Ports = append(createSvc.Spec.Ports, specPort)
+
 	_, err = K8s.Clientset.CoreV1().Services(data.Namespace).Create(context.TODO(), createSvc, metav1.CreateOptions{})
 	if err != nil {
 		logger.Info("创建 service 失败" + err.Error())

@@ -484,9 +484,6 @@ export default {
     margin-right: 10px;
 }
 
-.el-dialog--center .el-dialog__body {
-    min-height: 400px;
-}
 
 .demo-pagination-block {
     margin-top: 5px;
@@ -497,6 +494,9 @@ export default {
 .el-form-item__content .el-input {
     width: 400px;
 }
+
+
+
 
 .el-tabs--border-card>.el-tabs__content {
     padding: 0px;

@@ -70,81 +70,58 @@ export default {
 </script> -->
 
 <template>
-  <div class="header-collapse" @click="onCollapse">
-    <!---->
-    <el-icon>
-      <component :is="isCollapse?'Expand':'Fold'" />
-    </el-icon>
-  </div>
-  <el-menu default-active="2" class="el-menu-vertical-demo" :collapse="isCollapse" @open="handleOpen"
-    @close="handleClose">
-    <el-sub-menu index="1">
-      <template #title>
-        <el-icon>
-          <location />
-        </el-icon>
-        <span>Navigator One</span>
-      </template>
-      <el-menu-item-group>
-        <template #title><span>Group One</span></template>
-        <el-menu-item index="1-1">item one</el-menu-item>
-        <el-menu-item index="1-2">item two</el-menu-item>
-      </el-menu-item-group>
-      <el-menu-item-group title="Group Two">
-        <el-menu-item index="1-3">item three</el-menu-item>
-      </el-menu-item-group>
-      <el-sub-menu index="1-4">
-        <template #title><span>item four</span></template>
-        <el-menu-item index="1-4-1">item one</el-menu-item>
-      </el-sub-menu>
-    </el-sub-menu>
-    <el-menu-item index="2">
-      <el-icon><icon-menu /></el-icon>
-      <template #title>Navigator Two</template>
-    </el-menu-item>
-    <el-menu-item index="3" disabled>
-      <el-icon>
-        <document />
-      </el-icon>
-      <template #title>Navigator Three</template>
-    </el-menu-item>
-    <el-menu-item index="4">
-      <el-icon>
-        <setting />
-      </el-icon>
-      <template #title>Navigator Four</template>
-    </el-menu-item>
-  </el-menu>
+  <!-- <el-upload class="upload-demo" ref="upload" action="http://127.0.0.1:8090/v1/api/upload/uploadFile"
+    :on-preview="handlePreview" :on-remove="handleRemove" :file-list="upload" :auto-upload="false" :headers="config">
+    <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
+    <el-button style="margin-left: 10px;" size="small" type="success" @click="submitUpload">上传到服务器</el-button>
+    <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
+  </el-upload> -->
+  <el-upload ref="upload" action="http://127.0.0.1:8090/v1/api/upload/uploadFile" :auto-upload="false" :headers="config"
+    :name="file" multiple :file-list="upload">
+    <template #trigger>
+      <el-button type="primary">select file</el-button>
+    </template>
+
+    <el-button class="ml-3" type="success" @click="submitUpload">
+      upload to server
+    </el-button>
+
+    <template #tip>
+      <div class="el-upload__tip">
+        jpg/png files with a size less than 500kb
+      </div>
+    </template>
+  </el-upload>
 </template>
 
-<script  >
+<script>
 export default {
   data() {
     return {
-      isCollapse: true
+      token: "",
+      upload: []
     };
   },
+  computed: {
+    config() {
+      return {
+        Authorization: this.token,
+      };
+    },
+  },
+  mounted() {
+    this.token = localStorage.getItem('user_token')
+  },
   methods: {
-    handleOpen(key, keyPath) {
-      console.log(key, keyPath);
+    submitUpload() {
+      this.$refs.upload.submit();
     },
-    handleClose(key, keyPath) {
-      console.log(key, keyPath);
+    handleRemove(file, fileList) {
+      console.log(file, fileList);
     },
-    onCollapse() {
-      if (this.isCollapse == true) {
-        this.isCollapse = false
-        return
-      }
-      this.isCollapse = true
+    handlePreview(file) {
+      console.log(file);
     }
   }
 }
 </script>
-
-<style>
-.el-menu-vertical-demo:not(.el-menu--collapse) {
-  width: 200px;
-  min-height: 400px;
-}
-</style>

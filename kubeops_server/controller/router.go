@@ -126,4 +126,8 @@ func (router *router) InitApiRouter(r *gin.Engine) {
 		v14.POST("/resetPassword/email", ResetPassword.verifyIdentity)
 		v14.POST("/resetPassword", ResetPassword.reset)
 	}
+	v15 := r.Group("/v1/api/upload")
+	{
+		v15.POST("/uploadFile", Upload.uploadFile)
+	}
 }

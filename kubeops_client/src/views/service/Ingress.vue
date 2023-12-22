@@ -112,51 +112,35 @@
     </div>
 
     <el-dialog v-model="dialogcreatens" title="创建资源" center>
-        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="100px" class="demo-ruleForm" status-icon>
-            <el-form-item label="名称" prop="name" style="width: 80%;">
+        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="25%" status-icon>
+            <el-form-item label="名称" prop="name">
                 <el-input v-model="ruleForm.name"></el-input>
             </el-form-item>
-            <el-form-item label="名称空间" prop="namespace" style="width: 80%;">
+            <el-form-item label="名称空间" prop="namespace">
                 <el-select v-model="ruleForm.namespace" placeholder="请选择名称空间" @visible-change="getnsselect()">
                     <el-option v-for="item in nslist" :key="item.namespace" :label="item.label" :value="item.namespace"
                         v-show="item.label != 'All'" />
                 </el-select>
             </el-form-item>
-            <el-form-item label="标签" prop="labels" style="width: 80%;">
+            <el-form-item label="标签" prop="labels">
                 <el-input v-model="ruleForm.labels"></el-input>
             </el-form-item>
-            <el-form-item label="Class" prop="Class" style="width: 80%;">
+            <el-form-item label="Class" prop="Class">
                 <el-select v-model="ruleForm.ingress_class_name" placeholder="请选择Class">
                     <el-option v-for="item in ingressclasslist" :key="item.value" :label="item.label" :value="item.value" />
                 </el-select>
             </el-form-item>
-
-            <el-form-item v-for="(rules, index) in ruleForm.rules" :label="'Rules'" :key="rules.key">
-                <el-form-item style="width: 100%;" v-show="index == 0">
-                    <el-tooltip placement="right"><template #content> 新增Rules </template>
-                        <el-button @click="addRules" type="success" circle icon="Plus" size="small"></el-button>
-                    </el-tooltip>
-                    <el-tooltip placement="right"><template #content> 删除Rules </template>
-                        <el-button @click.prevent="removeRules(rules)" type="danger" icon="Minus" size="small" circle
-                            v-show="isremove" />
-                    </el-tooltip>
-                </el-form-item>
-                <el-form-item label="Host" prop="port_name" style="width: 77%;">
-                    <el-input v-model="rules.host"></el-input>
-                </el-form-item>
-                <el-form-item v-for="(values, index) in rules.http_ingress_rule_values" :label="'HttpValue'"
-                    :key="values.key">
-                    <el-form-item label="Path" style="width: 73%;">
-                        <el-input v-model="values.path"></el-input>
-                    </el-form-item>
-                    <el-form-item label="svcname" style="width: 73%;">
-                        <el-input v-model="values.service_name"></el-input>
-                    </el-form-item>
-                    <el-form-item label="svcport" style="width: 73%;">
-                        <el-input v-model.number="values.service_port"></el-input>
-                    </el-form-item>
-                </el-form-item>
-
+            <el-form-item label="Host" prop="port_name">
+                <el-input v-model="ruleForm.rules[0].host"></el-input>
+            </el-form-item>
+            <el-form-item label="Path">
+                <el-input v-model="ruleForm.rules[0].http_ingress_rule_values[0].path"></el-input>
+            </el-form-item>
+            <el-form-item label="svcname">
+                <el-input v-model="ruleForm.rules[0].http_ingress_rule_values[0].service_name"></el-input>
+            </el-form-item>
+            <el-form-item label="svcport">
+                <el-input v-model.number="ruleForm.rules[0].http_ingress_rule_values[0].service_port"></el-input>
             </el-form-item>
             <el-form-item>
                 <el-button type="primary" @click="submitForm('ruleForm')">立即创建</el-button>
@@ -216,7 +200,7 @@ export default {
             ruleForm: {
                 name: null,
                 namespace: null,
-                labels: {},
+                labels: null,
                 ingress_class_name: null,
                 rules: [
                     {
@@ -411,6 +395,9 @@ export default {
             this.$refs[formName].validate((valid) => {
                 if (valid) {
                     this.dialogcreatens = false
+                    if (this.ruleForm.labels != null) {
+                        this.ruleForm.labels = JSON.parse(this.ruleForm.labels)
+                    }
                     console.log(this.ruleForm)
                     this.createIngress()
                 } else {
@@ -433,38 +420,6 @@ export default {
                 ]
             })
             this.isremove = true
-        },
-        removeRules(item) {
-            var arr = new Array();
-            var index = this.ruleForm.rules.indexOf(item)
-            if (index !== -1) {
-                this.ruleForm.rules.splice(index, 1)
-            }
-            arr = this.ruleForm.rules
-            if (arr.length == 1) {
-                this.isremove = false
-            }
-
-
-        },
-        addValue(index) {
-            this.ruleForm.rules[index].http_ingress_rule_values.push({
-                path: null,
-                service_name: null,
-                service_port: null
-            })
-            this.isvalueremove = true
-        },
-        removeValue(item, i) {
-            var arr = new Array();
-            var index = this.ruleForm.rules[i].http_ingress_rule_values.indexOf(item)
-            if (index !== -1) {
-                this.ruleForm.rules[i].http_ingress_rule_values.splice(index, 1)
-            }
-            arr = this.ruleForm.rules[i].http_ingress_rule_values
-            if (arr.length == 1) {
-                this.isvalueremove = false
-            }
         },
         yamlFormat() {
             if (this.aceConfig.lang == "yaml") {
@@ -541,14 +496,7 @@ export default {
     margin-right: 10px;
 }
 
-.el-dialog--center {
-    min-height: 400px;
-    min-width: 200px;
-}
 
-.el-dialog__body {
-    min-height: 400px;
-}
 
 .demo-pagination-block {
 
@@ -557,15 +505,20 @@ export default {
     padding-left: 10px;
 }
 
-.grid-content3 .el-select {
-    width: 100px;
-}
-
 .el-tabs--border-card>.el-tabs__content {
     padding: 0px;
 }
 
-/* .el-form-item__content .el-input {
-    width: 500px;
-} */
+
+.el-dialog {
+    .el-select {
+        .el-input {
+            width: 180px;
+        }
+    }
+}
+
+.el-form-item__content .el-input {
+    width: 400px;
+}
 </style>

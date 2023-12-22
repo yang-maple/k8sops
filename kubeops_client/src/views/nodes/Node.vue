@@ -142,14 +142,9 @@ export default {
   margin-right: 10px;
 }
 
-.el-dialog--center {
-  min-height: 400px;
-  min-width: 200px;
-}
 
-.el-dialog__body {
-  min-height: 400px;
-}
+
+
 
 .demo-pagination-block+.demo-pagination-block {
   float: right;

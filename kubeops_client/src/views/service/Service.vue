@@ -119,55 +119,43 @@
     </div>
 
     <el-dialog v-model="dialogcreatens" title="创建资源" center>
-        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="100px" class="demo-ruleForm" status-icon>
-            <el-form-item label="名称" prop="name" style="width: 80%;">
+        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="25%" status-icon>
+            <el-form-item label="名称" prop="name">
                 <el-input v-model="ruleForm.name"></el-input>
             </el-form-item>
-            <el-form-item label="名称空间" prop="namespace" style="width: 80%;">
+            <el-form-item label="名称空间" prop="namespace">
                 <el-select v-model="ruleForm.namespace" placeholder="请选择名称空间" @visible-change="getnsselect()">
                     <el-option v-for="item in nslist" :key="item.namespace" :label="item.label" :value="item.namespace"
                         v-show="item.label != 'All'" />
                 </el-select>
             </el-form-item>
-            <el-form-item label="标签" prop="labels" style="width: 80%;">
+            <el-form-item label="标签" prop="labels">
                 <el-input v-model="ruleForm.labels"></el-input>
             </el-form-item>
-            <el-form-item label="类型" prop="type" style="width: 80%;">
+            <el-form-item label="类型" prop="type">
                 <el-select v-model="ruleForm.type" placeholder="请选择服务类型">
                     <el-option v-for="item in typelist" :key="item.value" :label="item.label" :value="item.value" />
                 </el-select>
             </el-form-item>
 
-            <el-form-item v-for="(service, index) in ruleForm.service_ports" :label="'端口' + (index + 1)" :key="service.key">
-                <el-form-item label="容器名称" prop="port_name" style="width: 70%;">
-                    <el-input v-model="service.port_name"></el-input>
-                </el-form-item>
-                <el-form-item label="服务端口" prop="ports" style="width: 70%;">
-                    <el-input v-model.number="service.port"></el-input>
-                </el-form-item>
-                <el-form-item label="协议" prop="resource" style="width: 70%;">
-                    <el-radio-group v-model="service.protocol">
-                        <el-radio label="TCP"></el-radio>
-                        <el-radio label="UDP"></el-radio>
-                    </el-radio-group>
-                </el-form-item>
-                <el-form-item label="暴露端口" style="width: 70%;">
-                    <el-input type="number" v-model.number="service.target_port"></el-input>
-                </el-form-item>
-                <el-form-item label="访问端口" style="width: 70%;"
-                    v-show="ruleForm.type == 'NodePort' || ruleForm.type == 'LoadBalancer'">
-                    <el-input type="number" v-model.number="service.node_port"></el-input>
-                </el-form-item>
-                <el-form-item style="width: 80%;">
-                    <el-tooltip placement="right"><template #content> 删除端口 </template>
-                        <el-button @click.prevent="removeService(service)" type="danger" icon="Minus" size="small" circle />
-                    </el-tooltip>
-                </el-form-item>
+
+            <el-form-item label="容器名称" prop="port_name">
+                <el-input v-model="ruleForm.service_ports.port_name"></el-input>
             </el-form-item>
-            <el-form-item>
-                <el-tooltip placement="right"><template #content> 新增端口 </template>
-                    <el-button @click="addService" type="success" circle icon="Plus" size="small"></el-button>
-                </el-tooltip>
+            <el-form-item label="服务端口" prop="ports">
+                <el-input v-model.number="ruleForm.service_ports.port"></el-input>
+            </el-form-item>
+            <el-form-item label="协议" prop="resource">
+                <el-radio-group v-model="ruleForm.service_ports.protocol">
+                    <el-radio label="TCP"></el-radio>
+                    <el-radio label="UDP"></el-radio>
+                </el-radio-group>
+            </el-form-item>
+            <el-form-item label="暴露端口">
+                <el-input type="number" v-model.number="ruleForm.service_ports.target_port"></el-input>
+            </el-form-item>
+            <el-form-item label="访问端口" v-show="ruleForm.type == 'NodePort' || ruleForm.type == 'LoadBalancer'">
+                <el-input type="number" v-model.number="ruleForm.service_ports.node_port"></el-input>
             </el-form-item>
             <el-form-item>
                 <el-button type="primary" @click="submitForm('ruleForm')">立即创建</el-button>
@@ -229,9 +217,15 @@ export default {
             ruleForm: {
                 name: null,
                 namespace: null,
-                labels: {},
+                labels: null,
                 type: null,
-                service_ports: [],
+                service_ports: {
+                    port_name: null,
+                    port: null,
+                    protocol: null,
+                    target_port: null,
+                    node_port: null
+                },
             },
             rules: {
                 name: [
@@ -412,6 +406,9 @@ export default {
         submitForm(formName) {
             this.$refs[formName].validate((valid) => {
                 if (valid) {
+                    if (this.ruleForm.labels != null) {
+                        this.ruleForm.labels = JSON.parse(this.ruleForm.labels)
+                    }
                     this.dialogcreatens = false
                     console.log(this.ruleForm)
                     this.createService()
@@ -431,13 +428,6 @@ export default {
                 target_port: null,
                 node_port: null
             })
-        },
-        removeService(item) {
-            console.log(item)
-            var index = this.ruleForm.service_ports.indexOf(item)
-            if (index !== -1) {
-                this.ruleForm.service_ports.splice(index, 1)
-            }
         },
         handle(row) {
             this.$router.push({
@@ -523,15 +513,6 @@ export default {
     margin-right: 10px;
 }
 
-.el-dialog--center {
-    min-height: 400px;
-    min-width: 200px;
-}
-
-.el-dialog__body {
-    min-height: 300px;
-}
-
 .demo-pagination-block {
     margin-top: 5px;
     margin-bottom: 5px;
@@ -542,7 +523,16 @@ export default {
     padding: 0px;
 }
 
-/* .el-form-item__content .el-input {
-    width: 500px;
-} */
+
+.el-form-item__content .el-input {
+    width: 400px;
+}
+
+.el-dialog {
+    .el-select {
+        .el-input {
+            width: 180px;
+        }
+    }
+}
 </style>

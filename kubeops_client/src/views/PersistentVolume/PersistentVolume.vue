@@ -106,22 +106,37 @@
         </template>
     </el-dialog>
     <el-dialog v-model="dialogcreatens" title="创建 PersistentVolume 资源" center>
-        <el-form :model="form" :label-width="formLabelWidth">
+        <el-form :model="form" label-width="25%">
             <el-form-item label="名称">
                 <el-input v-model="form.name" autocomplete="off" />
             </el-form-item>
+            <el-form-item label="标签">
+                <el-input v-model="form.labels"></el-input>
+            </el-form-item>
             <el-form-item label="容量">
-                <div class="mt-4">
-                    <el-input v-model="form.storage" placeholder="Please input" class="input-with-select">
-                        <template #append>
-                            <el-select v-model="form.storage_type" placeholder="Select" style="width: 120px">
-                                <el-option label="Gi" value="Gi" />
-                                <el-option label="Mi" value="Mi" />
-                                <el-option label="Tel" value="3" />
-                            </el-select>
-                        </template>
-                    </el-input>
-                </div>
+                <el-input v-model="form.storage" placeholder="Please input" style="width: fit-content;">
+                    <template #append>
+                        <el-select v-model="storage_type" placeholder="Select">
+                            <el-option label="Gi" value="Gi" />
+                            <el-option label="Mi" value="Mi" />
+                            <el-option label="Tel" value="3" />
+                        </el-select>
+                    </template>
+                </el-input>
+            </el-form-item>
+            <el-form-item label="访问模式">
+                <el-checkbox-group v-model="form.access_mode">
+                    <el-checkbox label="ReadWriteOnce" name="access_mode" />
+                    <el-checkbox label="ReadOnlyMany" name="access_mode" />
+                    <el-checkbox label="ReadWriteMany" name="access_mode" />
+                    <el-checkbox label="ReadWriteOncePod" name="access_mode" />
+                </el-checkbox-group>
+            </el-form-item>
+            <el-form-item label="卷模式">
+                <el-radio-group v-model="form.volume_mode">
+                    <el-radio label="Filesystem" />
+                    <el-radio label="Block" />
+                </el-radio-group>
             </el-form-item>
             <el-form-item label="类型">
                 <el-select v-model="form.type" placeholder="type">
@@ -164,20 +179,23 @@ export default {
             persistentvolumeItem: [],
             dialogFormVisible: false,
             dialogcreatens: false,
+            storage_type: 'Gi',
             form: {
                 name: '',
-                label: [],
+                labels: null,
                 storage: '',
-                storage_type: '',
                 type: '',
                 path: '',
                 server: '',
+                access_mode: [],
+                volume_mode: '',
             },
             formLabelWidth: '140px',
             total: 1,
             page_size: [1, 10, 20, 50, 100],
             limit: 10,
             page: 1,
+            filter_name: '',
             content: '',
             aceConfig: {
                 lang: 'json',
@@ -241,14 +259,15 @@ export default {
             })
         },
         createPersistentVolume() {
+            if (this.form.labels != null) {
+                this.form.labels = JSON.parse(this.form.labels)
+            }
+            this.form.storage = this.form.storage + this.storage_type
+            console.log(this.form)
             this.$ajax.post(
                 '/pv/create',
                 {
-                    name: this.form.name,
-                    storage: this.form.storage + this.form.storage_type,
-                    type: this.form.type,
-                    path: this.form.path,
-                    server: this.form.server
+                    data: this.form
                 },
             ).then((res) => {
                 this.Loading("Creating")
@@ -258,6 +277,7 @@ export default {
                 });
                 console.log(res)
             }).catch((res) => {
+
                 console.log(res);
             })
 
@@ -297,8 +317,9 @@ export default {
             })
             setTimeout(() => {
                 loading.close()
+                this.reload()
             }, 2000)
-            this.reload()
+
         },
         changeshow() {
             this.showEl = true
@@ -398,26 +419,13 @@ export default {
     margin-right: 15px;
 }
 
-.el-input {
-    width: 80%;
-}
-
 .dialog-footer button:first-child {
     margin-right: 10px;
 }
 
-.el-dialog--center .el-dialog__body {
-    min-height: 200px;
+.el-form-item__content .el-input {
+    width: 400px;
 }
-
-.el-select .el-input {
-    width: 120px;
-}
-
-.grid-content3 .el-select {
-    width: 100px;
-}
-
 
 .dotClass {
     width: 10px;
@@ -429,5 +437,13 @@ export default {
 
 .el-tabs--border-card>.el-tabs__content {
     padding: 0px;
+}
+
+.el-dialog {
+    .el-select {
+        .el-input {
+            width: 180px;
+        }
+    }
 }
 </style>

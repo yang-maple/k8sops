@@ -64,17 +64,17 @@ type DeploymentCreate struct {
 	Namespace   string            `json:"namespace"`
 	Replicas    int32             `json:"replicas"`
 	Labels      map[string]string `json:"labels"`
-	Container   []container       `json:"container"`
+	Container   container         `json:"container"`
 	HealthCheck bool              `json:"health_check"`
 	HealthPath  string            `json:"health_path"`
 }
 
 type container struct {
-	ContainerName string          `json:"container_name"`
-	Image         string          `json:"image"`
-	Cpu           string          `json:"cpu"`
-	Memory        string          `json:"memory"`
-	Containerport []containerport `json:"container_port"`
+	ContainerName string        `json:"container_name"`
+	Image         string        `json:"image"`
+	Cpu           string        `json:"cpu"`
+	Memory        string        `json:"memory"`
+	Containerport containerport `json:"container_port"`
 }
 
 type containerport struct {
@@ -169,32 +169,28 @@ func (d *deployment) ModifyDeployReplicas(Namespace, DeployName string, Replicas
 // CreateDeploy 创建 deployment实例
 func (d *deployment) CreateDeploy(data *DeploymentCreate) (err error) {
 
-	containers := make([]corev1.Container, 0, len(data.Container))
-	for _, contain_v := range data.Container {
-		containers_port := make([]corev1.ContainerPort, 0, len(contain_v.Containerport))
-		for _, port_v := range contain_v.Containerport {
-			containers_port = append(containers_port, corev1.ContainerPort{
-				Name:          port_v.PortName,
-				ContainerPort: port_v.ContainerPort,
-				Protocol:      port_v.Protocol,
-			})
-		}
-		containers = append(containers, corev1.Container{
-			Name:  contain_v.ContainerName,
-			Image: contain_v.Image,
-			Ports: containers_port,
-			Resources: corev1.ResourceRequirements{
-				Limits: map[corev1.ResourceName]resource.Quantity{
-					corev1.ResourceCPU:    resource.MustParse(contain_v.Cpu),
-					corev1.ResourceMemory: resource.MustParse(contain_v.Memory),
-				},
-				Requests: map[corev1.ResourceName]resource.Quantity{
-					corev1.ResourceCPU:    resource.MustParse(contain_v.Cpu),
-					corev1.ResourceMemory: resource.MustParse(contain_v.Memory),
-				},
+	containers := make([]corev1.Container, 0, 1)
+	containersPort := make([]corev1.ContainerPort, 0, 1)
+	containersPort = append(containersPort, corev1.ContainerPort{
+		Name:          data.Container.Containerport.PortName,
+		ContainerPort: data.Container.Containerport.ContainerPort,
+		Protocol:      data.Container.Containerport.Protocol,
+	})
+	containers = append(containers, corev1.Container{
+		Name:  data.Container.ContainerName,
+		Image: data.Container.Image,
+		Ports: containersPort,
+		Resources: corev1.ResourceRequirements{
+			Limits: map[corev1.ResourceName]resource.Quantity{
+				corev1.ResourceCPU:    resource.MustParse(data.Container.Cpu),
+				corev1.ResourceMemory: resource.MustParse(data.Container.Memory),
 			},
-		})
-	}
+			Requests: map[corev1.ResourceName]resource.Quantity{
+				corev1.ResourceCPU:    resource.MustParse(data.Container.Cpu),
+				corev1.ResourceMemory: resource.MustParse(data.Container.Memory),
+			},
+		},
+	})
 	deploy := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   data.Name,
@@ -230,7 +226,7 @@ func (d *deployment) CreateDeploy(data *DeploymentCreate) (err error) {
 						// type=0 表示该结构体实例内的数据为整型，转json 时只需要使用 IntVal 的数据
 						// type=1 表示该结构体实例内的数据为字符串，转json 时只需要使用 StrVal 的数据
 						Type:   0,
-						IntVal: data.Container[0].Containerport[0].ContainerPort,
+						IntVal: data.Container.Containerport.ContainerPort,
 					},
 				},
 			},

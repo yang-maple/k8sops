@@ -118,11 +118,11 @@
     </div>
 
     <el-dialog v-model="dialogcreatens" title="创建资源" center>
-        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="100px" class="demo-ruleForm" status-icon>
-            <el-form-item label="名称" prop="name" style="width: 80%;">
+        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="25%" status-icon>
+            <el-form-item label="名称" prop="name">
                 <el-input v-model="ruleForm.name"></el-input>
             </el-form-item>
-            <el-form-item label="名称空间" prop="namespace" style="width: 80%;">
+            <el-form-item label="名称空间" prop="namespace">
                 <el-select v-model="ruleForm.namespace" placeholder="Select" @visible-change="getnsselect()">
                     <el-option-group v-for="group in  nslist " :key="group.label">
                         <el-option v-for=" item  in  group.options " :key="item.namespace" :value="item.namespace"
@@ -130,16 +130,16 @@
                     </el-option-group>
                 </el-select>
             </el-form-item>
-            <el-form-item label="标签" prop="labels" style="width: 80%;">
+            <el-form-item label="标签" prop="labels">
                 <el-input v-model="ruleForm.labels"></el-input>
             </el-form-item>
-            <el-form-item label="数据" prop="data" style="width: 80%;">
-                <el-input v-model="ruleForm.data" type="textarea" :rows="4"></el-input>
+            <el-form-item label="数据" prop="data">
+                <el-input v-model="ruleForm.data" type="textarea" style="width: 400px;" :rows="4"></el-input>
             </el-form-item>
             <el-form-item label="禁止修改">
                 <el-switch v-model="ruleForm.immutable" />
             </el-form-item>
-            <el-form-item label="类型" style="width: 30%;">
+            <el-form-item label="类型">
                 <el-input v-model="ruleForm.secretType" disabled placeholder="Opaque" />
             </el-form-item>
             <el-form-item>
@@ -199,8 +199,8 @@ export default {
             ruleForm: {
                 name: null,
                 namespace: '',
-                labels: {},
-                data: {},
+                labels: null,
+                data: null,
                 immutable: false,
                 secretType: 'Opaque',
             },
@@ -214,6 +214,9 @@ export default {
                 ],
                 resource: [
                     { message: '请选择一种协议', trigger: 'change' }
+                ],
+                data: [
+                    { required: true, message: '数据不能为空', trigger: 'blur' }
                 ],
 
             }
@@ -268,8 +271,8 @@ export default {
             })
             setTimeout(() => {
                 loading.close()
+                this.reload()
             }, 2000)
-            this.reload()
         },
         getnsselect() {
             if (this.nslist == "") {
@@ -394,8 +397,10 @@ export default {
         submitForm(formName) {
             this.$refs[formName].validate((valid) => {
                 if (valid) {
+                    if (this.ruleForm.labels != null) {
+                        this.ruleForm.labels = JSON.parse(this.ruleForm.labels)
+                    }
                     this.ruleForm.data = JSON.parse(this.ruleForm.data);
-                    this.ruleForm.labels = JSON.parse(this.ruleForm.labels);
                     this.createSecret()
                 } else {
                     return false;
@@ -479,15 +484,6 @@ export default {
     margin-right: 10px;
 }
 
-.el-dialog--center {
-    min-height: 400px;
-    min-width: 200px;
-}
-
-.el-dialog__body {
-    min-height: 400px;
-}
-
 .demo-pagination-block {
     margin-top: 5px;
     margin-bottom: 5px;
@@ -507,7 +503,15 @@ export default {
     padding: 0px;
 }
 
-/* .el-form-item__content .el-input {
-    width: 500px;
-} */
+.el-dialog {
+    .el-select {
+        .el-input {
+            width: 180px;
+        }
+    }
+}
+
+.el-form-item__content .el-input {
+    width: 400px;
+}
 </style>

@@ -52,7 +52,6 @@
                     </div>
                 </el-menu>
             </el-aside>
-
             <el-container>
                 <!-- 头部信息 -->
                 <el-header class="header">
@@ -81,8 +80,16 @@
                                 </el-breadcrumb>
                             </div>
                         </el-col>
+                        <!--通过yaml 创建资源-->
+                        <el-col :span="12">
+                            <div style="text-align: right;">
+                                <el-button type="info" @click="dialogcreatens = true">
+                                    YAML创建资源
+                                </el-button>
+                            </div>
+                        </el-col>
                         <!-- 用户信息 -->
-                        <el-col :span="15">
+                        <el-col :span="3">
                             <div class="header-user">
                                 <el-dropdown>
                                     <div class="header-dropdown header-username" @mouseover="isOver = true"
@@ -117,12 +124,40 @@
             </el-container>
         </el-container>
     </div>
+    <el-dialog v-model="dialogcreatens" title="YAML创建资源" center>
+        <el-tabs v-model="activeName" type="border-card" @tab-click="handleClick">
+            <el-tab-pane label="YAML" name="yaml"><v-ace-editor v-model:value="content" :lang="aceConfig.lang"
+                    style="min-height: 400px" :theme="aceConfig.theme" :options="aceConfig.options" /></el-tab-pane>
+            <el-tab-pane label="YAML文件" name="yamlfile">
+                <el-upload class="upload-demo" drag action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15"
+                    multiple>
+                    <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                    <div class="el-upload__text">
+                        Drop file here or <em>click to upload</em>
+                    </div>
+                </el-upload>
+            </el-tab-pane>
+        </el-tabs>
+        <template #footer>
+            <span class="dialog-footer">
+                <el-button type="primary" v-if="activeName == 'yaml'">创建</el-button>
+                <el-button type="primary" v-if="activeName == 'yamlfile'">上传并创建</el-button>
+                <el-button @click="dialogcreatens = false">
+                    取消
+                </el-button>
+            </span>
+        </template>
+    </el-dialog>
 </template>
 
 <script>
 import { useRouter } from 'vue-router';
-
+import { VAceEditor } from 'vue3-ace-editor';
+import '../ace.config.js';
 export default {
+    components: {
+        VAceEditor
+    },
     data() {
         return {
             logo: require('@/assets/img/logo.png'),
@@ -130,7 +165,17 @@ export default {
             asideWidth: '220px',
             isCollapse: false,
             isOver: false,
+            dialogcreatens: false,
             routers: [],
+            aceConfig: {
+                lang: 'json',
+                theme: "cloud9_day",
+                options: {
+                    showPrintMargin: false,
+                }
+            },
+            activeName: 'yaml',
+            content: '',
         }
     },
     computed: {
@@ -159,7 +204,11 @@ export default {
         },
         mouseover() {
             this.isOver = true
+        },
+        handleClick(tab) {
+            console.log(tab)
         }
+
     }
 }
 
@@ -296,9 +345,21 @@ export default {
     width: 100%;
     height: 100%;
     padding: 5px !important;
+    padding-top: 10px !important;
 }
 
 .el-footer {
     height: 30px !important
+}
+
+.el-tabs--border-card>.el-tabs__content {
+    padding: 0px;
+}
+
+.el-dialog--center {
+    .el-dialog__body {
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+    }
 }
 </style>

@@ -40,12 +40,14 @@ type pvDetail struct {
 }
 
 type CreatePVConfig struct {
-	Name    string            `json:"name"`
-	Labels  map[string]string `json:"labels"`
-	Storage string            `json:"storage"`
-	Type    string            `json:"type"`
-	Path    string            `json:"path"`
-	Server  string            `json:"server"`
+	Name       string                              `json:"name"`
+	Labels     map[string]string                   `json:"labels"`
+	Storage    string                              `json:"storage"`
+	AccessMode []corev1.PersistentVolumeAccessMode `json:"access_mode"`
+	VolumeMode *corev1.PersistentVolumeMode        `json:"volume_mode"`
+	Type       string                              `json:"type"`
+	Path       string                              `json:"path"`
+	Server     string                              `json:"server"`
 }
 
 // GetPvList PersistentVolume列表
@@ -103,9 +105,6 @@ func (p *persistenvolume) DelPv(PvName string) (err error) {
 
 // CreatePv 创建 PersistentVolume
 func (p *persistenvolume) CreatePv(data *CreatePVConfig) (err error) {
-
-	mode := corev1.PersistentVolumeFilesystem
-
 	createPv := &corev1.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   data.Name,
@@ -115,12 +114,12 @@ func (p *persistenvolume) CreatePv(data *CreatePVConfig) (err error) {
 			Capacity: corev1.ResourceList{
 				corev1.ResourceStorage: resource.MustParse(data.Storage),
 			},
-			AccessModes:                   []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			AccessModes:                   data.AccessMode,
 			ClaimRef:                      nil,
 			PersistentVolumeReclaimPolicy: "",
 			StorageClassName:              "",
 			MountOptions:                  nil,
-			VolumeMode:                    &mode,
+			VolumeMode:                    data.VolumeMode,
 			NodeAffinity:                  nil,
 		},
 	}

@@ -95,11 +95,11 @@
         </el-row>
     </div>
     <el-dialog v-model="dialogcreatens" title="创建资源" center>
-        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="100px" class="demo-ruleForm" status-icon>
-            <el-form-item label="名称" prop="name" style="width: 80%;">
+        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="25%" status-icon>
+            <el-form-item label="名称" prop="name">
                 <el-input v-model="ruleForm.name"></el-input>
             </el-form-item>
-            <el-form-item label="名称空间" prop="namespace" style="width: 80%;">
+            <el-form-item label="名称空间" prop="namespace">
                 <el-select v-model="ruleForm.namespace" placeholder="Select" @visible-change="getnsselect()">
                     <el-option-group v-for="group in  nslist " :key="group.label">
                         <el-option v-for=" item  in  group.options " :key="item.namespace" :value="item.namespace"
@@ -107,7 +107,7 @@
                     </el-option-group>
                 </el-select>
             </el-form-item>
-            <el-form-item label="标签" prop="labels" style="width: 80%;">
+            <el-form-item label="标签" prop="labels">
                 <el-input v-model="ruleForm.labels"></el-input>
             </el-form-item>
             <el-form-item label="访问模式">
@@ -118,20 +118,19 @@
                     <el-checkbox label="ReadWriteOncePod" name="access_modes" />
                 </el-checkbox-group>
             </el-form-item>
-            <el-form-item label="存储容量" style="width: 80%;">
-                <div class="mt-4">
-                    <el-input v-model="ruleForm.storage" placeholder="Please input" class="input-with-select">
+            <el-form-item label="存储容量">
+                <div>
+                    <el-input v-model="ruleForm.storage" placeholder="Please input" style="width: fit-content;">
                         <template #append>
-                            <el-select v-model="storage_type" style="width: 120px">
+                            <el-select v-model="storage_type">
                                 <el-option label="Gi" value="Gi" />
                                 <el-option label="Mi" value="Mi" />
                             </el-select>
                         </template>
                     </el-input>
                 </div>
-                <!-- <el-input v-model="ruleForm.storage"></el-input> -->
             </el-form-item>
-            <el-form-item label="存储类型" style="width: 80%;">
+            <el-form-item label="存储类型">
                 <el-select v-model="ruleForm.storage_classname" placeholder="请选择存储类型">
                     <el-option v-for="item in storageclasslist" :key="item.value" :label="item.label" :value="item.value" />
                 </el-select>
@@ -210,7 +209,7 @@ export default {
                 name: null,
                 namespace: '',
                 access_modes: [],
-                labels: {},
+                labels: null,
                 storage: null,
                 storage_classname: null,
             },
@@ -406,7 +405,9 @@ export default {
             this.$refs[formName].validate((valid) => {
                 if (valid) {
                     console.log(this.ruleForm)
-                    this.ruleForm.labels = JSON.parse(this.ruleForm.labels);
+                    if (this.ruleForm.labels != null) {
+                        this.ruleForm.labels = JSON.parse(this.ruleForm.labels)
+                    }
                     this.createPersistentVolumeClaims()
                 } else {
                     return false;
@@ -490,14 +491,6 @@ export default {
     margin-right: 10px;
 }
 
-.el-dialog--center {
-    min-height: 400px;
-    min-width: 200px;
-}
-
-.el-dialog__body {
-    min-height: 400px;
-}
 
 .demo-pagination-block {
     margin-top: 5px;
@@ -509,7 +502,15 @@ export default {
     padding: 0px;
 }
 
-/* .el-form-item__content .el-input {
-    width: 500px;
-} */
+.el-dialog {
+    .el-select {
+        .el-input {
+            width: 180px;
+        }
+    }
+}
+
+.el-form-item__content .el-input {
+    width: 400px;
+}
 </style>

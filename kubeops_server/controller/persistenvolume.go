@@ -87,8 +87,10 @@ func (p *persistenvolume) DelPersistentVolume(c *gin.Context) {
 
 // CreatePersistentVolume 创建 PersistentVolume 资源
 func (p *persistenvolume) CreatePersistentVolume(c *gin.Context) {
-	data := new(service.CreatePVConfig)
-	err := c.ShouldBindJSON(&data)
+	createPv := new(struct {
+		Data *service.CreatePVConfig `json:"data"`
+	})
+	err := c.ShouldBindJSON(&createPv)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -97,7 +99,7 @@ func (p *persistenvolume) CreatePersistentVolume(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Persistenvolume.CreatePv(data)
+	err = service.Persistenvolume.CreatePv(createPv.Data)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "创建PersistentVolume失败",

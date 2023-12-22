@@ -101,9 +101,9 @@
         </template>
     </el-dialog>
     <el-dialog v-model="dialogcreatens" title="创建名称空间" center>
-        <el-form :model="form">
-            <el-form-item label="名称" :label-width="formLabelWidth" style="width: 80%;">
-                <el-input v-model="form.newnamespaces" autocomplete="off" />
+        <el-form :model="form" label-width="25%">
+            <el-form-item label="名称">
+                <el-input v-model="form.newnamespaces" autocomplete="off" style="width: 80%;" />
             </el-form-item>
         </el-form>
         <template #footer>
@@ -143,7 +143,7 @@ export default {
                 desc: '',
                 newnamespaces: '',
             },
-            formLabelWidth: '140px',
+            filter_name: '',
             total: 1,
             page_size: [1, 10, 20, 50, 100],
             limit: 10,
@@ -350,13 +350,6 @@ export default {
     margin-right: 10px;
 }
 
-.el-dialog--center {
-    min-height: 10px;
-}
-
-.el-dialog__body {
-    min-height: 100px;
-}
 
 .demo-pagination-block {
     margin-top: 5px;

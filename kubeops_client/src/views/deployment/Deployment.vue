@@ -4,8 +4,10 @@
             <div class="header-grid-content">
                 <el-select v-model="namespace" filterable placeholder="Namespace" @visible-change="getnsselect()"
                     @change="getDeployment()" clearable>
-                    <el-option v-for="item in nslist" :key="item.namespace" :label="item.label" :value="item.namespace"
-                        style="width:100%" />
+                    <el-option-group v-for="group in nslist" :key="group.label" :label="group.label">
+                        <el-option v-for="item in group.options" :key="item.namespace" :label="item.label"
+                            :value="item.namespace" />
+                    </el-option-group>
                 </el-select>
             </div>
         </el-col>
@@ -118,70 +120,50 @@
         </template>
     </el-dialog>
     <el-dialog v-model="dialogcreatens" title="创建资源" center>
-        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="100px" class="demo-ruleForm" status-icon>
+        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="25%" status-icon>
             <el-form-item label="名称" prop="name">
                 <el-input v-model="ruleForm.name"></el-input>
             </el-form-item>
             <el-form-item label="名称空间" prop="namespace">
                 <el-select v-model="ruleForm.namespace" placeholder="请选择活动区域" @visible-change="getnsselect()">
-                    <el-option v-for="item in nslist" :key="item.namespace" :label="item.label" :value="item.namespace"
-                        style="width:100%" v-show="item.label != 'All'" />
+                    <el-option-group v-for="group in  nslist " :key="group.label">
+                        <el-option v-for=" item  in  group.options " :key="item.namespace" :value="item.namespace"
+                            v-show="item.label != 'ALL'" />
+                    </el-option-group>
                 </el-select>
             </el-form-item>
+            <el-form-item label="标签">
+                <el-input v-model="ruleForm.labels"></el-input>
+            </el-form-item>
             <el-form-item label="副本">
-                <el-input-number v-model="ruleForm.replicas" :min="1" :max="99" style="width: 200px;" />
+                <el-input-number v-model="ruleForm.replicas" :min="1" :max="99" />
             </el-form-item>
-            <el-form-item v-for="(container, index) in ruleForm.container" :label="'容器' + index" :key="container.key">
-                <el-form-item v-show="index == 0">
-                </el-form-item>
-                <el-form-item label="容器名称" prop="container_name">
-                    <el-input v-model="container.container_name" style="width: 300px;"></el-input>
-                    <el-tooltip placement="right"><template #content> 删除容器 </template>
-                        <el-button @click.prevent="removeContainer(container)" type="danger" icon="Minus" size="small"
-                            circle />
-                    </el-tooltip>
-                </el-form-item>
-                <el-form-item label="镜像" prop="image">
-                    <el-input v-model="container.image" style="width: 300px;"></el-input>
-                </el-form-item>
-                <el-form-item label="Cpu限制">
-                    <el-input v-model="container.cpu" style="width: 300px;"></el-input>
-                </el-form-item>
-                <el-form-item label="Memory限制">
-                    <el-input v-model="container.memory" style="width: 300px;"></el-input>
-                </el-form-item>
-                <el-form-item :label="'端口' + portindex"
-                    v-for="(containerport, portindex) in ruleForm.container[index].container_port" :key="containerport.key">
-                    <el-form-item label="端口名称">
-                        <el-input v-model="containerport.port_name" style="width: 80%;"></el-input>
-                        <el-tooltip placement="right"><template #content> 删除端口 </template>
-                            <el-button @click.prevent="removeContainerPort(index, containerport)" type="danger" icon="Minus"
-                                size="small" circle></el-button>
-                        </el-tooltip>
-                    </el-form-item>
-                    <el-form-item label="端口">
-                        <el-input type="number" v-model.number="containerport.container_port"
-                            style="width: 90%;"></el-input>
-                    </el-form-item>
-                    <el-form-item label="协议" prop="resource">
-                        <el-radio-group v-model="containerport.protocol">
-                            <el-radio label="TCP"></el-radio>
-                            <el-radio label="UDP"></el-radio>
-                        </el-radio-group>
-                    </el-form-item>
-                </el-form-item>
-                <el-form-item>
-                    <el-tooltip placement="right"><template #content> 新增端口 </template>
-                        <el-button @click="addContainerPort(index)" type="success" circle icon="Plus" size="small"
-                            style="margin-left: 50px;" />
-                    </el-tooltip>
-                </el-form-item>
+            <el-form-item label="容器名称" prop="container_name">
+                <el-input v-model="ruleForm.container.container_name"></el-input>
             </el-form-item>
-            <el-form-item>
-                <el-tooltip placement="right"><template #content> 新增容器 </template>
-                    <el-button @click="addContainer" type="success" circle icon="Plus" size="small"></el-button>
-                </el-tooltip>
+            <el-form-item label="镜像" prop="image">
+                <el-input v-model="ruleForm.container.image"></el-input>
             </el-form-item>
+            <el-form-item label="Cpu限制">
+                <el-input v-model="ruleForm.container.cpu"></el-input>
+            </el-form-item>
+            <el-form-item label="Memory限制">
+                <el-input v-model="ruleForm.container.memory"></el-input>
+            </el-form-item>
+
+            <el-form-item label="端口名称">
+                <el-input v-model="ruleForm.container.container_port.port_name"></el-input>
+            </el-form-item>
+            <el-form-item label="端口">
+                <el-input type="number" v-model.number="ruleForm.container.container_port.container_port"></el-input>
+            </el-form-item>
+            <el-form-item label="协议" prop="resource">
+                <el-radio-group v-model="ruleForm.container.container_port.protocol">
+                    <el-radio label="TCP"></el-radio>
+                    <el-radio label="UDP"></el-radio>
+                </el-radio-group>
+            </el-form-item>
+
             <el-form-item label="健康检查" prop="delivery">
                 <el-switch v-model="ruleForm.health_check"></el-switch>
             </el-form-item>
@@ -236,24 +218,20 @@ export default {
                 name: '',
                 namespace: '',
                 replicas: 0,
-                labels: {
-                    "app": "demo"
-                },
-                container: [
+                labels: {},
+                container:
+                {
+                    container_name: '',
+                    image: '',
+                    cpu: '0',
+                    memory: '0',
+                    container_port:
                     {
-                        container_name: '',
-                        image: '',
-                        cpu: '0',
-                        memory: '0',
-                        container_port: [
-                            {
-                                port_name: '',
-                                container_port: 0,
-                                protocol: '',
-                            }
-                        ]
+                        port_name: '',
+                        container_port: 0,
+                        protocol: '',
                     }
-                ],
+                }
             },
             rules: {
                 name: [
@@ -324,14 +302,27 @@ export default {
         },
         getnsselect() {
             if (this.nslist == "") {
-                this.nslist.push({ 'namespace': '', 'label': "All" })
+                this.nslist.push({
+                    label: '',
+                    options: [
+                        {
+                            namespace: '',
+                            label: 'ALL',
+                        },
+                    ],
+                })
                 this.$ajax({
                     method: 'get',
                     url: '/namespaces/list',
                 }).then((res) => {
-                    res.data.item.forEach(v => {
-                        this.nslist.push({ 'namespace': v.name, 'label': v.name })
+                    this.nslist.push({
+                        label: '',
+                        options: [],
                     })
+                    res.data.item.forEach(v => {
+                        this.nslist[1].options.push({ 'namespace': v.name, 'label': v.name })
+                    })
+                    console.log(this.nslist)
                 }).catch((res) => {
                     console.log(res.data)
                 })
@@ -502,6 +493,7 @@ export default {
             this.$refs[formName].validate((valid) => {
                 if (valid) {
                     this.dialogcreatens = false
+                    this.ruleForm.labels = JSON.parse(this.ruleForm.labels);
                     console.log(this.ruleForm)
                     this.createDeployment()
                 } else {
@@ -511,40 +503,6 @@ export default {
         },
         resetForm(formName) {
             this.$refs[formName].resetFields();
-        },
-        addContainer() {
-            this.ruleForm.container.push({
-                container_name: '',
-                image: '',
-                cpu: '0',
-                memory: '0',
-                container_port: [
-                    {
-                        port_name: '',
-                        container_port: 0,
-                        protocol: '',
-                    }
-                ]
-            })
-        },
-        addContainerPort(index) {
-            this.ruleForm.container[index].container_port.push({
-                port_name: '',
-                container_port: 0,
-                protocol: '',
-            })
-        },
-        removeContainer(item) {
-            var index = this.ruleForm.container.indexOf(item)
-            if (index !== -1) {
-                this.ruleForm.container.splice(index, 1)
-            }
-        },
-        removeContainerPort(portindex, portitem) {
-            var index = this.ruleForm.container[portindex].container_port.indexOf(portitem)
-            if (index !== -1) {
-                this.ruleForm.container[portindex].container_port.splice(index, 1)
-            }
         },
         yamlFormat() {
             if (this.aceConfig.lang == "yaml") {
@@ -623,10 +581,6 @@ export default {
     margin-right: 10px;
 }
 
-.el-dialog--center .el-dialog__body {
-    min-height: 400px;
-}
-
 .demo-pagination-block {
     margin-top: 5px;
     margin-bottom: 5px;
@@ -639,5 +593,13 @@ export default {
 
 .el-tabs--border-card>.el-tabs__content {
     padding: 0px;
+}
+
+.el-dialog {
+    .el-select {
+        .el-input {
+            width: 180px;
+        }
+    }
 }
 </style>

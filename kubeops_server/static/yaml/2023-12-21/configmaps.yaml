@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: special-config
+  namespace: default
+data:
+  special.how: very
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: env-config
+  namespace: default
+data:
+  log_level: INFO
+
+
+docker login --username=ikb-middleware@noahwm noah-acr-ee-001-registry-vpc.cn-shanghai.cr.aliyuncs.com
+
+Var&Hy!TZ4fI|M&r0ZdvWZVd4KTps2ht
+Var&Hy!TZ4fI|M&r0ZdvWZVd4KTps2ht
+
+
+Var&Hy!TZ4fI|M&r0ZdvWZVd4KTps2ht
+ikb-middleware@noahwm
+
+Changeme@123
+
+noah-acr-ee-001-registry-vpc.cn-shanghai.cr.aliyuncs.com/noahikb/[镜像名]:[镜像版本号]
+
+
+AKIASCZWGXHFXOKOMKNJ
+2/ou0pSSSV5cKYjRY+pcWjqZlNLs1jn4CUi5Rt2O
