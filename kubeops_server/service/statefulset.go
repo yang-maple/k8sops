@@ -50,8 +50,8 @@ func (s *statefulSet) fromCells(cells []DataCell) []appsv1.StatefulSet {
 }
 
 // GetStatefulList  列表
-func (s *statefulSet) GetStatefulList(StsName, Namespace string, Limit, Page int) (stsResp *StsResp, err error) {
-	statefulList, err := K8s.Clientset.AppsV1().StatefulSets(Namespace).List(context.TODO(), metav1.ListOptions{})
+func (s *statefulSet) GetStatefulList(StsName, Namespace string, Limit, Page int, uuid int) (stsResp *StsResp, err error) {
+	statefulList, err := K8s.Clientset[uuid].AppsV1().StatefulSets(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取 statefulList 失败" + err.Error())
 		return nil, errors.New("获取 statefulList 失败" + err.Error())
@@ -98,9 +98,9 @@ func (s *statefulSet) GetStatefulList(StsName, Namespace string, Limit, Page int
 }
 
 // GetStatefulDetail 详情
-func (s *statefulSet) GetStatefulDetail(Namespace, StsName string) (detail *appsv1.StatefulSet, err error) {
+func (s *statefulSet) GetStatefulDetail(Namespace, StsName string, uuid int) (detail *appsv1.StatefulSet, err error) {
 	//获取deploy
-	detail, err = K8s.Clientset.AppsV1().StatefulSets(Namespace).Get(context.TODO(), StsName, metav1.GetOptions{})
+	detail, err = K8s.Clientset[uuid].AppsV1().StatefulSets(Namespace).Get(context.TODO(), StsName, metav1.GetOptions{})
 	if err != nil {
 		logger.Info("获取 stateful set 详情失败" + err.Error())
 		return nil, errors.New("获取 stateful set 详情失败" + err.Error())
@@ -111,8 +111,8 @@ func (s *statefulSet) GetStatefulDetail(Namespace, StsName string) (detail *apps
 }
 
 // DelStateful 删除
-func (s *statefulSet) DelStateful(Namespace, StsName string) (err error) {
-	err = K8s.Clientset.AppsV1().StatefulSets(Namespace).Delete(context.TODO(), StsName, metav1.DeleteOptions{})
+func (s *statefulSet) DelStateful(Namespace, StsName string, uuid int) (err error) {
+	err = K8s.Clientset[uuid].AppsV1().StatefulSets(Namespace).Delete(context.TODO(), StsName, metav1.DeleteOptions{})
 	if err != nil {
 		logger.Info("删除实例失败" + err.Error())
 		return errors.New("删除实例失败" + err.Error())
@@ -121,8 +121,8 @@ func (s *statefulSet) DelStateful(Namespace, StsName string) (err error) {
 }
 
 // UpdateDelStateful 更新
-func (s *statefulSet) UpdateDelStateful(Namespace string, Sts *appsv1.StatefulSet) (err error) {
-	_, err = K8s.Clientset.AppsV1().StatefulSets(Namespace).Update(context.TODO(), Sts, metav1.UpdateOptions{})
+func (s *statefulSet) UpdateDelStateful(Namespace string, Sts *appsv1.StatefulSet, uuid int) (err error) {
+	_, err = K8s.Clientset[uuid].AppsV1().StatefulSets(Namespace).Update(context.TODO(), Sts, metav1.UpdateOptions{})
 	if err != nil {
 		logger.Info("StatefulSets 更新失败" + err.Error())
 		return errors.New("StatefulSets 更新失败" + err.Error())
@@ -132,14 +132,14 @@ func (s *statefulSet) UpdateDelStateful(Namespace string, Sts *appsv1.StatefulSe
 }
 
 // ModifyStatefulReplicas 修改deployment 副本数
-func (s *statefulSet) ModifyStatefulReplicas(Namespace, StsName string, Replicas *int32) (err error) {
-	stateful, err := K8s.Clientset.AppsV1().StatefulSets(Namespace).Get(context.TODO(), StsName, metav1.GetOptions{})
+func (s *statefulSet) ModifyStatefulReplicas(Namespace, StsName string, Replicas *int32, uuid int) (err error) {
+	stateful, err := K8s.Clientset[uuid].AppsV1().StatefulSets(Namespace).Get(context.TODO(), StsName, metav1.GetOptions{})
 	if err != nil {
 		logger.Info("获取 Stateful 数据失败" + err.Error())
 		return errors.New("Stateful 详情失败" + err.Error())
 	}
 	stateful.Spec.Replicas = Replicas
-	_, err = K8s.Clientset.AppsV1().StatefulSets(Namespace).Update(context.TODO(), stateful, metav1.UpdateOptions{})
+	_, err = K8s.Clientset[uuid].AppsV1().StatefulSets(Namespace).Update(context.TODO(), stateful, metav1.UpdateOptions{})
 	if err != nil {
 		logger.Info("更新副本数失败" + err.Error())
 		return errors.New("更新副本数失败" + err.Error())

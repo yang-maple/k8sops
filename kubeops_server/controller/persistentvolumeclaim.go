@@ -6,6 +6,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"kubeops/service"
 	"net/http"
+	"strconv"
 )
 
 type persistentVolumeClaim struct{}
@@ -28,7 +29,8 @@ func (p *persistentVolumeClaim) GetPersistentVolumeClaimList(c *gin.Context) {
 		})
 		return
 	}
-	data, err := service.Claim.GetPVClaimList(params.FilterName, params.Namespace, params.Limit, params.Page)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	data, err := service.Claim.GetPVClaimList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": "获取PersistentVolumeClaim失败",
@@ -56,7 +58,8 @@ func (p *persistentVolumeClaim) GetPersistentVolumeClaimDetail(c *gin.Context) {
 		})
 		return
 	}
-	detail, err := service.Claim.GetPVClaimDetail(params.Namespace, params.PersistentVolumeClaimName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	detail, err := service.Claim.GetPVClaimDetail(params.Namespace, params.PersistentVolumeClaimName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": "获取PersistentVolumeClaim 详情失败",
@@ -83,7 +86,8 @@ func (p *persistentVolumeClaim) CreatePersistentVolumeClaim(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Claim.CreatePVClaim(createPvc.Data)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Claim.CreatePVClaim(createPvc.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": "创建PersistentVolumeClaim失败",
@@ -110,7 +114,8 @@ func (p *persistentVolumeClaim) DelPersistentVolumeClaim(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Claim.DelPVClaim(params.Namespace, params.PersistentVolumeClaimName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Claim.DelPVClaim(params.Namespace, params.PersistentVolumeClaimName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": "删除 PersistentVolumeClaim 失败",
@@ -137,7 +142,8 @@ func (p *persistentVolumeClaim) UpdatePersistentVolumeClaim(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Claim.UpdatePVClaim(params.Namespace, params.Data)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Claim.UpdatePVClaim(params.Namespace, params.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": "更新 PersistentVolumeClaim 失败",

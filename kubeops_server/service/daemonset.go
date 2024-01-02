@@ -52,9 +52,9 @@ func (d *daemonSet) fromCell(cells []DataCell) []appsv1.DaemonSet {
 }
 
 // GetDsList 列表
-func (d *daemonSet) GetDsList(DsName, Namespace string, Limit, Page int) (DP *DsResp, err error) {
+func (d *daemonSet) GetDsList(DsName, Namespace string, Limit, Page int, uuid int) (DP *DsResp, err error) {
 	//获取deployment 的所有清单列表
-	daemonList, err := K8s.Clientset.AppsV1().DaemonSets(Namespace).List(context.TODO(), metav1.ListOptions{})
+	daemonList, err := K8s.Clientset[uuid].AppsV1().DaemonSets(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取 daemonSetList 失败" + err.Error())
 	}
@@ -99,9 +99,9 @@ func (d *daemonSet) GetDsList(DsName, Namespace string, Limit, Page int) (DP *Ds
 }
 
 // GetDsDetail  获取详情
-func (d *daemonSet) GetDsDetail(Namespace, DsName string) (detail *appsv1.DaemonSet, err error) {
+func (d *daemonSet) GetDsDetail(Namespace, DsName string, uuid int) (detail *appsv1.DaemonSet, err error) {
 	//获取deploy
-	detail, err = K8s.Clientset.AppsV1().DaemonSets(Namespace).Get(context.TODO(), DsName, metav1.GetOptions{})
+	detail, err = K8s.Clientset[uuid].AppsV1().DaemonSets(Namespace).Get(context.TODO(), DsName, metav1.GetOptions{})
 	if err != nil {
 		logger.Info("获取deployment 详情失败" + err.Error())
 		return nil, errors.New("获取deployment 详情失败" + err.Error())
@@ -112,8 +112,8 @@ func (d *daemonSet) GetDsDetail(Namespace, DsName string) (detail *appsv1.Daemon
 }
 
 // DelDs 删除
-func (d *daemonSet) DelDs(Namespace, DsName string) (err error) {
-	err = K8s.Clientset.AppsV1().DaemonSets(Namespace).Delete(context.TODO(), DsName, metav1.DeleteOptions{})
+func (d *daemonSet) DelDs(Namespace, DsName string, uuid int) (err error) {
+	err = K8s.Clientset[uuid].AppsV1().DaemonSets(Namespace).Delete(context.TODO(), DsName, metav1.DeleteOptions{})
 	if err != nil {
 		logger.Info("删除实例失败" + err.Error())
 		return errors.New("删除实例失败" + err.Error())
@@ -122,8 +122,8 @@ func (d *daemonSet) DelDs(Namespace, DsName string) (err error) {
 }
 
 // UpdateDs 更新
-func (d *daemonSet) UpdateDs(Namespace string, ds *appsv1.DaemonSet) (err error) {
-	_, err = K8s.Clientset.AppsV1().DaemonSets(Namespace).Update(context.TODO(), ds, metav1.UpdateOptions{})
+func (d *daemonSet) UpdateDs(Namespace string, ds *appsv1.DaemonSet, uuid int) (err error) {
+	_, err = K8s.Clientset[uuid].AppsV1().DaemonSets(Namespace).Update(context.TODO(), ds, metav1.UpdateOptions{})
 	if err != nil {
 		logger.Info("daemonSet 更新失败" + err.Error())
 		return errors.New("daemonSet 更新失败" + err.Error())

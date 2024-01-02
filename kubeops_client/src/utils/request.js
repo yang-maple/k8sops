@@ -20,6 +20,7 @@ httpClient.interceptors.request.use(
         config.headers['Content-Type'] = 'application/json'
         config.headers['Accept-Language'] = 'zh-CN'
         config.headers['Authorization'] = localStorage.getItem("user_token") //可以全局设置接口请求 header 中带token
+        config.headers['Uuid'] = localStorage.getItem("user_id")
         // 处理post 请求
         if (config.method === 'post') {
             if (!config.data) { //没有参数时，config.data 为null

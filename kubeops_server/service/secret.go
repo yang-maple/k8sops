@@ -52,9 +52,9 @@ func (s *secret) fromCells(cells []DataCell) []corev1.Secret {
 }
 
 // GetSecretList 列表
-func (s *secret) GetSecretList(secretName, Namespace string, Limit, Page int) (DP *SecretResp, err error) {
+func (s *secret) GetSecretList(secretName, Namespace string, Limit, Page int, uuid int) (DP *SecretResp, err error) {
 	//获取deployment 的所有清单列表
-	secretList, err := K8s.Clientset.CoreV1().Secrets(Namespace).List(context.TODO(), metav1.ListOptions{})
+	secretList, err := K8s.Clientset[uuid].CoreV1().Secrets(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取 secret 失败" + err.Error())
 	}
@@ -94,9 +94,9 @@ func (s *secret) GetSecretList(secretName, Namespace string, Limit, Page int) (D
 }
 
 // GetSecretDetail 详情
-func (s *secret) GetSecretDetail(Namespace, secretName string) (detail *corev1.Secret, err error) {
+func (s *secret) GetSecretDetail(Namespace, secretName string, uuid int) (detail *corev1.Secret, err error) {
 	//获取deploy
-	detail, err = K8s.Clientset.CoreV1().Secrets(Namespace).Get(context.TODO(), secretName, metav1.GetOptions{})
+	detail, err = K8s.Clientset[uuid].CoreV1().Secrets(Namespace).Get(context.TODO(), secretName, metav1.GetOptions{})
 	if err != nil {
 		logger.Info("获取Secret 详情失败" + err.Error())
 		return nil, errors.New("获取Secret 详情失败" + err.Error())
@@ -107,7 +107,7 @@ func (s *secret) GetSecretDetail(Namespace, secretName string) (detail *corev1.S
 }
 
 // CreateSecret 创建
-func (s *secret) CreateSecret(data *CreateSecret) (err error) {
+func (s *secret) CreateSecret(data *CreateSecret, uuid int) (err error) {
 
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -120,7 +120,7 @@ func (s *secret) CreateSecret(data *CreateSecret) (err error) {
 		Type:       corev1.SecretType(data.Type),
 	}
 
-	_, err = K8s.Clientset.CoreV1().Secrets(data.Namespace).Create(context.TODO(), secret, metav1.CreateOptions{})
+	_, err = K8s.Clientset[uuid].CoreV1().Secrets(data.Namespace).Create(context.TODO(), secret, metav1.CreateOptions{})
 	if err != nil {
 		logger.Info("创建 secret 失败" + err.Error())
 		return errors.New("创建 secret 失败" + err.Error())
@@ -130,8 +130,8 @@ func (s *secret) CreateSecret(data *CreateSecret) (err error) {
 }
 
 // DelSecret 删除
-func (s *secret) DelSecret(Namespace, secretName string) (err error) {
-	err = K8s.Clientset.CoreV1().Secrets(Namespace).Delete(context.TODO(), secretName, metav1.DeleteOptions{})
+func (s *secret) DelSecret(Namespace, secretName string, uuid int) (err error) {
+	err = K8s.Clientset[uuid].CoreV1().Secrets(Namespace).Delete(context.TODO(), secretName, metav1.DeleteOptions{})
 	if err != nil {
 		logger.Info("删除Secret失败" + err.Error())
 		return errors.New("删除Secret失败" + err.Error())
@@ -140,8 +140,8 @@ func (s *secret) DelSecret(Namespace, secretName string) (err error) {
 }
 
 // UpdateSecret   更新
-func (s *secret) UpdateSecret(Namespace string, Config *corev1.Secret) (err error) {
-	_, err = K8s.Clientset.CoreV1().Secrets(Namespace).Update(context.TODO(), Config, metav1.UpdateOptions{})
+func (s *secret) UpdateSecret(Namespace string, Config *corev1.Secret, uuid int) (err error) {
+	_, err = K8s.Clientset[uuid].CoreV1().Secrets(Namespace).Update(context.TODO(), Config, metav1.UpdateOptions{})
 	if err != nil {
 		logger.Info("更新 secret 失败" + err.Error())
 		return errors.New("更新 secret 失败" + err.Error())

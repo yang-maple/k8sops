@@ -8,6 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"kubeops/service"
 	"net/http"
+	"strconv"
 )
 
 var Pod pod
@@ -32,7 +33,8 @@ func (p *pod) GetPods(c *gin.Context) {
 		})
 		return
 	}
-	data, err := service.Pod.GetPods(params.FilterName, params.Namespace, params.Limit, params.Page)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	data, err := service.Pod.GetPods(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":    "获取plist失败",
@@ -63,7 +65,8 @@ func (p *pod) GetPodsDetail(c *gin.Context) {
 		})
 		return
 	}
-	data, err := service.Pod.GetPodDetail(params.PodName, params.Namespace)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	data, err := service.Pod.GetPodDetail(params.PodName, params.Namespace, uuid)
 	if err != nil {
 		logger.Info("获取pod 详情失败" + err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -81,8 +84,8 @@ func (p *pod) GetPodsDetail(c *gin.Context) {
 // DeletePod 删除 pod
 func (p *pod) DeletePod(c *gin.Context) {
 	params := new(struct {
-		Namespace string `json:"namespace"`
-		PodName   string `json:"pod_name"`
+		Namespace string `form:"namespace"`
+		PodName   string `form:"pod_name"`
 	})
 	err := c.ShouldBind(&params)
 	if err != nil {
@@ -93,8 +96,11 @@ func (p *pod) DeletePod(c *gin.Context) {
 		})
 		return
 	}
-	fmt.Println("参数为：", params)
-	err = service.Pod.DelPod(params.PodName, params.Namespace)
+	if params.Namespace == "" {
+		params.Namespace = "default"
+	}
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Pod.DelPod(params.PodName, params.Namespace, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": "删除失败",
@@ -121,7 +127,8 @@ func (p *pod) UpdatePod(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Pod.UpdatePod(&params.Data, params.Namespace)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Pod.UpdatePod(&params.Data, params.Namespace, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":    "更新失败",
@@ -150,7 +157,8 @@ func (p *pod) GetContainerList(c *gin.Context) {
 		})
 		return
 	}
-	containers, err := service.Pod.GetContainer(params.PodName, params.Namespace)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	containers, err := service.Pod.GetContainer(params.PodName, params.Namespace, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": "获取容器信息失败",
@@ -180,7 +188,8 @@ func (p *pod) GetContainerLog(c *gin.Context) {
 		})
 		return
 	}
-	log, err := service.Pod.GetContainerLog(params.PodName, params.ContainerName, params.Namespace)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	log, err := service.Pod.GetContainerLog(params.PodName, params.ContainerName, params.Namespace, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": "获取日志失败",
@@ -196,7 +205,8 @@ func (p *pod) GetContainerLog(c *gin.Context) {
 
 // GetPodNumber  获取每个namespace下的pod 数量
 func (p *pod) GetPodNumber(c *gin.Context) {
-	total, err := service.Pod.CountPod()
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	total, err := service.Pod.CountPod(uuid)
 	fmt.Println("total:", total)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

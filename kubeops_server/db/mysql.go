@@ -44,6 +44,7 @@ func Init() {
 	isInit = true
 	GORM.AutoMigrate(&model.Workflow{})
 	GORM.AutoMigrate(&model.User{})
+	GORM.AutoMigrate(&model.ClusterInfo{})
 }
 
 // Close 关闭数据库连接

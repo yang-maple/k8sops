@@ -113,7 +113,9 @@
                     </el-row>
                 </el-header>
                 <el-main>
-                    <router-view></router-view>
+                    <div v-if="cluster != null && this.$route.path != '/clusterinfo'"><router-view></router-view></div>
+                    <div v-if="this.$route.path == '/clusterinfo'"><router-view></router-view></div>
+                    <div v-if="cluster == null"><el-empty description="还没有添加任何集群哦~"></el-empty></div>
                 </el-main>
                 <el-footer class="footer">
                     <el-icon style="width: 2em;top: 3px;font-size: 18px;">
@@ -129,8 +131,9 @@
             <el-tab-pane label="YAML" name="yaml"><v-ace-editor v-model:value="content" :lang="aceConfig.lang"
                     style="min-height: 400px" :theme="aceConfig.theme" :options="aceConfig.options" /></el-tab-pane>
             <el-tab-pane label="YAML文件" name="yamlfile">
-                <el-upload class="upload-demo" drag action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15"
-                    multiple>
+                <el-upload ref="upload" class="upload-demo" drag action="http://127.0.0.1:8090/v1/api/upload/uploadFile"
+                    multiple :auto-upload="false" :name="yamlfile" :file-list="file_list" :headers="config"
+                    :on-success="sumbitsuccess" :on-error="submiterror">
                     <el-icon class="el-icon--upload"><upload-filled /></el-icon>
                     <div class="el-upload__text">
                         Drop file here or <em>click to upload</em>
@@ -139,9 +142,10 @@
             </el-tab-pane>
         </el-tabs>
         <template #footer>
+            <el-text type="info" size="small" v-if="activeName == 'yaml'">仅支持单资源创建，多资源创建请使用文件上传</el-text><br>
             <span class="dialog-footer">
-                <el-button type="primary" v-if="activeName == 'yaml'">创建</el-button>
-                <el-button type="primary" v-if="activeName == 'yamlfile'">上传并创建</el-button>
+                <el-button type="primary" v-if="activeName == 'yaml'" @click="createyaml()">创建</el-button>
+                <el-button type="primary" v-if="activeName == 'yamlfile'" @click="submitUpload">上传并创建</el-button>
                 <el-button @click="dialogcreatens = false">
                     取消
                 </el-button>
@@ -153,10 +157,16 @@
 <script>
 import { useRouter } from 'vue-router';
 import { VAceEditor } from 'vue3-ace-editor';
+import { ref } from 'vue';
 import '../ace.config.js';
+import jsyaml from 'js-yaml'
 export default {
     components: {
         VAceEditor
+    },
+    setup() {
+        const yamlfile = ref('yamlfile')
+        return { yamlfile }
     },
     data() {
         return {
@@ -168,20 +178,32 @@ export default {
             dialogcreatens: false,
             routers: [],
             aceConfig: {
-                lang: 'json',
+                lang: 'yaml',
                 theme: "cloud9_day",
                 options: {
                     showPrintMargin: false,
                 }
             },
+            validationErrors: [],
             activeName: 'yaml',
             content: '',
+            file_list: [],
         }
     },
     computed: {
         username() {
             let username = localStorage.getItem('user_name')
             return username ? username : '未知'
+        },
+        config() {
+            let token = localStorage.getItem('user_token')
+            return {
+                Authorization: token,
+            };
+        },
+        cluster() {
+            let cluster = localStorage.getItem('user_cluster')
+            return cluster ? cluster : null
         }
     },
     beforeMount() {
@@ -198,8 +220,7 @@ export default {
             }
         },
         logout() {
-            localStorage.removeItem("user_name")
-            localStorage.removeItem("user_token")
+            this.$auth.delUserAuth()
             this.$router.push('/login')
         },
         mouseover() {
@@ -207,8 +228,56 @@ export default {
         },
         handleClick(tab) {
             console.log(tab)
-        }
-
+        },
+        createyaml() {
+            try {
+                let data = jsyaml.load(this.content);
+                this.$ajax.post(
+                    '/upload/uploadYaml',
+                    {
+                        yamlContent: JSON.stringify(jsyaml.load(this.content), null, 2),
+                    },
+                ).then((res) => {
+                    this.$message({
+                        message: res.msg,
+                        type: 'success'
+                    });
+                    this.dialogcreatens = false
+                    this.content = ''
+                    console.log(res)
+                }).catch((res) => {
+                    this.$message({
+                        message: res.msg,
+                        type: 'error'
+                    });
+                    console.log(res);
+                })
+            } catch (error) {
+                this.$message({
+                    message: 'yaml 格式无效',
+                    type: 'error'
+                });
+                console.error(error);
+            }
+        },
+        submitUpload() {
+            this.$refs.upload.submit();
+        },
+        sumbitsuccess(response, uploadFile, uploadFiles) {
+            this.$message({
+                message: response.msg,
+                type: 'success'
+            });
+            this.dialogcreatens = false
+            console.log(response)
+        },
+        submiterror(error, uploadFile, uploadFiles) {
+            this.$message({
+                message: JSON.parse(error.message).msg,
+                type: 'error'
+            });
+            console.log(JSON.parse(error.message))
+        },
     }
 }
 
@@ -352,8 +421,10 @@ export default {
     height: 30px !important
 }
 
+
 .el-tabs--border-card>.el-tabs__content {
-    padding: 0px;
+    padding: 0px !important;
+    padding-top: 5px !important;
 }
 
 .el-dialog--center {

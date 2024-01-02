@@ -7,6 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"kubeops/service"
 	"net/http"
+	"strconv"
 )
 
 type persistenvolume struct{}
@@ -15,7 +16,8 @@ var Persistentvolume persistenvolume
 
 // GetPersistentVolumeList 获取PersistentVolume清单
 func (p *persistenvolume) GetPersistentVolumeList(c *gin.Context) {
-	data, err := service.Persistenvolume.GetPvList()
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	data, err := service.Persistenvolume.GetPvList(uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "获取PersistentVolume失败",
@@ -43,7 +45,8 @@ func (p *persistenvolume) GetPersistentVolumeDetail(c *gin.Context) {
 		})
 		return
 	}
-	data, err := service.Persistenvolume.GetPvDetail(params.PersistentVolumeName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	data, err := service.Persistenvolume.GetPvDetail(params.PersistentVolumeName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "获取PersistentVolume失败",
@@ -72,7 +75,8 @@ func (p *persistenvolume) DelPersistentVolume(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Persistenvolume.DelPv(params.PersistentVolumeName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Persistenvolume.DelPv(params.PersistentVolumeName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "删除 PersistentVolume 失败",
@@ -99,7 +103,8 @@ func (p *persistenvolume) CreatePersistentVolume(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Persistenvolume.CreatePv(createPv.Data)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Persistenvolume.CreatePv(createPv.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "创建PersistentVolume失败",
@@ -126,7 +131,8 @@ func (p *persistenvolume) UpdatePersistentVolume(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Persistenvolume.UpdatePv(params.Data)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Persistenvolume.UpdatePv(params.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":    "更新失败",

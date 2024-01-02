@@ -132,7 +132,6 @@ export default {
         return {
             detailnamespace: null,
             dialogFormVisible: false,
-            dialogcreatens: false,
             podItem: [],
             filter_name: '',
             namespace: '',
@@ -150,44 +149,6 @@ export default {
             nslist: [],
             total: 0,
             page_size: [1, 10, 20, 50, 100],
-            ruleForm: {
-                name: '',
-                namespace: '',
-                replicas: 0,
-                labels: {
-                    "app": "demo"
-                },
-                container: [
-                    {
-                        container_name: '',
-                        image: '',
-                        cpu: '0',
-                        memory: '0',
-                        container_port: [
-                            {
-                                port_name: '',
-                                container_port: 0,
-                                protocol: '',
-                            }
-                        ]
-                    }
-                ],
-            },
-            rules: {
-                name: [
-                    { required: true, message: '请输入资源名称', trigger: 'blur' },
-                    { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
-                ],
-                namespace: [
-                    { required: true, message: '请选择名称空间', trigger: 'change' }
-                ],
-                replica: [
-                    { required: true, message: '请输入副本数量', trigger: 'change' }
-                ],
-                resource: [
-                    { message: '请选择一种协议', trigger: 'change' }
-                ],
-            }
         }
     },
     created() {
@@ -210,26 +171,6 @@ export default {
                 this.podItem = res.data.item
             }).catch((res) => {
                 console.log(res);
-            })
-        },
-        createDeployment() {
-            this.$ajax.post(
-                '/deploy/create',
-                {
-                    data: this.ruleForm
-                },
-            ).then((res) => {
-                this.Loading("Creating")
-                this.$message({
-                    message: res.msg,
-                    type: 'success'
-                });
-            }).catch((res) => {
-                this.$message({
-                    showClose: true,
-                    message: res.msg + res.reason,
-                    type: 'error'
-                });
             })
         },
         Loading(msg) {
@@ -285,61 +226,13 @@ export default {
                 console.log(res.data);
             })
         },
-        handleReplica(namespace, name, replicas) {
-            this.$ajax.put(
-                '/deploy/modify',
-                {
-                    deploy_name: name,
-                    namespace: namespace,
-                    replicas: replicas
-                },
-            ).then((res) => {
-                this.Loading("Update······")
-                this.$message({
-                    showClose: true,
-                    message: res.msg,
-                    type: 'success'
-                });
-            }).catch((res) => {
-                this.$message({
-                    showClose: true,
-                    message: res.msg + res.reason,
-                    type: 'error'
-                });
-                console.log(res);
-            })
-        },
-        handleRestart(namespace, name) {
-            this.$ajax.post(
-                '/deploy/restart',
-                {
-                    deploy_name: name,
-                    namespace: namespace,
-                },
-            ).then((res) => {
-                this.Loading("Restarting······")
-                this.$message({
-                    showClose: true,
-                    message: res.msg,
-                    type: 'success'
-                });
-                console.log(res)
-            }).catch((res) => {
-                this.$message({
-                    showClose: true,
-                    message: res.msg + res.reason,
-                    type: 'error'
-                });
-                console.log(res);
-            })
-        },
         handleDelete(namespace, name) {
             this.$ajax({
                 method: 'delete',
-                url: '/deploy/delete',
+                url: '/pod/delete',
                 params: {
                     namespace: namespace,
-                    deploy_name: name
+                    pod_name: name
                 }
             }
             ).then((res) => {
@@ -408,61 +301,13 @@ export default {
                 cancelButtonText: '取消',
                 type: 'warning'
             }).then(() => {
-                this.handleDelete(row.namespaces, row.name)
+                this.handleDelete(row.namespace, row.name)
             }).catch(() => {
                 this.$message({
                     type: 'info',
                     message: '已取消删除'
                 });
             });
-        },
-        submitForm(formName) {
-            this.$refs[formName].validate((valid) => {
-                if (valid) {
-                    this.dialogcreatens = false
-                    console.log(this.ruleForm)
-                    this.createDeployment()
-                } else {
-                    return false;
-                }
-            });
-        },
-        resetForm(formName) {
-            this.$refs[formName].resetFields();
-        },
-        addContainer() {
-            this.ruleForm.container.push({
-                container_name: '',
-                image: '',
-                cpu: '0',
-                memory: '0',
-                container_port: [
-                    {
-                        port_name: '',
-                        container_port: 0,
-                        protocol: '',
-                    }
-                ]
-            })
-        },
-        addContainerPort(index) {
-            this.ruleForm.container[index].container_port.push({
-                port_name: '',
-                container_port: 0,
-                protocol: '',
-            })
-        },
-        removeContainer(item) {
-            var index = this.ruleForm.container.indexOf(item)
-            if (index !== -1) {
-                this.ruleForm.container.splice(index, 1)
-            }
-        },
-        removeContainerPort(portindex, portitem) {
-            var index = this.ruleForm.container[portindex].container_port.indexOf(portitem)
-            if (index !== -1) {
-                this.ruleForm.container[portindex].container_port.splice(index, 1)
-            }
         },
         yamlFormat() {
             if (this.aceConfig.lang == "yaml") {

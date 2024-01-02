@@ -1,127 +1,151 @@
 
-<!-- <template>
-  <el-tabs v-model="activeName" type="border-card" @tab-click="handleClick">
-    <el-tab-pane label="Yaml" name="yaml"><v-ace-editor v-model:value="content" :lang="aceConfig.lang"
-        style="min-height: 300px" :theme="aceConfig.theme" :options="aceConfig.options" /></el-tab-pane>
-    <el-tab-pane label="Json" name="json"><v-ace-editor v-model:value="content" :lang="aceConfig.lang"
-        style="min-height: 300px" :theme="aceConfig.theme" :options="aceConfig.options" /></el-tab-pane>
-  </el-tabs>
+<template>
+  <div class="home-header">
+    <el-row>
+      <el-col :span="6">
+        <el-statistic title="集群总数" :value="1111" />
+      </el-col>
+      <el-col :span="6">
+        <el-space direction="vertical">
+          <el-text
+            style="font-size: 12px;font-weight: 400; color:#606266;line-height: 20px;margin-bottom: -4px;">当前集群</el-text>
+          <el-text style="font-size: 20px; font-weight: 400; color:#303133;">{{ clusterName }}</el-text>
+        </el-space>
+      </el-col>
+      <el-col :span="6">
+        <el-statistic :value="222">
+          <template #title>
+            <div style="display: inline-flex; align-items: center">
+              私有云集群
+              <el-icon style="margin-left: 4px" :size="12">
+                <Male />
+              </el-icon>
+            </div>
+          </template>
+        </el-statistic>
+      </el-col>
+      <el-col :span="6">
+        <el-statistic title="阿里云集群" :value="333" />
+      </el-col>
+    </el-row>
+  </div>
+  <div class="home-nodes">
+    <el-row>
+      <el-col :span="24">
+
+      </el-col>
+    </el-row>
+  </div>
+  <div class="home-nodes">
+    <el-row>
+      <el-col :span="6">
+        <div id="node-chart" class="node-chart"></div>
+      </el-col>
+    </el-row>
+  </div>
 </template>
 
-
 <script>
-import { VAceEditor } from 'vue3-ace-editor';
-import '../ace.config.js';
-import yaml from 'js-yaml';
+import { Male } from '@element-plus/icons-vue'
+import * as echarts from 'echarts';
 export default {
   data() {
     return {
-      content: '',
-      aceConfig: {
-        lang: 'json',
-        theme: "cloud9_day",
-        options: {
-          showPrintMargin: false,
-        }
-      },
-      activeName: 'json'
-    };
+      clusterName: "aaa",
+      nodeItem: [],
+      option: {
+        title: {
+          text: 'Referer of a Website',
+          subtext: 'Fake Data',
+          left: 'center'
+        },
+        tooltip: {
+          trigger: 'item'
+        },
+        legend: {
+          orient: 'vertical',
+          left: 'left'
+        },
+        series: [
+          {
+            name: 'Access From',
+            type: 'pie',
+            radius: '50%',
+            data: [],
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  computed: {
   },
   created() {
-    this.editorInit()
+    this.initdata()
+  },
+  mounted() {
+    // this.initEchart()
   },
   methods: {
-    editorInit() {
+    initEchart() {
+      var myChart = echarts.init(document.getElementById('node-chart'));
+      myChart.setOption(this.option)
+    },
+    initdata() {
       this.$ajax({
         method: 'get',
-        url: '/pod/detail',
-        params: {
-          pod_name: "web-jenkins-1",
-          namespace: "test"
-        }
+        url: '/homepage/getInfo',
       }).then((res) => {
-        this.content = JSON.stringify(res.data, null, 2)
+        this.nodeItem = res.data.cluster_info
+        console.log(res.data)
       }).catch((res) => {
         console.log(res);
       })
-    },
-    yamlFormat() {
-      this.aceConfig.lang = "yaml"
-      this.content = yaml.dump(JSON.parse(this.content))
-    },
-    jsonFormat() {
-      this.aceConfig.lang = "json"
-      this.content = JSON.stringify(yaml.load(this.content), null, 2);
-    },
-    handleClick(tab) {
-      console.log(tab.props.name);
-      if (tab.props.name == "yaml") {
-        this.yamlFormat()
-        return
-      }
-      this.jsonFormat()
-    }
-
-  },
-  components: {
-    VAceEditor,
-  },
-};
-</script> -->
-
-<template>
-  <!-- <el-upload class="upload-demo" ref="upload" action="http://127.0.0.1:8090/v1/api/upload/uploadFile"
-    :on-preview="handlePreview" :on-remove="handleRemove" :file-list="upload" :auto-upload="false" :headers="config">
-    <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
-    <el-button style="margin-left: 10px;" size="small" type="success" @click="submitUpload">上传到服务器</el-button>
-    <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
-  </el-upload> -->
-  <el-upload ref="upload" action="http://127.0.0.1:8090/v1/api/upload/uploadFile" :auto-upload="false" :headers="config"
-    :name="file" multiple :file-list="upload">
-    <template #trigger>
-      <el-button type="primary">select file</el-button>
-    </template>
-
-    <el-button class="ml-3" type="success" @click="submitUpload">
-      upload to server
-    </el-button>
-
-    <template #tip>
-      <div class="el-upload__tip">
-        jpg/png files with a size less than 500kb
-      </div>
-    </template>
-  </el-upload>
-</template>
-
-<script>
-export default {
-  data() {
-    return {
-      token: "",
-      upload: []
-    };
-  },
-  computed: {
-    config() {
-      return {
-        Authorization: this.token,
-      };
-    },
-  },
-  mounted() {
-    this.token = localStorage.getItem('user_token')
-  },
-  methods: {
-    submitUpload() {
-      this.$refs.upload.submit();
-    },
-    handleRemove(file, fileList) {
-      console.log(file, fileList);
-    },
-    handlePreview(file) {
-      console.log(file);
+      console.log(this.nodeItem)
     }
   }
 }
 </script>
+
+<style>
+.home-header {
+  padding-top: 5px;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-bottom: 5px;
+  border-radius: 4px;
+  background: #f0f2f5;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.home-nodes {
+  padding-top: 5px;
+  text-align: center;
+  background: #f0f2f5;
+}
+
+.node-chart {
+  width: 600px;
+  height: 400px;
+
+}
+
+.percentage-value {
+  display: block;
+  margin-top: 10px;
+  font-size: 28px;
+}
+
+.percentage-label {
+  display: block;
+  margin-top: 10px;
+  font-size: 12px;
+}
+</style>

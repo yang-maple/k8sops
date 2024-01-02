@@ -5,6 +5,7 @@ import (
 	"github.com/wonderivan/logger"
 	"kubeops/service"
 	"net/http"
+	"strconv"
 )
 
 type node struct{}
@@ -12,7 +13,8 @@ type node struct{}
 var Node node
 
 func (n *node) GetNodeList(c *gin.Context) {
-	data, err := service.Node.GetNodelist()
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	data, err := service.Node.GetNodeList(uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  err.Error(),
@@ -40,7 +42,8 @@ func (n *node) GetNodeDeTal(c *gin.Context) {
 		})
 		return
 	}
-	data, err := service.Node.GetNodeDetail(params.NodeName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	data, err := service.Node.GetNodeDetail(params.NodeName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  err.Error(),

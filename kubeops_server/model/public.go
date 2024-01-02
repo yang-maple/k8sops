@@ -2,6 +2,7 @@ package model
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	"os"
 	"strconv"
 	"time"
 )
@@ -99,4 +100,13 @@ func GetStatus(replicas, ready int32) (string, string) {
 // Int32Ptr int32 转化为 *int32
 func Int32Ptr(i int32) *int32 {
 	return &i
+}
+
+// DirExists 判断目录是否已存在
+func DirExists(dir string) bool {
+	_, err := os.Stat(dir)
+	if os.IsExist(err) {
+		return false
+	}
+	return true
 }

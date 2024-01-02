@@ -11,8 +11,7 @@ import (
 )
 
 func main() {
-	//初始化k8s
-	service.K8s.Init()
+	////初始化k8s
 	//初始化db
 	db.Init()
 	//初始化redis
@@ -26,6 +25,8 @@ func main() {
 	controller.Router.InitApiRouter(r)
 	//启动ws 服务并监听 ws 端口
 	go func() {
+		//获取uuid
+
 		http.HandleFunc("/ws", service.Terminal.WsHandler)
 		_ = http.ListenAndServe(":8081", nil)
 	}()

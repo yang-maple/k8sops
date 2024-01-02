@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/remotecommand"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -42,8 +43,8 @@ func (t *terminal) WsHandler(w http.ResponseWriter, r *http.Request) {
 		logger.Info("defer close TerminalSession")
 		pty.Close()
 	}()
-
-	req := K8s.Clientset.CoreV1().RESTClient().Post().Resource("pods").
+	uuid, _ := strconv.Atoi(r.Header.Get("Uuid"))
+	req := K8s.Clientset[uuid].CoreV1().RESTClient().Post().Resource("pods").
 		Name(podName).
 		Namespace(namespace).
 		SubResource("exec").

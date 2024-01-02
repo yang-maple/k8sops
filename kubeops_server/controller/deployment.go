@@ -9,6 +9,7 @@ import (
 	"kubeops/model"
 	"kubeops/service"
 	"net/http"
+	"strconv"
 )
 
 var Deployment deployment
@@ -34,7 +35,8 @@ func (d *deployment) GetDeploylist(c *gin.Context) {
 		})
 		return
 	}
-	data, err := service.Deployment.GetDeploymentList(params.FilterName, params.Namespace, params.Limit, params.Page)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	data, err := service.Deployment.GetDeploymentList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "获取podList失败",
@@ -63,7 +65,8 @@ func (d *deployment) ModifyDeployReplicas(c *gin.Context) {
 		return
 	}
 	replicas := model.Int32Ptr(int32(params.Replicas))
-	err = service.Deployment.ModifyDeployReplicas(params.Namespace, params.DeployName, replicas)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Deployment.ModifyDeployReplicas(params.Namespace, params.DeployName, replicas, uuid)
 	if err != nil {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -89,7 +92,8 @@ func (d *deployment) RestartDeploy(c *gin.Context) {
 		logger.Info("绑定参数失败" + err.Error())
 		return
 	}
-	err = service.Deployment.RestartDeploy(params.Namespace, params.DeployName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Deployment.RestartDeploy(params.Namespace, params.DeployName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": errors.New("重启失败" + err.Error()),
@@ -116,7 +120,8 @@ func (d *deployment) GetDeployDetail(c *gin.Context) {
 		})
 		return
 	}
-	deploy, err := service.Deployment.GetDeployDetail(params.Namespace, params.DeployName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	deploy, err := service.Deployment.GetDeployDetail(params.Namespace, params.DeployName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"err": errors.New("获取deploy 失败" + err.Error()),
@@ -144,7 +149,8 @@ func (d *deployment) CreateDeploy(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Deployment.CreateDeploy(params.Data)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Deployment.CreateDeploy(params.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":    "创建失败",
@@ -172,7 +178,8 @@ func (d *deployment) DelDeploy(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Deployment.DelDeploy(params.Namespace, params.DeployName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Deployment.DelDeploy(params.Namespace, params.DeployName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":    "删除失败",
@@ -203,7 +210,8 @@ func (d *deployment) UpdateDeploy(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Deployment.UpdateDeploy(params.Namespace, params.Data)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Deployment.UpdateDeploy(params.Namespace, params.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":    "更新失败",
@@ -219,8 +227,8 @@ func (d *deployment) UpdateDeploy(c *gin.Context) {
 
 // GetDeployPer 获取 每个namespace 下的deployment 实例
 func (d *deployment) GetDeployPer(c *gin.Context) {
-
-	dps, err := service.Deployment.GetDeployPer()
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	dps, err := service.Deployment.GetDeployPer(uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"err": errors.New("获取deploy 失败" + err.Error()),
@@ -246,7 +254,8 @@ func (d *deployment) RolloutDeploy(c *gin.Context) {
 		logger.Info("绑定参数失败" + err.Error())
 		return
 	}
-	err = service.Deployment.RolloutDeploy(params.Namespace, params.DeployName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Deployment.RolloutDeploy(params.Namespace, params.DeployName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": errors.New("回滚失败" + err.Error()),

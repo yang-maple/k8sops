@@ -90,9 +90,9 @@ type Deploydp struct {
 }
 
 // GetDeploymentList 获取deployment 列表
-func (d *deployment) GetDeploymentList(DeployName, Namespace string, Limit, Page int) (DP *DeployResp, err error) {
+func (d *deployment) GetDeploymentList(DeployName, Namespace string, Limit, Page int, uuid int) (DP *DeployResp, err error) {
 	//获取deployment 的所有清单列表
-	deploylist, err := K8s.Clientset.AppsV1().Deployments(Namespace).List(context.TODO(), metav1.ListOptions{})
+	deploylist, err := K8s.Clientset[uuid].AppsV1().Deployments(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取deploylist 失败" + err.Error())
 	}
@@ -138,9 +138,9 @@ func (d *deployment) GetDeploymentList(DeployName, Namespace string, Limit, Page
 }
 
 // GetDeployDetail 获取deployment 详情
-func (d *deployment) GetDeployDetail(Namespace, DeployName string) (detail *appsv1.Deployment, err error) {
+func (d *deployment) GetDeployDetail(Namespace, DeployName string, uuid int) (detail *appsv1.Deployment, err error) {
 	//获取deploy
-	detail, err = K8s.Clientset.AppsV1().Deployments(Namespace).Get(context.TODO(), DeployName, metav1.GetOptions{})
+	detail, err = K8s.Clientset[uuid].AppsV1().Deployments(Namespace).Get(context.TODO(), DeployName, metav1.GetOptions{})
 	if err != nil {
 		logger.Info("获取deployment 详情失败" + err.Error())
 		return nil, errors.New("获取deployment 详情失败" + err.Error())
@@ -151,14 +151,14 @@ func (d *deployment) GetDeployDetail(Namespace, DeployName string) (detail *apps
 }
 
 // ModifyDeployReplicas 修改deployment 副本数
-func (d *deployment) ModifyDeployReplicas(Namespace, DeployName string, Replicas *int32) (err error) {
-	deploy, err := K8s.Clientset.AppsV1().Deployments(Namespace).Get(context.TODO(), DeployName, metav1.GetOptions{})
+func (d *deployment) ModifyDeployReplicas(Namespace, DeployName string, Replicas *int32, uuid int) (err error) {
+	deploy, err := K8s.Clientset[uuid].AppsV1().Deployments(Namespace).Get(context.TODO(), DeployName, metav1.GetOptions{})
 	if err != nil {
 		logger.Info("获取deployment 数据失败" + err.Error())
 		return errors.New("获取deployment 详情失败" + err.Error())
 	}
 	deploy.Spec.Replicas = Replicas
-	_, err = K8s.Clientset.AppsV1().Deployments(Namespace).Update(context.TODO(), deploy, metav1.UpdateOptions{})
+	_, err = K8s.Clientset[uuid].AppsV1().Deployments(Namespace).Update(context.TODO(), deploy, metav1.UpdateOptions{})
 	if err != nil {
 		logger.Info("更新副本数失败" + err.Error())
 		return errors.New("更新副本数失败" + err.Error())
@@ -167,7 +167,7 @@ func (d *deployment) ModifyDeployReplicas(Namespace, DeployName string, Replicas
 }
 
 // CreateDeploy 创建 deployment实例
-func (d *deployment) CreateDeploy(data *DeploymentCreate) (err error) {
+func (d *deployment) CreateDeploy(data *DeploymentCreate, uuid int) (err error) {
 
 	containers := make([]corev1.Container, 0, 1)
 	containersPort := make([]corev1.ContainerPort, 0, 1)
@@ -235,7 +235,7 @@ func (d *deployment) CreateDeploy(data *DeploymentCreate) (err error) {
 			PeriodSeconds:       5,
 		}
 	}
-	_, err = K8s.Clientset.AppsV1().Deployments(data.Namespace).Create(context.TODO(), deploy, metav1.CreateOptions{})
+	_, err = K8s.Clientset[uuid].AppsV1().Deployments(data.Namespace).Create(context.TODO(), deploy, metav1.CreateOptions{})
 	if err != nil {
 		logger.Info("创建deployment 失败" + err.Error())
 		return errors.New("创建deployment 失败" + err.Error())
@@ -245,8 +245,8 @@ func (d *deployment) CreateDeploy(data *DeploymentCreate) (err error) {
 }
 
 // DelDeploy 删除 deployment 实例
-func (d *deployment) DelDeploy(Namespace, DeployName string) (err error) {
-	err = K8s.Clientset.AppsV1().Deployments(Namespace).Delete(context.TODO(), DeployName, metav1.DeleteOptions{})
+func (d *deployment) DelDeploy(Namespace, DeployName string, uuid int) (err error) {
+	err = K8s.Clientset[uuid].AppsV1().Deployments(Namespace).Delete(context.TODO(), DeployName, metav1.DeleteOptions{})
 	if err != nil {
 		logger.Info("删除实例失败" + err.Error())
 		return errors.New("删除实例失败" + err.Error())
@@ -255,9 +255,9 @@ func (d *deployment) DelDeploy(Namespace, DeployName string) (err error) {
 }
 
 // RestartDeploy 重启 deployment 实例
-func (d *deployment) RestartDeploy(Namespace, DeployName string) (err error) {
+func (d *deployment) RestartDeploy(Namespace, DeployName string, uuid int) (err error) {
 	restartTime := fmt.Sprintf(`{"spec":{"template":{"metadata":{"labels":{"restart-time":"%s"}}}}}`, time.Now().Format("2006-01-02_15-04-05"))
-	_, err = K8s.Clientset.AppsV1().Deployments(Namespace).Patch(context.TODO(), DeployName, types.StrategicMergePatchType, []byte(restartTime), metav1.PatchOptions{})
+	_, err = K8s.Clientset[uuid].AppsV1().Deployments(Namespace).Patch(context.TODO(), DeployName, types.StrategicMergePatchType, []byte(restartTime), metav1.PatchOptions{})
 	if err != nil {
 		logger.Info("重启deploy 失败" + err.Error())
 		return errors.New("重启deploy 失败" + err.Error())
@@ -266,8 +266,8 @@ func (d *deployment) RestartDeploy(Namespace, DeployName string) (err error) {
 }
 
 // UpdateDeploy 更新 deployment 实例
-func (d *deployment) UpdateDeploy(Namespace string, deploy *appsv1.Deployment) (err error) {
-	_, err = K8s.Clientset.AppsV1().Deployments(Namespace).Update(context.TODO(), deploy, metav1.UpdateOptions{})
+func (d *deployment) UpdateDeploy(Namespace string, deploy *appsv1.Deployment, uuid int) (err error) {
+	_, err = K8s.Clientset[uuid].AppsV1().Deployments(Namespace).Update(context.TODO(), deploy, metav1.UpdateOptions{})
 	if err != nil {
 		logger.Info("deployment 更新失败" + err.Error())
 		return errors.New("deployment 更新失败" + err.Error())
@@ -277,16 +277,16 @@ func (d *deployment) UpdateDeploy(Namespace string, deploy *appsv1.Deployment) (
 }
 
 // GetDeployPer 获取 每个namespace 下的deployment 实例
-func (d *deployment) GetDeployPer() (dps []Deploydp, err error) {
+func (d *deployment) GetDeployPer(uuid int) (dps []Deploydp, err error) {
 
-	namespacelist, err := K8s.Clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+	namespacelist, err := K8s.Clientset[uuid].CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取namespace 列表失败" + err.Error())
 		return nil, errors.New("获取namespace 列表失败")
 	}
 
 	for _, v := range namespacelist.Items {
-		deploylist, err := K8s.Clientset.AppsV1().Deployments(v.Name).List(context.TODO(), metav1.ListOptions{})
+		deploylist, err := K8s.Clientset[uuid].AppsV1().Deployments(v.Name).List(context.TODO(), metav1.ListOptions{})
 		if err != nil {
 			logger.Info("获取deployment 列表失败" + err.Error())
 			return nil, errors.New("获取namespace 列表失败")
@@ -301,9 +301,9 @@ func (d *deployment) GetDeployPer() (dps []Deploydp, err error) {
 }
 
 // RolloutDeploy 回滚 deployment
-func (d *deployment) RolloutDeploy(Namespace, DeployName string) (err error) {
+func (d *deployment) RolloutDeploy(Namespace, DeployName string, uuid int) (err error) {
 	//获取deploy 信息
-	deploy, err := K8s.Clientset.AppsV1().Deployments(Namespace).Get(context.TODO(), DeployName, metav1.GetOptions{})
+	deploy, err := K8s.Clientset[uuid].AppsV1().Deployments(Namespace).Get(context.TODO(), DeployName, metav1.GetOptions{})
 	if err != nil {
 		logger.Info("获取实例失败" + err.Error())
 		return errors.New("获取实例失败" + err.Error())
@@ -313,7 +313,7 @@ func (d *deployment) RolloutDeploy(Namespace, DeployName string) (err error) {
 	//回滚至上一个版本
 	version, _ := strconv.Atoi(revison)
 	patchData := fmt.Sprintf(`{"metadata":{"annotations":{"deployment.kubernetes.io/revision":"%d"}}}`, version)
-	_, err = K8s.Clientset.AppsV1().Deployments(Namespace).Patch(context.TODO(), DeployName, types.StrategicMergePatchType, []byte(patchData), metav1.PatchOptions{})
+	_, err = K8s.Clientset[uuid].AppsV1().Deployments(Namespace).Patch(context.TODO(), DeployName, types.StrategicMergePatchType, []byte(patchData), metav1.PatchOptions{})
 	if err != nil {
 		logger.Info("回滚deploy 失败" + err.Error())
 		return errors.New("回滚deploy 失败" + err.Error())

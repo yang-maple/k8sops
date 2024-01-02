@@ -51,8 +51,8 @@ type CreatePVConfig struct {
 }
 
 // GetPvList PersistentVolume列表
-func (p *persistenvolume) GetPvList() (*pvList, error) {
-	pvs, err := K8s.Clientset.CoreV1().PersistentVolumes().List(context.TODO(), metav1.ListOptions{})
+func (p *persistenvolume) GetPvList(uuid int) (*pvList, error) {
+	pvs, err := K8s.Clientset[uuid].CoreV1().PersistentVolumes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取PersistentVolume 失败" + err.Error())
 		return nil, errors.New("获取PersistentVolume 失败" + err.Error())
@@ -78,9 +78,9 @@ func (p *persistenvolume) GetPvList() (*pvList, error) {
 }
 
 // GetPvDetail 获取PersistentVolume 详情
-func (p *persistenvolume) GetPvDetail(PvName string) (*pvDetail, error) {
+func (p *persistenvolume) GetPvDetail(PvName string, uuid int) (*pvDetail, error) {
 	//获取deploy
-	details, err := K8s.Clientset.CoreV1().PersistentVolumes().Get(context.TODO(), PvName, metav1.GetOptions{})
+	details, err := K8s.Clientset[uuid].CoreV1().PersistentVolumes().Get(context.TODO(), PvName, metav1.GetOptions{})
 	if err != nil {
 		logger.Info("获取PersistentVolume 详情失败" + err.Error())
 		return nil, errors.New("获取PersistentVolume 详情失败" + err.Error())
@@ -94,8 +94,8 @@ func (p *persistenvolume) GetPvDetail(PvName string) (*pvDetail, error) {
 }
 
 // DelPv 删除 PersistentVolume
-func (p *persistenvolume) DelPv(PvName string) (err error) {
-	err = K8s.Clientset.CoreV1().PersistentVolumes().Delete(context.TODO(), PvName, metav1.DeleteOptions{})
+func (p *persistenvolume) DelPv(PvName string, uuid int) (err error) {
+	err = K8s.Clientset[uuid].CoreV1().PersistentVolumes().Delete(context.TODO(), PvName, metav1.DeleteOptions{})
 	if err != nil {
 		logger.Info("删除 PersistentVolumes 详情失败" + err.Error())
 		return errors.New("删除 PersistentVolumes 详情失败" + err.Error())
@@ -104,7 +104,7 @@ func (p *persistenvolume) DelPv(PvName string) (err error) {
 }
 
 // CreatePv 创建 PersistentVolume
-func (p *persistenvolume) CreatePv(data *CreatePVConfig) (err error) {
+func (p *persistenvolume) CreatePv(data *CreatePVConfig, uuid int) (err error) {
 	createPv := &corev1.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   data.Name,
@@ -137,7 +137,7 @@ func (p *persistenvolume) CreatePv(data *CreatePVConfig) (err error) {
 		}
 		createPv.Spec.StorageClassName = "standard"
 	}
-	_, err = K8s.Clientset.CoreV1().PersistentVolumes().Create(context.TODO(), createPv, metav1.CreateOptions{})
+	_, err = K8s.Clientset[uuid].CoreV1().PersistentVolumes().Create(context.TODO(), createPv, metav1.CreateOptions{})
 	if err != nil {
 		logger.Info("创建 PersistentVolume 失败" + err.Error())
 		return errors.New("创建 PersistentVolume 失败" + err.Error())
@@ -146,8 +146,8 @@ func (p *persistenvolume) CreatePv(data *CreatePVConfig) (err error) {
 }
 
 // UpdatePv 更新 PersistentVolume
-func (p *persistenvolume) UpdatePv(deploy *corev1.PersistentVolume) (err error) {
-	_, err = K8s.Clientset.CoreV1().PersistentVolumes().Update(context.TODO(), deploy, metav1.UpdateOptions{})
+func (p *persistenvolume) UpdatePv(deploy *corev1.PersistentVolume, uuid int) (err error) {
+	_, err = K8s.Clientset[uuid].CoreV1().PersistentVolumes().Update(context.TODO(), deploy, metav1.UpdateOptions{})
 	if err != nil {
 		logger.Info("PersistentVolume 更新失败" + err.Error())
 		return errors.New("PersistentVolume 更新失败" + err.Error())

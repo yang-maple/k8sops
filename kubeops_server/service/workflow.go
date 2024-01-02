@@ -58,7 +58,7 @@ func (w *workflow) GetWorkflowDetail(id int) (workflow *model.Workflow, err erro
 }
 
 // CreateWorkflow 新增工作流 workflow
-func (w *workflow) CreateWorkflow(data *Workflowcreate) (err error) {
+func (w *workflow) CreateWorkflow(data *Workflowcreate, uuid int) (err error) {
 	//定义一个 ingressname 用于判断 该实例是否 用到 ingress 类型
 	var ingressname string
 	//判断 该实例类型是否为 ingress
@@ -81,7 +81,7 @@ func (w *workflow) CreateWorkflow(data *Workflowcreate) (err error) {
 	//数据写入数据库
 
 	//创建k8s 资源
-	err = createWorkflowRes(data)
+	err = createWorkflowRes(data, uuid)
 	if err != nil {
 		return err
 	} else {
@@ -95,7 +95,7 @@ func (w *workflow) CreateWorkflow(data *Workflowcreate) (err error) {
 }
 
 // DeleteById 删除工作流
-func (w *workflow) DeleteById(id int) (err error) {
+func (w *workflow) DeleteById(id int, uuid int) (err error) {
 	//获取数据库资源
 	workflow, err := dao.Workflow.GetById(id)
 	if err != nil {
@@ -103,7 +103,7 @@ func (w *workflow) DeleteById(id int) (err error) {
 	}
 
 	//删除k8s资源
-	err = deleteWorkflowRes(workflow)
+	err = deleteWorkflowRes(workflow, uuid)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (w *workflow) DeleteById(id int) (err error) {
 }
 
 // 创建k8s 资源的函数 deploy service ingress
-func createWorkflowRes(data *Workflowcreate) (err error) {
+func createWorkflowRes(data *Workflowcreate, uuid int) (err error) {
 	//组装数据
 	deploy := &data.Deploy
 	//给公共字段赋值
@@ -124,7 +124,7 @@ func createWorkflowRes(data *Workflowcreate) (err error) {
 	deploy.Namespace = data.Namespace
 	deploy.Labels = data.Labels
 	//创建deploy
-	err = Deployment.CreateDeploy(deploy)
+	err = Deployment.CreateDeploy(deploy, uuid)
 	if err != nil {
 		return err
 	}
@@ -146,9 +146,9 @@ func createWorkflowRes(data *Workflowcreate) (err error) {
 	//类型更换
 	svc.Type = svctype
 	//创建资源
-	err = Services.CreateSvc(svc)
+	err = Services.CreateSvc(svc, uuid)
 	if err != nil {
-		_ = Deployment.DelDeploy(data.Namespace, data.Name)
+		_ = Deployment.DelDeploy(data.Namespace, data.Name, uuid)
 		return err
 	}
 	//创建资源
@@ -169,31 +169,31 @@ func createWorkflowRes(data *Workflowcreate) (err error) {
 	} else {
 		return nil
 	}
-	if err := Ingress.CreateIng(ing); err != nil {
-		_ = Deployment.DelDeploy(data.Namespace, data.Name)
-		_ = Services.DelSvc(data.Namespace, Getservicename(data.Name))
+	if err := Ingress.CreateIng(ing, uuid); err != nil {
+		_ = Deployment.DelDeploy(data.Namespace, data.Name, uuid)
+		_ = Services.DelSvc(data.Namespace, Getservicename(data.Name), uuid)
 		return err
 	}
 	return nil
 }
 
 // 删除 k8s资源的函数 deploy service ingress
-func deleteWorkflowRes(data *model.Workflow) (err error) {
+func deleteWorkflowRes(data *model.Workflow, uuid int) (err error) {
 	//判断是否为ingress 如果是则删除 ingress 资源 如果没有ingress资源则跳过
 	if data.Type == "Ingress" {
-		err = Ingress.DelIng(data.Namespace, Getingressname(data.Name))
+		err = Ingress.DelIng(data.Namespace, Getingressname(data.Name), uuid)
 		if err != nil {
 			return err
 		}
 	}
 	//删除 service 资源
-	err = Services.DelSvc(data.Namespace, Getservicename(data.Name))
+	err = Services.DelSvc(data.Namespace, Getservicename(data.Name), uuid)
 	if err != nil {
 		return err
 	}
 
 	//删除 deploy 资源
-	err = Deployment.DelDeploy(data.Namespace, data.Name)
+	err = Deployment.DelDeploy(data.Namespace, data.Name, uuid)
 	if err != nil {
 		return err
 	}

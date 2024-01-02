@@ -249,6 +249,7 @@ export default {
             }).then((res) => {
                 this.total = res.data.total
                 this.ingressItem = res.data.item
+                console.log(res.data.item)
             }).catch(function (res) {
                 console.log(res);
             })

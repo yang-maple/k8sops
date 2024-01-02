@@ -1,20 +1,20 @@
 <template>
   <div class="table-bg-purple">
-    <el-table :data="tableData" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small"
+    <el-table :data="nodeItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small"
       :default-sort="{ prop: 'date', order: 'descending' }">
-      <el-table-column label="名称" width="150" align="center">
+      <el-table-column label="名称" min-width="150" align="center">
         <template #default="scope">
           <div style="display: flex; align-items: center">
-            <span slot="reference" v-if="scope.row.status.conditions[4].type == 'Ready'">
+            <span slot="reference" v-if="scope.row.status == 'Ready'">
               <el-tooltip placement="bottom" effect="light"><template #content>Ready</template>
                 <i class="dotClass" style="background-color: springgreen"></i></el-tooltip>
             </span>
-            <span slot="reference" v-if="scope.row.status.conditions[4].type != 'Ready'">
+            <span slot="reference" v-if="scope.row.status != 'Ready'">
               <el-tooltip placement="bottom" effect="light"><template #content> NotReady </template>
                 <i class="dotClass" style="background-color: red"></i></el-tooltip>
             </span>
             <el-link style="margin-left: 10px" type="primary" :underline="false" @click="handle(scope.row)">{{
-              scope.row.metadata.name
+              scope.row.name
             }}</el-link>
             <!-- <span style="margin-left: 10px">{{ scope.row.metadata.name }}</span> -->
           </div>
@@ -22,24 +22,21 @@
       </el-table-column>
       <el-table-column label="标签" width="350" align="center">
         <template #default="scope">
-          <el-tag type="info" size="small" v-for="(v, k) in scope.row.metadata.labels " :key="k">{{ k }}:{{ v
+          <el-tag type="info" size="small" v-for="(v, k) in scope.row.labels " :key="k">{{ k }}:{{ v
           }}<br></el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="status.conditions[4].type" label="状态" align="center" width="100" />
-      <el-table-column prop="status.allocatable.cpu" align="center" label="CPU(核)" width="100" />
-      <el-table-column align="center" label="可分配内存" width="100">
-        <template #default="scope">
-          <span> {{ node.memory[scope.row.metadata.name] }}</span>
-        </template>
+      <el-table-column prop="status" label="状态" align="center" width="100" />
+      <el-table-column prop="cpu" align="center" label="CPU(核)" width="100" />
+      <el-table-column prop="memory" align="center" label="可分配内存" width="100">
       </el-table-column>
-      <el-table-column align="center" label="pod 数量" width="100">
-        <template #default="scope">
+      <el-table-column prop="pods" align="center" label="pod 数量" width="100">
+        <!-- <template #default="scope">
           <span> {{ node.pod[scope.row.metadata.name] }}</span>
-        </template>
+        </template> -->
       </el-table-column>
-      <el-table-column prop="metadata.creationTimestamp" align="center" label="创建时间" width="200" />
-      <el-table-column prop="status.nodeInfo.kubeletVersion" label="版本" align="center" />
+      <el-table-column prop="create_time" align="center" label="创建时间" width="200" />
+      <el-table-column prop="kubelet_version" label="版本" align="center" />
     </el-table>
   </div>
 </template>
@@ -48,11 +45,7 @@
 export default {
   data() {
     return {
-      tableData: [],
-      node: {
-        pod: {},
-        memory: {},
-      },
+      nodeItem: [],
       msg: 'test message',
     }
   },
@@ -60,38 +53,10 @@ export default {
     this.GetNodelistaxios()
   },
   methods: {
-    formatter(row, column) {
-      return row.address;
-    },
-    // tableRowClassName({ row, rowIndex }) {
-    //   if (rowIndex === 0) {
-    //     return 'warning-row';
-    //   } else if (rowIndex === 2) {
-    //     return 'success-row';
-    //   }
-    //   return '';
-    // },
-    Getnodes(name) {
-      this.$ajax({
-        method: 'get',
-        url: '/node/detail',
-        params: {
-          node_name: name
-        }
-      }).then((res) => {
-        this.node.pod[name] = res.data.total
-        this.node.memory[name] = res.data.memory_allocator
-      }).catch(function (res) {
-        console.log(res.data);
-      })
-    },
-
     GetNodelistaxios() {
       this.$ajax.get("/node/list").then((res) => {
-        this.tableData = res.data.node_name
-        this.tableData.forEach(v => {
-          this.Getnodes(v.metadata.name)
-        })
+        this.nodeItem = res.data.Item
+        console.log(res.data);
       }).catch(function (res) {
         console.log(res.data);
       })

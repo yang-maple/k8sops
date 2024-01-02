@@ -68,9 +68,9 @@ func (s *service) fromCells(cells []DataCell) []corev1.Service {
 }
 
 // GetSvcList 获取services列表
-func (s *service) GetSvcList(svcName, Namespace string, Limit, Page int) (DP *svcResp, err error) {
+func (s *service) GetSvcList(svcName, Namespace string, Limit, Page int, uuid int) (DP *svcResp, err error) {
 	//获取deployment 的所有清单列表
-	svcList, err := K8s.Clientset.CoreV1().Services(Namespace).List(context.TODO(), metav1.ListOptions{})
+	svcList, err := K8s.Clientset[uuid].CoreV1().Services(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取 svc list 失败" + err.Error())
 	}
@@ -116,9 +116,9 @@ func (s *service) GetSvcList(svcName, Namespace string, Limit, Page int) (DP *sv
 }
 
 // GetSvcDetail 获取 services 详情
-func (s *service) GetSvcDetail(Namespace, svcName string) (*svcDetail, error) {
+func (s *service) GetSvcDetail(Namespace, svcName string, uuid int) (*svcDetail, error) {
 	//获取deploy
-	detail, err := K8s.Clientset.CoreV1().Services(Namespace).Get(context.TODO(), svcName, metav1.GetOptions{})
+	detail, err := K8s.Clientset[uuid].CoreV1().Services(Namespace).Get(context.TODO(), svcName, metav1.GetOptions{})
 	if err != nil {
 		logger.Info("获取services 详情失败" + err.Error())
 		return nil, errors.New("获取services 详情失败" + err.Error())
@@ -132,7 +132,7 @@ func (s *service) GetSvcDetail(Namespace, svcName string) (*svcDetail, error) {
 }
 
 // CreateSvc 创建 services
-func (s *service) CreateSvc(data *CreateService) (err error) {
+func (s *service) CreateSvc(data *CreateService, uuid int) (err error) {
 	createSvc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   data.Name,
@@ -160,7 +160,7 @@ func (s *service) CreateSvc(data *CreateService) (err error) {
 	}
 	createSvc.Spec.Ports = append(createSvc.Spec.Ports, specPort)
 
-	_, err = K8s.Clientset.CoreV1().Services(data.Namespace).Create(context.TODO(), createSvc, metav1.CreateOptions{})
+	_, err = K8s.Clientset[uuid].CoreV1().Services(data.Namespace).Create(context.TODO(), createSvc, metav1.CreateOptions{})
 	if err != nil {
 		logger.Info("创建 service 失败" + err.Error())
 		return errors.New("创建 service 失败" + err.Error())
@@ -170,8 +170,8 @@ func (s *service) CreateSvc(data *CreateService) (err error) {
 }
 
 // DelSvc 删除 services
-func (s *service) DelSvc(Namespace, svcName string) (err error) {
-	err = K8s.Clientset.CoreV1().Services(Namespace).Delete(context.TODO(), svcName, metav1.DeleteOptions{})
+func (s *service) DelSvc(Namespace, svcName string, uuid int) (err error) {
+	err = K8s.Clientset[uuid].CoreV1().Services(Namespace).Delete(context.TODO(), svcName, metav1.DeleteOptions{})
 	if err != nil {
 		logger.Info("删除service失败" + err.Error())
 		return errors.New("删除service失败" + err.Error())
@@ -180,8 +180,8 @@ func (s *service) DelSvc(Namespace, svcName string) (err error) {
 }
 
 // UpdateSvc 更新 services
-func (s *service) UpdateSvc(Namespace string, svc *corev1.Service) (err error) {
-	_, err = K8s.Clientset.CoreV1().Services(Namespace).Update(context.TODO(), svc, metav1.UpdateOptions{})
+func (s *service) UpdateSvc(Namespace string, svc *corev1.Service, uuid int) (err error) {
+	_, err = K8s.Clientset[uuid].CoreV1().Services(Namespace).Update(context.TODO(), svc, metav1.UpdateOptions{})
 	if err != nil {
 		logger.Info("service 更新失败" + err.Error())
 		return errors.New("service 更新失败" + err.Error())

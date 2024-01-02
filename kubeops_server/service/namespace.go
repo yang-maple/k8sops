@@ -31,8 +31,8 @@ type NamespaceDetail struct {
 }
 
 // GetNsList  列表
-func (n *namespace) GetNsList() (namespacesList *NsList, err error) {
-	nsList, err := K8s.Clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+func (n *namespace) GetNsList(uuid int) (namespacesList *NsList, err error) {
+	nsList, err := K8s.Clientset[uuid].CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取namespaces-list 失败" + err.Error())
 		return nil, errors.New("获取namespaces-list 失败" + err.Error())
@@ -53,9 +53,9 @@ func (n *namespace) GetNsList() (namespacesList *NsList, err error) {
 }
 
 // GetNsDetail 获取namespace 详情
-func (n *namespace) GetNsDetail(NsName string) (*NamespaceDetail, error) {
+func (n *namespace) GetNsDetail(NsName string, uuid int) (*NamespaceDetail, error) {
 	//获取deploy
-	details, err := K8s.Clientset.CoreV1().Namespaces().Get(context.TODO(), NsName, metav1.GetOptions{})
+	details, err := K8s.Clientset[uuid].CoreV1().Namespaces().Get(context.TODO(), NsName, metav1.GetOptions{})
 	if err != nil {
 		logger.Info("获取Namespace 详情失败" + err.Error())
 		return nil, errors.New("获取Namespace 详情失败" + err.Error())
@@ -69,8 +69,8 @@ func (n *namespace) GetNsDetail(NsName string) (*NamespaceDetail, error) {
 }
 
 // DelNs 删除
-func (n *namespace) DelNs(NsName string) (err error) {
-	err = K8s.Clientset.CoreV1().Namespaces().Delete(context.TODO(), NsName, metav1.DeleteOptions{})
+func (n *namespace) DelNs(NsName string, uuid int) (err error) {
+	err = K8s.Clientset[uuid].CoreV1().Namespaces().Delete(context.TODO(), NsName, metav1.DeleteOptions{})
 	if err != nil {
 		logger.Info("删除实例失败" + err.Error())
 		return errors.New("删除实例失败" + err.Error())
@@ -79,13 +79,13 @@ func (n *namespace) DelNs(NsName string) (err error) {
 }
 
 // CreateNs 创建
-func (n *namespace) CreateNs(NsName string) (err error) {
+func (n *namespace) CreateNs(NsName string, uuid int) (err error) {
 	namespaceConfig := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: NsName,
 		},
 	}
-	_, err = K8s.Clientset.CoreV1().Namespaces().Create(context.TODO(), namespaceConfig, metav1.CreateOptions{})
+	_, err = K8s.Clientset[uuid].CoreV1().Namespaces().Create(context.TODO(), namespaceConfig, metav1.CreateOptions{})
 	if err != nil {
 		logger.Info("namespace 创建失败" + err.Error())
 		return errors.New("namespace 创建失败" + err.Error())
@@ -95,8 +95,8 @@ func (n *namespace) CreateNs(NsName string) (err error) {
 }
 
 // UpdateNs  更新
-func (n *namespace) UpdateNs(deploy *corev1.Namespace) (err error) {
-	_, err = K8s.Clientset.CoreV1().Namespaces().Update(context.TODO(), deploy, metav1.UpdateOptions{})
+func (n *namespace) UpdateNs(deploy *corev1.Namespace, uuid int) (err error) {
+	_, err = K8s.Clientset[uuid].CoreV1().Namespaces().Update(context.TODO(), deploy, metav1.UpdateOptions{})
 	if err != nil {
 		logger.Info("NameSpaces 更新失败" + err.Error())
 		return errors.New("NameSpaces 更新失败" + err.Error())

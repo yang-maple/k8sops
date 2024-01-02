@@ -14,8 +14,21 @@ const routes = [
             {
                 path: '/home',
                 icon: 'LocationInformation',
-                component: () => import('@/views/Home.vue'),
+                component: () => import('@/views/homepage/Homepage.vue'),
                 name: '概要',
+            }
+        ]
+    },
+    {
+        path: '/clusterinfo',
+        component: layout,
+        meta: { title: '集群信息', requireAuth: true },
+        children: [
+            {
+                path: '/clusterinfo',
+                icon: 'LocationInformation',
+                component: () => import('@/views/clustermanager/Cluster.vue'),
+                name: '集群信息',
             }
         ]
     },

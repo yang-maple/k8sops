@@ -7,6 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"kubeops/service"
 	"net/http"
+	"strconv"
 )
 
 type services struct{}
@@ -30,7 +31,8 @@ func (s *services) GetServiceList(c *gin.Context) {
 		})
 		return
 	}
-	data, err := service.Services.GetSvcList(params.FilterName, params.Namespace, params.Limit, params.Page)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	data, err := service.Services.GetSvcList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":    "获取Services失败",
@@ -60,7 +62,9 @@ func (s *services) GetServiceDetail(c *gin.Context) {
 		})
 		return
 	}
-	detail, err := service.Services.GetSvcDetail(params.Namespace, params.ServiceName)
+
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	detail, err := service.Services.GetSvcDetail(params.Namespace, params.ServiceName, uuid)
 	if err != nil {
 		logger.Info("获取Services 详情失败" + err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -91,7 +95,8 @@ func (s *services) DelServices(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Services.DelSvc(params.Namespace, params.ServiceName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Services.DelSvc(params.Namespace, params.ServiceName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":    "删除 Services 失败",
@@ -119,7 +124,8 @@ func (s *services) CreateService(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Services.CreateSvc(createSvc.Data)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Services.CreateSvc(createSvc.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":    "创建 Services 失败",
@@ -148,7 +154,8 @@ func (s *services) UpdateService(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Services.UpdateSvc(params.Namespace, params.Data)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Services.UpdateSvc(params.Namespace, params.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":    "更新失败",

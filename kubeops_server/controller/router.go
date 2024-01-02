@@ -128,6 +128,18 @@ func (router *router) InitApiRouter(r *gin.Engine) {
 	}
 	v15 := r.Group("/v1/api/upload")
 	{
-		v15.POST("/uploadFile", Upload.uploadFile)
+		v15.POST("/uploadFile", Upload.uploadYamlFile)
+		v15.POST("/uploadYaml", Upload.createYaml)
+	}
+	v16 := r.Group("/v1/api/cluster")
+	{
+		v16.POST("/create", Cluster.Create)
+		v16.GET("/list", Cluster.List)
+		v16.POST("/change", Cluster.Change)
+		v16.DELETE("/delete", Cluster.Delete)
+	}
+	v17 := r.Group("/v1/api/homepage")
+	{
+		v17.GET("/getInfo", HomePage.GetHomepage)
 	}
 }

@@ -51,10 +51,9 @@
             <el-table-column label="ClusterIP" prop="cluster_ip" width="100" align="center" />
             <el-table-column label="ExternalIP" width="100" align="center">
                 <template #default="scope">
-                    <div v-if="serviceItem.external_ip == undefined">-</div>
-                    <div v-if="serviceItem.external_ip != undefined" v-for="(v, k) in scope.row.external_ip " :key="k">{{ v
-                    }}
-                    </div>
+                    <div v-if="scope.row.external_ip == undefined">-</div>
+                    <div v-if="scope.row.external_ip != undefined" v-for="(v, k) in scope.row.external_ip " :key="k">{{ v
+                    }}</div>
                 </template>
             </el-table-column>
             <el-table-column label="Ports" width="130" align="center">
@@ -261,6 +260,7 @@ export default {
             }).then((res) => {
                 this.total = res.data.total
                 this.serviceItem = res.data.item
+                console.log(this.serviceItem[0].external_ip);
             }).catch(function (res) {
                 console.log(res);
             })

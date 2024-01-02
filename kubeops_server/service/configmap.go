@@ -51,9 +51,9 @@ func (c *configmap) fromCells(cells []DataCell) []corev1.ConfigMap {
 }
 
 // GetCmList 列表
-func (c *configmap) GetCmList(configName, Namespace string, Limit, Page int) (DP *CmsResp, err error) {
+func (c *configmap) GetCmList(configName, Namespace string, Limit, Page, uuid int) (DP *CmsResp, err error) {
 	//获取deployment 的所有清单列表
-	cmList, err := K8s.Clientset.CoreV1().ConfigMaps(Namespace).List(context.TODO(), metav1.ListOptions{})
+	cmList, err := K8s.Clientset[uuid].CoreV1().ConfigMaps(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取 configmap 失败" + err.Error())
 	}
@@ -92,9 +92,9 @@ func (c *configmap) GetCmList(configName, Namespace string, Limit, Page int) (DP
 }
 
 // GetCmDetail 详情
-func (c *configmap) GetCmDetail(Namespace, configName string) (detail *corev1.ConfigMap, err error) {
+func (c *configmap) GetCmDetail(Namespace, configName string, uuid int) (detail *corev1.ConfigMap, err error) {
 	//获取deploy
-	detail, err = K8s.Clientset.CoreV1().ConfigMaps(Namespace).Get(context.TODO(), configName, metav1.GetOptions{})
+	detail, err = K8s.Clientset[uuid].CoreV1().ConfigMaps(Namespace).Get(context.TODO(), configName, metav1.GetOptions{})
 	if err != nil {
 		logger.Info("获取configmap 详情失败" + err.Error())
 		return nil, errors.New("获取configmap 详情失败" + err.Error())
@@ -105,7 +105,7 @@ func (c *configmap) GetCmDetail(Namespace, configName string) (detail *corev1.Co
 }
 
 // CreateCm 创建
-func (c *configmap) CreateCm(data *CreateConfig) (err error) {
+func (c *configmap) CreateCm(data *CreateConfig, uuid int) (err error) {
 	config := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   data.Name,
@@ -114,7 +114,7 @@ func (c *configmap) CreateCm(data *CreateConfig) (err error) {
 		Immutable: &data.Modify,
 		Data:      data.Data,
 	}
-	_, err = K8s.Clientset.CoreV1().ConfigMaps(data.Namespace).Create(context.TODO(), config, metav1.CreateOptions{})
+	_, err = K8s.Clientset[uuid].CoreV1().ConfigMaps(data.Namespace).Create(context.TODO(), config, metav1.CreateOptions{})
 	if err != nil {
 		logger.Info("创建 configmap 失败" + err.Error())
 		return errors.New("创建 configmap 失败" + err.Error())
@@ -124,8 +124,8 @@ func (c *configmap) CreateCm(data *CreateConfig) (err error) {
 }
 
 // DelCm 删除
-func (c *configmap) DelCm(Namespace, configName string) (err error) {
-	err = K8s.Clientset.CoreV1().ConfigMaps(Namespace).Delete(context.TODO(), configName, metav1.DeleteOptions{})
+func (c *configmap) DelCm(Namespace, configName string, uuid int) (err error) {
+	err = K8s.Clientset[uuid].CoreV1().ConfigMaps(Namespace).Delete(context.TODO(), configName, metav1.DeleteOptions{})
 	if err != nil {
 		logger.Info("删除configmap失败" + err.Error())
 		return errors.New("删除configmap失败" + err.Error())
@@ -134,8 +134,8 @@ func (c *configmap) DelCm(Namespace, configName string) (err error) {
 }
 
 // UpdateCm  更新
-func (c *configmap) UpdateCm(Namespace string, Config *corev1.ConfigMap) (err error) {
-	_, err = K8s.Clientset.CoreV1().ConfigMaps(Namespace).Update(context.TODO(), Config, metav1.UpdateOptions{})
+func (c *configmap) UpdateCm(Namespace string, Config *corev1.ConfigMap, uuid int) (err error) {
+	_, err = K8s.Clientset[uuid].CoreV1().ConfigMaps(Namespace).Update(context.TODO(), Config, metav1.UpdateOptions{})
 	if err != nil {
 		logger.Info("configmap更新失败" + err.Error())
 		return errors.New("configmap 更新失败" + err.Error())

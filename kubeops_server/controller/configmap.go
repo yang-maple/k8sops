@@ -6,6 +6,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"kubeops/service"
 	"net/http"
+	"strconv"
 )
 
 type configmap struct{}
@@ -20,6 +21,8 @@ func (cm *configmap) GetConfigmapList(c *gin.Context) {
 		Limit      int    `form:"limit"`
 		Page       int    `form:"page"`
 	})
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
@@ -29,7 +32,7 @@ func (cm *configmap) GetConfigmapList(c *gin.Context) {
 		})
 		return
 	}
-	data, err := service.Configmaps.GetCmList(params.FilterName, params.Namespace, params.Limit, params.Page)
+	data, err := service.Configmaps.GetCmList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "获取Configmap失败",
@@ -59,7 +62,8 @@ func (cm *configmap) GetConfigmapDetail(c *gin.Context) {
 		})
 		return
 	}
-	detail, err := service.Configmaps.GetCmDetail(params.Namespace, params.ConfigmapName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	detail, err := service.Configmaps.GetCmDetail(params.Namespace, params.ConfigmapName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "获取Configmap 详情失败",
@@ -88,7 +92,8 @@ func (cm *configmap) DelConfigmap(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Configmaps.DelCm(params.Namespace, params.ConfigmapName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Configmaps.DelCm(params.Namespace, params.ConfigmapName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "删除 Configmap 失败",
@@ -116,7 +121,8 @@ func (cm *configmap) CreateConfigmap(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Configmaps.CreateCm(params.Data)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Configmaps.CreateCm(params.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "创建 Configmap 失败",
@@ -144,7 +150,8 @@ func (cm *configmap) UpdateConfigmap(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Configmaps.UpdateCm(params.Namespace, params.Data)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Configmaps.UpdateCm(params.Namespace, params.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": "更新 Configmap 失败",

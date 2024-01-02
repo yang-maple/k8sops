@@ -61,9 +61,9 @@ func (i *ingress) fromCells(cells []DataCell) []networkv1.Ingress {
 }
 
 // GetIngList 获取 ingress 资源列表
-func (i *ingress) GetIngList(ingName, Namespace string, Limit, Page int) (DP *IngResp, err error) {
+func (i *ingress) GetIngList(ingName, Namespace string, Limit, Page int, uuid int) (DP *IngResp, err error) {
 	//获取deployment 的所有清单列表
-	ingList, err := K8s.Clientset.NetworkingV1().Ingresses(Namespace).List(context.TODO(), metav1.ListOptions{})
+	ingList, err := K8s.Clientset[uuid].NetworkingV1().Ingresses(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取 ingress 失败" + err.Error())
 	}
@@ -107,9 +107,9 @@ func (i *ingress) GetIngList(ingName, Namespace string, Limit, Page int) (DP *In
 }
 
 // GetIngDetail 获取 ingress 资源详情
-func (i *ingress) GetIngDetail(Namespace, ingName string) (detail *networkv1.Ingress, err error) {
+func (i *ingress) GetIngDetail(Namespace, ingName string, uuid int) (detail *networkv1.Ingress, err error) {
 	//获取deploy
-	detail, err = K8s.Clientset.NetworkingV1().Ingresses(Namespace).Get(context.TODO(), ingName, metav1.GetOptions{})
+	detail, err = K8s.Clientset[uuid].NetworkingV1().Ingresses(Namespace).Get(context.TODO(), ingName, metav1.GetOptions{})
 	if err != nil {
 		logger.Info("获取ingress 详情失败" + err.Error())
 		return nil, errors.New("获取ingress 详情失败" + err.Error())
@@ -120,7 +120,7 @@ func (i *ingress) GetIngDetail(Namespace, ingName string) (detail *networkv1.Ing
 }
 
 // CreateIng 创建 ingress 资源
-func (i *ingress) CreateIng(data *CreateIngress) (err error) {
+func (i *ingress) CreateIng(data *CreateIngress, uuid int) (err error) {
 	pathType := networkv1.PathTypeImplementationSpecific
 	createIng := &networkv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
@@ -157,7 +157,7 @@ func (i *ingress) CreateIng(data *CreateIngress) (err error) {
 		}
 		createIng.Spec.Rules = append(createIng.Spec.Rules, specRole)
 	}
-	_, err = K8s.Clientset.NetworkingV1().Ingresses(data.Namespace).Create(context.TODO(), createIng, metav1.CreateOptions{})
+	_, err = K8s.Clientset[uuid].NetworkingV1().Ingresses(data.Namespace).Create(context.TODO(), createIng, metav1.CreateOptions{})
 	if err != nil {
 		logger.Info("创建 service 失败" + err.Error())
 		return errors.New("创建 service 失败" + err.Error())
@@ -167,8 +167,8 @@ func (i *ingress) CreateIng(data *CreateIngress) (err error) {
 }
 
 // DelIng 删除ingress 资源
-func (i *ingress) DelIng(Namespace, ingName string) (err error) {
-	err = K8s.Clientset.NetworkingV1().Ingresses(Namespace).Delete(context.TODO(), ingName, metav1.DeleteOptions{})
+func (i *ingress) DelIng(Namespace, ingName string, uuid int) (err error) {
+	err = K8s.Clientset[uuid].NetworkingV1().Ingresses(Namespace).Delete(context.TODO(), ingName, metav1.DeleteOptions{})
 	if err != nil {
 		logger.Info("删除ingress失败" + err.Error())
 		return errors.New("删除ingress失败" + err.Error())
@@ -177,8 +177,8 @@ func (i *ingress) DelIng(Namespace, ingName string) (err error) {
 }
 
 // UpdateIng 更新ingress 资源详情
-func (i *ingress) UpdateIng(Namespace string, ing *networkv1.Ingress) (err error) {
-	_, err = K8s.Clientset.NetworkingV1().Ingresses(Namespace).Update(context.TODO(), ing, metav1.UpdateOptions{})
+func (i *ingress) UpdateIng(Namespace string, ing *networkv1.Ingress, uuid int) (err error) {
+	_, err = K8s.Clientset[uuid].NetworkingV1().Ingresses(Namespace).Update(context.TODO(), ing, metav1.UpdateOptions{})
 	if err != nil {
 		logger.Info("ingress 更新失败" + err.Error())
 		return errors.New("ingress 更新失败" + err.Error())

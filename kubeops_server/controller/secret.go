@@ -6,6 +6,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"kubeops/service"
 	"net/http"
+	"strconv"
 )
 
 type secret struct{}
@@ -29,7 +30,8 @@ func (s *secret) GetSecretList(c *gin.Context) {
 		})
 		return
 	}
-	data, err := service.Secrets.GetSecretList(params.FilterName, params.Namespace, params.Limit, params.Page)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	data, err := service.Secrets.GetSecretList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "获取Secret失败",
@@ -59,7 +61,8 @@ func (s *secret) GetSecretDetail(c *gin.Context) {
 		})
 		return
 	}
-	detail, err := service.Secrets.GetSecretDetail(params.Namespace, params.SecretName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	detail, err := service.Secrets.GetSecretDetail(params.Namespace, params.SecretName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "获取Secret 详情失败",
@@ -88,7 +91,8 @@ func (s *secret) DelSecret(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Secrets.DelSecret(params.Namespace, params.SecretName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Secrets.DelSecret(params.Namespace, params.SecretName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "删除 Secret 失败",
@@ -116,7 +120,8 @@ func (s *secret) CreateSecret(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Secrets.CreateSecret(params.Data)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Secrets.CreateSecret(params.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "创建 Secret 失败",
@@ -145,7 +150,8 @@ func (s *secret) UpdateSecret(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Secrets.UpdateSecret(params.Namespace, params.Data)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Secrets.UpdateSecret(params.Namespace, params.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": "更新 Secret 失败",

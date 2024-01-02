@@ -7,6 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"kubeops/service"
 	"net/http"
+	"strconv"
 )
 
 type namespace struct{}
@@ -14,7 +15,8 @@ type namespace struct{}
 var Namespace namespace
 
 func (n *namespace) GetNsList(c *gin.Context) {
-	data, err := service.Namespace.GetNsList()
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	data, err := service.Namespace.GetNsList(uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":    "获取namespaces失败",
@@ -42,7 +44,8 @@ func (n *namespace) GetNsDetail(c *gin.Context) {
 		})
 		return
 	}
-	data, err := service.Namespace.GetNsDetail(params.NamespaceName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	data, err := service.Namespace.GetNsDetail(params.NamespaceName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":    "获取namespaces失败",
@@ -70,7 +73,8 @@ func (n *namespace) DelNs(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Namespace.DelNs(params.NamespaceName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Namespace.DelNs(params.NamespaceName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":    "名称空间" + params.NamespaceName + "删除失败",
@@ -97,7 +101,8 @@ func (n *namespace) CreateNs(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Namespace.CreateNs(params.NamespaceName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Namespace.CreateNs(params.NamespaceName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":    params.NamespaceName + "创建失败",
@@ -122,7 +127,8 @@ func (n *namespace) UpdateNs(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Namespace.UpdateNs(params.Data)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Namespace.UpdateNs(params.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":    "更新失败",

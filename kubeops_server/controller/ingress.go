@@ -7,6 +7,7 @@ import (
 	networkv1 "k8s.io/api/networking/v1"
 	"kubeops/service"
 	"net/http"
+	"strconv"
 )
 
 type ingress struct{}
@@ -30,7 +31,8 @@ func (i *ingress) GetIngressList(c *gin.Context) {
 		})
 		return
 	}
-	data, err := service.Ingress.GetIngList(params.FilterName, params.Namespace, params.Limit, params.Page)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	data, err := service.Ingress.GetIngList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "获取Ingress失败",
@@ -60,7 +62,8 @@ func (i *ingress) GetIngressDetail(c *gin.Context) {
 		})
 		return
 	}
-	detail, err := service.Ingress.GetIngDetail(params.Namespace, params.IngressName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	detail, err := service.Ingress.GetIngDetail(params.Namespace, params.IngressName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "获取Services 详情失败",
@@ -89,7 +92,8 @@ func (i *ingress) DelIngress(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Ingress.DelIng(params.Namespace, params.IngressName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Ingress.DelIng(params.Namespace, params.IngressName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "删除 Services 失败",
@@ -117,7 +121,8 @@ func (i *ingress) CreateIngress(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Ingress.CreateIng(createIngress.Data)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Ingress.CreateIng(createIngress.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "创建 Services 失败",
@@ -146,7 +151,8 @@ func (i *ingress) UpdateIngress(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Ingress.UpdateIng(params.Namespace, params.Data)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Ingress.UpdateIng(params.Namespace, params.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":    "更新失败",

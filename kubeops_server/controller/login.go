@@ -77,7 +77,7 @@ func (l *login) VerifyInfo(c *gin.Context) {
 		return
 	}
 	// 验证码验证成功后，判断用户名密码
-	token, err := service.Login.VerifyUserInfo(params)
+	uid, token, clusterName, err := service.Login.VerifyUserInfo(params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":   err.Error(),
@@ -86,8 +86,10 @@ func (l *login) VerifyInfo(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"msg":      params.Username + "登陆成功",
-		"username": params.Username,
-		"token":    token,
+		"msg":          params.Username + "登陆成功",
+		"username":     params.Username,
+		"uid":          uid,
+		"token":        token,
+		"cluster_name": clusterName,
 	})
 }

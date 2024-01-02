@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"kubeops/dao"
 	"kubeops/utils"
 )
@@ -19,14 +20,23 @@ type LoginInfo struct {
 }
 
 // VerifyUserInfo 验证用户身份信息
-func (l *login) VerifyUserInfo(info *LoginInfo) (token string, err error) {
-	err = dao.Login.VerifyUser(info.Username, info.Password)
+func (l *login) VerifyUserInfo(info *LoginInfo) (uid int, token, name string, err error) {
+	uuid, dir, name, err := dao.Login.VerifyUser(info.Username, info.Password)
 	if err != nil {
-		return "", errors.New(err.Error())
+		return 0, "", "", errors.New(err.Error())
 	}
-	token, err = utils.CreateJwtToken(info.Username, info.Password, utils.UserExpireDuration, utils.UserSecret)
+	//初始化k8s集群
+	if dir != "" {
+		fmt.Println(dir, uuid)
+		err = K8s.Init(dir, uuid)
+		if err != nil {
+			return 0, "", "", errors.New(err.Error())
+		}
+	}
+	token, err = utils.CreateJwtToken(uuid, info.Username, utils.UserExpireDuration, utils.UserSecret)
 	if err != nil {
-		return "", errors.New(err.Error())
+		return 0, "", "", errors.New(err.Error())
 	}
-	return token, nil
+
+	return uuid, token, name, nil
 }

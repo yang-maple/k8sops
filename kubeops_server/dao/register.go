@@ -18,12 +18,15 @@ func (r *register) RegisterUser(username, password, email string) (err error) {
 	if tx.Error != nil && tx.Error.Error() != "record not found" || tx.RowsAffected != 0 {
 		return errors.New("用户名已存在")
 	}
-	userInfo.Username = username
-	userInfo.Password = utils.PasswordToMd5(password)
-	userInfo.Email = email
-	userInfo.Status = 1
+	//组装新用户信息
+	newUser := model.User{
+		Username: username,
+		Password: utils.PasswordToMd5(password),
+		Email:    email,
+		Status:   1,
+	}
 	//注册用户
-	tx = db.GORM.Create(&userInfo)
+	tx = db.GORM.Create(&newUser)
 	if tx.Error != nil {
 		return tx.Error
 	}

@@ -8,6 +8,7 @@ import (
 	"kubeops/model"
 	"kubeops/service"
 	"net/http"
+	"strconv"
 )
 
 var StatefulSet statefulSet
@@ -33,7 +34,8 @@ func (s *statefulSet) GetStatefulSetList(c *gin.Context) {
 		})
 		return
 	}
-	data, err := service.StatefulSet.GetStatefulList(params.FilterName, params.Namespace, params.Limit, params.Page)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	data, err := service.StatefulSet.GetStatefulList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
 		logger.Info("获取 StatefulSet 失败" + err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -64,7 +66,8 @@ func (s *statefulSet) GetStatefulDetail(c *gin.Context) {
 		})
 		return
 	}
-	Ds, err := service.StatefulSet.GetStatefulDetail(params.Namespace, params.StatefulSetName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	Ds, err := service.StatefulSet.GetStatefulDetail(params.Namespace, params.StatefulSetName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"err": errors.New("获取Stateful set 失败" + err.Error()),
@@ -92,7 +95,8 @@ func (s *statefulSet) DelStatefulSet(c *gin.Context) {
 		})
 		return
 	}
-	err = service.StatefulSet.DelStateful(params.Namespace, params.StatefulSetName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.StatefulSet.DelStateful(params.Namespace, params.StatefulSetName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"err": errors.New("删除失败" + err.Error()),
@@ -121,7 +125,8 @@ func (s *statefulSet) UpDataStatefulSet(c *gin.Context) {
 		})
 		return
 	}
-	err = service.StatefulSet.UpdateDelStateful(params.Namespace, params.Data)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.StatefulSet.UpdateDelStateful(params.Namespace, params.Data, uuid)
 	if err != nil {
 		logger.Info("更新失败" + err.Error())
 		c.JSON(http.StatusOK, gin.H{
@@ -150,7 +155,8 @@ func (s *statefulSet) ModifyStatefulReplicas(c *gin.Context) {
 		return
 	}
 	replicas := model.Int32Ptr(int32(params.Replicas))
-	err = service.StatefulSet.ModifyStatefulReplicas(params.Namespace, params.StatefulSetName, replicas)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.StatefulSet.ModifyStatefulReplicas(params.Namespace, params.StatefulSetName, replicas, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": errors.New("更新副本数失败" + err.Error()),

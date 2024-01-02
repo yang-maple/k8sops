@@ -7,6 +7,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	"kubeops/service"
 	"net/http"
+	"strconv"
 )
 
 var DaemonSet daemonSet
@@ -32,7 +33,8 @@ func (d *daemonSet) GetDaemonList(c *gin.Context) {
 		})
 		return
 	}
-	data, err := service.DaemonSet.GetDsList(params.FilterName, params.Namespace, params.Limit, params.Page)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	data, err := service.DaemonSet.GetDsList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
 		logger.Info("获取 Daemon set 失败" + err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -63,7 +65,8 @@ func (d *daemonSet) GetDaemonDetail(c *gin.Context) {
 		})
 		return
 	}
-	Ds, err := service.DaemonSet.GetDsDetail(params.Namespace, params.DaemonName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	Ds, err := service.DaemonSet.GetDsDetail(params.Namespace, params.DaemonName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"err": errors.New("获取Daemon set 失败" + err.Error()),
@@ -91,7 +94,8 @@ func (d *daemonSet) DelDaemon(c *gin.Context) {
 		})
 		return
 	}
-	err = service.DaemonSet.DelDs(params.Namespace, params.DaemonName)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.DaemonSet.DelDs(params.Namespace, params.DaemonName, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"err": errors.New("删除失败" + err.Error()),
@@ -121,7 +125,8 @@ func (d *daemonSet) UpdateDaemon(c *gin.Context) {
 		})
 		return
 	}
-	err = service.DaemonSet.UpdateDs(params.Namespace, params.Data)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.DaemonSet.UpdateDs(params.Namespace, params.Data, uuid)
 	if err != nil {
 		logger.Info("更新失败" + err.Error())
 		c.JSON(http.StatusOK, gin.H{

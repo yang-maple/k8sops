@@ -54,9 +54,9 @@ func (p *pvClaim) fromCells(cells []DataCell) []corev1.PersistentVolumeClaim {
 }
 
 // GetPVClaimList 列表
-func (p *pvClaim) GetPVClaimList(claimName, Namespace string, Limit, Page int) (DP *PvClaimResp, err error) {
+func (p *pvClaim) GetPVClaimList(claimName, Namespace string, Limit, Page int, uuid int) (DP *PvClaimResp, err error) {
 	//获取deployment 的所有清单列表
-	claimList, err := K8s.Clientset.CoreV1().PersistentVolumeClaims(Namespace).List(context.TODO(), metav1.ListOptions{})
+	claimList, err := K8s.Clientset[uuid].CoreV1().PersistentVolumeClaims(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取 PersistentVolumeClaims 失败" + err.Error())
 		return nil, err
@@ -103,9 +103,9 @@ func (p *pvClaim) GetPVClaimList(claimName, Namespace string, Limit, Page int) (
 }
 
 // GetPVClaimDetail 详情
-func (p *pvClaim) GetPVClaimDetail(Namespace, claimName string) (detail *corev1.PersistentVolumeClaim, err error) {
+func (p *pvClaim) GetPVClaimDetail(Namespace, claimName string, uuid int) (detail *corev1.PersistentVolumeClaim, err error) {
 	//获取deploy
-	detail, err = K8s.Clientset.CoreV1().PersistentVolumeClaims(Namespace).Get(context.TODO(), claimName, metav1.GetOptions{})
+	detail, err = K8s.Clientset[uuid].CoreV1().PersistentVolumeClaims(Namespace).Get(context.TODO(), claimName, metav1.GetOptions{})
 	if err != nil {
 		logger.Info("获取 PersistentVolumeClaims 详情失败" + err.Error())
 		return nil, err
@@ -116,7 +116,7 @@ func (p *pvClaim) GetPVClaimDetail(Namespace, claimName string) (detail *corev1.
 }
 
 // CreatePVClaim 创建
-func (p *pvClaim) CreatePVClaim(data *CreateClaim) (err error) {
+func (p *pvClaim) CreatePVClaim(data *CreateClaim, uuid int) (err error) {
 
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
@@ -138,7 +138,7 @@ func (p *pvClaim) CreatePVClaim(data *CreateClaim) (err error) {
 		Status: corev1.PersistentVolumeClaimStatus{},
 	}
 
-	_, err = K8s.Clientset.CoreV1().PersistentVolumeClaims(data.Namespace).Create(context.TODO(), pvc, metav1.CreateOptions{})
+	_, err = K8s.Clientset[uuid].CoreV1().PersistentVolumeClaims(data.Namespace).Create(context.TODO(), pvc, metav1.CreateOptions{})
 	if err != nil {
 		logger.Info("创建 PersistentVolumeClaims 失败" + err.Error())
 		return err
@@ -148,8 +148,8 @@ func (p *pvClaim) CreatePVClaim(data *CreateClaim) (err error) {
 }
 
 // DelPVClaim 删除
-func (p *pvClaim) DelPVClaim(Namespace, claimName string) (err error) {
-	err = K8s.Clientset.CoreV1().PersistentVolumeClaims(Namespace).Delete(context.TODO(), claimName, metav1.DeleteOptions{})
+func (p *pvClaim) DelPVClaim(Namespace, claimName string, uuid int) (err error) {
+	err = K8s.Clientset[uuid].CoreV1().PersistentVolumeClaims(Namespace).Delete(context.TODO(), claimName, metav1.DeleteOptions{})
 	if err != nil {
 		logger.Info("删除PersistentVolumeClaim失败" + err.Error())
 		return err
@@ -158,8 +158,8 @@ func (p *pvClaim) DelPVClaim(Namespace, claimName string) (err error) {
 }
 
 // UpdatePVClaim 更新
-func (p *pvClaim) UpdatePVClaim(Namespace string, claimName *corev1.PersistentVolumeClaim) (err error) {
-	_, err = K8s.Clientset.CoreV1().PersistentVolumeClaims(Namespace).Update(context.TODO(), claimName, metav1.UpdateOptions{})
+func (p *pvClaim) UpdatePVClaim(Namespace string, claimName *corev1.PersistentVolumeClaim, uuid int) (err error) {
+	_, err = K8s.Clientset[uuid].CoreV1().PersistentVolumeClaims(Namespace).Update(context.TODO(), claimName, metav1.UpdateOptions{})
 	if err != nil {
 		logger.Info("更新 PersistentVolumeClaim 失败" + err.Error())
 		return err

@@ -5,6 +5,7 @@ import (
 	"github.com/wonderivan/logger"
 	"kubeops/service"
 	"net/http"
+	"strconv"
 )
 
 type workflow struct {
@@ -85,7 +86,8 @@ func (w *workflow) DeleteWorkflow(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Workflow.DeleteById(params.Id)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Workflow.DeleteById(params.Id, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": err.Error(),
@@ -109,7 +111,8 @@ func (w *workflow) CreateWorkflow(c *gin.Context) {
 		})
 		return
 	}
-	err = service.Workflow.CreateWorkflow(params)
+	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
+	err = service.Workflow.CreateWorkflow(params, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg": err.Error(),

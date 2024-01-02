@@ -165,9 +165,9 @@ export default {
                         },
                     ).then((res) => {
                         this.notify("success", "登录成功", res.msg)
-                        this.$auth.setUserAuth(res.username, res.token)
+                        this.$auth.setUserAuth(res.username, res.token, res.uid)
+                        this.$auth.setUserCluster(res.cluster_name)
                         this.$router.push("/home")
-                        console.log(res)
                     }).catch((res) => {
                         this.notify("error", "登录失败", res.msg)
                         this.GetCaptcha();
