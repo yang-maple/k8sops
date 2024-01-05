@@ -13,4 +13,6 @@ gin-vue3 realize k8s-dashboard
 
    完成，切换config完成
 
-4. 首页的渲染。
+4. 首页的渲染。 （首页基本完成）
+
+4. bug 终端连接还需要调试

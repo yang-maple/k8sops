@@ -21,7 +21,7 @@
         </el-col>
         <el-col :span="4">
             <div class="header-grid-content" style="text-align: center;">
-                <el-button type="info" @click="Loading(`Refresh`)" round>
+                <el-button type="info" @click="Refresh()" round>
                     <el-icon>
                         <Refresh />
                     </el-icon>
@@ -112,7 +112,6 @@
 </template>
 
 <script scoped>
-import { ElFormItem, ElLoading } from 'element-plus'
 import { VAceEditor } from 'vue3-ace-editor';
 import '../../ace.config.js';
 import yaml from 'js-yaml';
@@ -204,16 +203,10 @@ export default {
                 console.log(res);
             })
         },
-        Loading(msg) {
-            const loading = ElLoading.service({
-                lock: true,
-                text: msg + ".....",
-                background: 'rgba(0, 0, 0, 0.7)',
-            })
+        Refresh() {
             setTimeout(() => {
-                loading.close()
                 this.reload()
-            }, 2000)
+            }, 1000)
         },
         getnsselect() {
             if (this.nslist == "") {
@@ -265,7 +258,6 @@ export default {
                     replicas: replicas
                 },
             ).then((res) => {
-                this.Loading("Modifying")
                 this.$message({
                     showClose: true,
                     message: res.msg,
@@ -279,9 +271,9 @@ export default {
                 });
                 console.log(res);
             })
+            this.Refresh()
         },
         handleDelete(namespace, name) {
-            this.Loading("Deleting······")
             this.$ajax({
                 method: 'delete',
                 url: '/stateful/delete',
@@ -291,7 +283,6 @@ export default {
                 }
             }
             ).then((res) => {
-                this.Loading("Deleting")
                 this.$message({
                     showClose: true,
                     message: res.msg,
@@ -300,8 +291,7 @@ export default {
             }).catch(function (res) {
                 console.log(res);
             })
-            this.reload()
-
+            this.Refresh()
         },
         handleUpdate(namespace) {
             let data = this.content
@@ -315,7 +305,6 @@ export default {
                     data: JSON.parse(data)
                 },
             ).then((res) => {
-                this.Loading("Updateing")
                 this.$message({
                     showClose: true,
                     message: res.msg,
@@ -330,6 +319,7 @@ export default {
                 });
                 console.log(res);
             })
+            this.Refresh()
         },
         messageboxReplica(row) {
             this.$prompt('修改的副本数为', '提示', {

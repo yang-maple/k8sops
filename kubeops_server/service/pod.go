@@ -56,11 +56,17 @@ type podInfo struct {
 	Image     []string          `json:"image"`
 	Labels    map[string]string `json:"labels"`
 	Node      string            `json:"node"`
-	Status    corev1.PodPhase   `json:"status"`
+	Status    string            `json:"status"`
 	Restart   int32             `json:"restart"`
 	Cpu       string            `json:"cpu"`
 	Memory    string            `json:"memory"`
 	Age       string            `json:"age"`
+}
+
+type CountPodReady struct {
+	Total    int `json:"total"`
+	Ready    int `json:"ready"`
+	NotReady int `json:"not_ready"`
 }
 
 // GetPods 定义 get pod 方法获取pod 列表 支持过滤排序和分页
@@ -95,7 +101,7 @@ func (p *pod) GetPods(FilterName, NameSpaces string, Limit, Page int, uuid int) 
 			Labels:    v.Labels,
 			Image:     model.GetImage(v.Spec),
 			Node:      v.Spec.NodeName,
-			Status:    v.Status.Phase,
+			Status:    GetPodStatus(v.Status),
 			Restart:   model.GetRestart(v.Status),
 			Cpu:       model.GetResourcesRequests("Cpu", v.Spec),
 			Memory:    model.GetResourcesRequests("Memory", v.Spec),
@@ -191,27 +197,60 @@ func (p *pod) GetContainerLog(podName, containerName, namespaces string, uuid in
 }
 
 // CountPod  获取每个namespace 下pod的数量
-func (p *pod) CountPod(uuid int) (total []podNp, err error) {
-	//获取所有的namespaces
-	namespaceList, err := K8s.Clientset[uuid].CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+func (p *pod) CountPod(uuid int) (total map[string]int, err error) {
+	podCountPerNamespace := make(map[string]int)
+	list, err := K8s.Clientset[uuid].CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("获取namespace 列表失败" + err.Error())
-		return nil, errors.New("获取namespace 列表失败")
+		logger.Info("获取pod 失败" + err.Error())
+		return nil, errors.New("获取pod 失败")
 	}
+	for _, v := range list.Items {
+		podCountPerNamespace[v.Namespace]++
+	}
+	return podCountPerNamespace, nil
+}
 
-	////获取每个ns下的pod数量
-	for _, namespace := range namespaceList.Items {
-		plist, err := K8s.Clientset[uuid].CoreV1().Pods(namespace.Name).List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			logger.Info("获取namespace下plist 列表失败" + err.Error())
-			return nil, errors.New("获取namespace下plist 列表失败")
-		}
-		//组装数据
-		npm := &podNp{
-			Name:   namespace.Name,
-			Number: len(plist.Items),
-		}
-		total = append(total, *npm)
+func (p *pod) PodCount(namespace string, uuid int) (*CountPodReady, error) {
+	podList, err := K8s.Clientset[uuid].CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		logger.Info("获取pod 失败" + err.Error())
+		return nil, errors.New("获取pod 失败")
 	}
-	return total, nil
+	count := 0
+
+	for _, v := range podList.Items {
+		if v.Status.Phase == "Running" {
+			count++
+		}
+	}
+	return &CountPodReady{
+		Total:    len(podList.Items),
+		Ready:    count,
+		NotReady: len(podList.Items) - count,
+	}, nil
+}
+
+// GetPodStatus 获取pod状态的方法
+func GetPodStatus(status corev1.PodStatus) string {
+	for _, v := range status.ContainerStatuses {
+		if v.Ready {
+			return "Running"
+		}
+		if v.State.Waiting != nil {
+			return v.State.Waiting.Reason
+		}
+		if v.State.Terminated != nil {
+			return v.State.Terminated.Reason
+		}
+		if v.LastTerminationState.Terminated != nil {
+			return v.LastTerminationState.Terminated.Reason
+		}
+		if v.LastTerminationState.Waiting != nil {
+			return v.LastTerminationState.Waiting.Reason
+		}
+	}
+	//if status.Phase == "Pending" {
+	//	return "Pending"
+	//}
+	return "UnKnow"
 }

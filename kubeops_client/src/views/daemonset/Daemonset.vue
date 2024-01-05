@@ -20,7 +20,7 @@
         </el-col>
         <el-col :span="4">
             <div class="header-grid-content" style="text-align: center;">
-                <el-button type="info" @click="Loading(`Refresh`)" round>
+                <el-button type="info" @click="Refresh()" round>
                     <el-icon>
                         <Refresh />
                     </el-icon>
@@ -192,7 +192,6 @@
 </template>
 
 <script scoped>
-import { ElFormItem, ElLoading } from 'element-plus'
 import { VAceEditor } from 'vue3-ace-editor';
 import '../../ace.config.js';
 import yaml from 'js-yaml';
@@ -278,23 +277,16 @@ export default {
                     page: this.page,
                 }
             }).then((res) => {
-                console.log(res.data.item)
                 this.total = res.data.total
                 this.daemonsetItem = res.data.item
             }).catch(function (res) {
                 console.log(res);
             })
         },
-        Loading(msg) {
-            const loading = ElLoading.service({
-                lock: true,
-                text: msg + ".....",
-                background: 'rgba(0, 0, 0, 0.7)',
-            })
+        Refresh() {
             setTimeout(() => {
-                loading.close()
                 this.reload()
-            }, 2000)
+            }, 1000)
 
         },
         getnsselect() {
@@ -348,12 +340,12 @@ export default {
                 }
             }
             ).then((res) => {
-                this.Loading("Deleting")
                 this.$message({
                     showClose: true,
                     message: res.msg,
                     type: 'warning'
                 });
+                this.Refresh()
             }).catch(function (res) {
                 console.log(res);
             })
@@ -370,13 +362,12 @@ export default {
                     data: JSON.parse(data)
                 },
             ).then((res) => {
-                this.Loading("Updateing")
                 this.$message({
                     showClose: true,
                     message: res.msg,
                     type: 'success'
                 });
-                console.log(res)
+                this.Refresh()
             }).catch((res) => {
                 this.$message({
                     showClose: true,

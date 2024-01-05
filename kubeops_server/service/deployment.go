@@ -89,6 +89,12 @@ type Deploydp struct {
 	Total int    `json:"total"`
 }
 
+type CountDeploy struct {
+	Total    int `json:"total"`
+	Ready    int `json:"ready"`
+	NotReady int `json:"not_ready"`
+}
+
 // GetDeploymentList 获取deployment 列表
 func (d *deployment) GetDeploymentList(DeployName, Namespace string, Limit, Page int, uuid int) (DP *DeployResp, err error) {
 	//获取deployment 的所有清单列表
@@ -319,6 +325,27 @@ func (d *deployment) RolloutDeploy(Namespace, DeployName string, uuid int) (err 
 		return errors.New("回滚deploy 失败" + err.Error())
 	}
 	return nil
+}
+
+// DeployCount 统计deployment 实例的状态分布
+func (d *deployment) DeployCount(Namespace string, uuid int) (*CountDeploy, error) {
+	deployList, err := K8s.Clientset[uuid].AppsV1().Deployments(Namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		logger.Info("获取deployment 列表失败" + err.Error())
+		return nil, errors.New("获取namespace 列表失败")
+	}
+	count := 0
+	for _, v := range deployList.Items {
+		//readyReplicas 与 replicas 相等 就表示所有pod 都处于ready状态
+		if v.Status.ReadyReplicas == *v.Spec.Replicas {
+			count++
+		}
+	}
+	return &CountDeploy{
+		Total:    len(deployList.Items),
+		Ready:    count,
+		NotReady: len(deployList.Items) - count,
+	}, nil
 }
 
 /*

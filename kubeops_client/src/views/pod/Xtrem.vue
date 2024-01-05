@@ -109,12 +109,12 @@ export default {
         runFakeTerminal(init) {
             let _this = this
             let term = _this.term
+            let jwttoken = localStorage.getItem("user_token")
             term._initialized = init
             if (term._initialized) return
             // 初始化
             term._initialized = true
             this.socket = new WebSocket(`ws://127.0.0.1:8081/ws?namespace=${this.namespace}&pod_name=${this.pod_name}&container_name=${this.container_name}`);
-
             // 换行并输入起始符
             term.prompt = _ => {
                 if (this.jsdata.data != undefined) {
@@ -213,6 +213,7 @@ export default {
                 this.containerItem = res.item
                 this.container_name = res.item[0]
                 this.initXterm()
+                console.log(this.container_name)
             }).catch(function (res) {
                 console.log(res);
             })

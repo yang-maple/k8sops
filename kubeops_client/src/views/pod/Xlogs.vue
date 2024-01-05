@@ -54,10 +54,6 @@ export default {
             refreshtimeValue: null,
             options: [
                 {
-                    refreshtimeValue: 1000,
-                    label: '1s',
-                },
-                {
                     refreshtimeValue: 5000,
                     label: '5s',
                 },

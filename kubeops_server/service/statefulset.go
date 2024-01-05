@@ -31,6 +31,12 @@ type statefulInfo struct {
 	Status     string            `json:"status"`
 }
 
+type CountStateful struct {
+	Total    int `json:"total"`
+	Ready    int `json:"ready"`
+	NotReady int `json:"not_ready"`
+}
+
 // toCells 将 statefulCell 转换为 dataCell
 func (s *statefulSet) toCells(statefulCell []appsv1.StatefulSet) []DataCell {
 	cells := make([]DataCell, len(statefulCell))
@@ -145,4 +151,24 @@ func (s *statefulSet) ModifyStatefulReplicas(Namespace, StsName string, Replicas
 		return errors.New("更新副本数失败" + err.Error())
 	}
 	return nil
+}
+
+// StatefulCount  统计stateful ready数量
+func (s *statefulSet) StatefulCount(Namespace string, uuid int) (*CountStateful, error) {
+	statefulList, err := K8s.Clientset[uuid].AppsV1().StatefulSets(Namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		logger.Info("获取 statefulList 失败" + err.Error())
+		return nil, errors.New("获取 statefulList 失败" + err.Error())
+	}
+	count := 0
+	for _, v := range statefulList.Items {
+		if v.Status.ReadyReplicas == *v.Spec.Replicas {
+			count++
+		}
+	}
+	return &CountStateful{
+		Total:    len(statefulList.Items),
+		Ready:    count,
+		NotReady: len(statefulList.Items) - count,
+	}, nil
 }

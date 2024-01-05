@@ -188,7 +188,6 @@ export default {
             }).then((res) => {
                 this.clusteritem = res.data.item
                 this.Counter()
-                console.log(res)
             }).catch((res) => {
                 console.log(res);
             })
@@ -258,7 +257,6 @@ export default {
             this.acktotal = [];
             this.k8stotal = [];
             for (let i = 0; i < this.clusteritem.length; i++) {
-                console.log(this.clusteritem[i].type)
                 if (this.clusteritem[i].type == 'k8s') {
                     this.k8stotal.push(this.clusteritem[i])
                 } else if (this.clusteritem[i].type == 'ack') {

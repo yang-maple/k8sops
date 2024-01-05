@@ -13,7 +13,7 @@ const routes = [
         children: [
             {
                 path: '/home',
-                icon: 'LocationInformation',
+                icon: '#icon-s-promotion',
                 component: () => import('@/views/homepage/Homepage.vue'),
                 name: '概要',
             }
@@ -26,7 +26,7 @@ const routes = [
         children: [
             {
                 path: '/clusterinfo',
-                icon: 'LocationInformation',
+                icon: '#icon-jiqunguanli2',
                 component: () => import('@/views/clustermanager/Cluster.vue'),
                 name: '集群信息',
             }
@@ -43,7 +43,7 @@ const routes = [
                 path: '/deployment',
                 name: "deployment",
                 component: () => import('@/views/deployment/Deployment.vue'),
-                icon: 'el-icon-s-data',
+                icon: '#icon-gongzuofuzai1',
                 meta: { title: 'Deployment', requireAuth: true },
             },
             {
@@ -102,7 +102,7 @@ const routes = [
         children: [
             {
                 path: '/node',
-                icon: 'LocationInformation',
+                icon: '#icon-jiqunguanli1',
                 component: () => import('@/layout/index.vue'),
                 name: 'Node 节点',
                 meta: { title: 'Node', requireAuth: true },
@@ -171,7 +171,7 @@ const routes = [
         children: [
             {
                 path: '/services',
-                icon: 'LocationInformation',
+                icon: '#icon-fuwuliu_o',
                 component: () => import('@/layout/index.vue'),
                 name: 'Services',
                 meta: { title: 'Services', requireAuth: true },
@@ -212,7 +212,7 @@ const routes = [
         children: [
             {
                 path: '/configure/persistenvolumeclaim',
-                icon: 'LocationInformation',
+                icon: '#icon-yidongyunkongzhitaiicon06',
                 component: () => import('@/views/storage/Persistenvolumeclaim.vue'),
                 name: 'PersistenVolumeClaim',
                 meta: { title: 'PersistenVolumeClaim', requireAuth: true },
@@ -300,6 +300,7 @@ const router = createRouter({
     history: createWebHistory(),
     routes
 })
+
 
 // 进度条配置
 //**要递增进度条，只需使用.inc()

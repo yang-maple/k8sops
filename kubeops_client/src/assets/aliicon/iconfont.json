@@ -1,0 +1,114 @@
+{
+  "id": "4398000",
+  "name": "k8s_ops",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "35361005",
+      "name": "s-promotion",
+      "font_class": "s-promotion",
+      "unicode": "e922",
+      "unicode_decimal": 59682
+    },
+    {
+      "icon_id": "383637",
+      "name": "纸飞机",
+      "font_class": "zhifeiji",
+      "unicode": "e629",
+      "unicode_decimal": 58921
+    },
+    {
+      "icon_id": "4071670",
+      "name": "k8s",
+      "font_class": "ks",
+      "unicode": "e72d",
+      "unicode_decimal": 59181
+    },
+    {
+      "icon_id": "868656",
+      "name": "弹性存储",
+      "font_class": "yidongyunkongzhitaiicon06",
+      "unicode": "e74e",
+      "unicode_decimal": 59214
+    },
+    {
+      "icon_id": "5387406",
+      "name": "服务流",
+      "font_class": "fuwuliu",
+      "unicode": "eaca",
+      "unicode_decimal": 60106
+    },
+    {
+      "icon_id": "5387779",
+      "name": "服务流_o",
+      "font_class": "fuwuliu_o",
+      "unicode": "eb53",
+      "unicode_decimal": 60243
+    },
+    {
+      "icon_id": "14151855",
+      "name": "概览",
+      "font_class": "gailan",
+      "unicode": "e631",
+      "unicode_decimal": 58929
+    },
+    {
+      "icon_id": "23094487",
+      "name": "顶部导航-集群管理",
+      "font_class": "jiqunguanli",
+      "unicode": "e601",
+      "unicode_decimal": 58881
+    },
+    {
+      "icon_id": "23169763",
+      "name": "集群管理-配置管理",
+      "font_class": "jiqunguanli-peizhiguanli",
+      "unicode": "e606",
+      "unicode_decimal": 58886
+    },
+    {
+      "icon_id": "29615342",
+      "name": "集群管理",
+      "font_class": "jiqunguanli1",
+      "unicode": "e7b3",
+      "unicode_decimal": 59315
+    },
+    {
+      "icon_id": "30696000",
+      "name": "Pod容器组",
+      "font_class": "Podrongqizu",
+      "unicode": "e669",
+      "unicode_decimal": 58985
+    },
+    {
+      "icon_id": "37244108",
+      "name": "工作负载集群",
+      "font_class": "gongzuofuzaijiqun",
+      "unicode": "e641",
+      "unicode_decimal": 58945
+    },
+    {
+      "icon_id": "37656306",
+      "name": "工作负载",
+      "font_class": "gongzuofuzai",
+      "unicode": "e744",
+      "unicode_decimal": 59204
+    },
+    {
+      "icon_id": "37997784",
+      "name": "集群管理",
+      "font_class": "jiqunguanli2",
+      "unicode": "e681",
+      "unicode_decimal": 59009
+    },
+    {
+      "icon_id": "38506700",
+      "name": "工作负载",
+      "font_class": "gongzuofuzai1",
+      "unicode": "e625",
+      "unicode_decimal": 58917
+    }
+  ]
+}

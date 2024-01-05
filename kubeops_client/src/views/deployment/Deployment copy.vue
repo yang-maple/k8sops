@@ -200,7 +200,7 @@
 </template>
 
 <script scoped>
-import { ElFormItem, ElLoading } from 'element-plus'
+import { ElLoading } from 'element-plus'
 import { VAceEditor } from 'vue3-ace-editor';
 import '../../ace.config.js';
 import yaml from 'js-yaml';

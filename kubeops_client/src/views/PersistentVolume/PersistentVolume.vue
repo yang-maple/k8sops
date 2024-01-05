@@ -16,7 +16,7 @@
         </el-col>
         <el-col :span="6">
             <div class="header-grid-content" style="text-align: center;">
-                <el-button type="info" @click="Loading(`Refresh`)" round>
+                <el-button type="info" @click="Refresh()" round>
                     <el-icon>
                         <Refresh />
                     </el-icon>
@@ -163,7 +163,6 @@
 </template>
 
 <script scoped>
-import { ElLoading } from 'element-plus'
 import { VAceEditor } from 'vue3-ace-editor';
 import '../../ace.config.js';
 import yaml from 'js-yaml';
@@ -237,7 +236,6 @@ export default {
                 }
             }
             ).then((res) => {
-                this.Loading("Deleting")
                 this.$message({
                     showClose: true,
                     message: res.msg,
@@ -246,7 +244,7 @@ export default {
             }).catch((res) => {
                 console.log(res);
             })
-
+            this.Refresh()
         },
         getPersistentVolume() {
             this.$ajax({
@@ -270,20 +268,18 @@ export default {
                     data: this.form
                 },
             ).then((res) => {
-                this.Loading("Creating")
                 this.$message({
                     message: res.msg,
                     type: 'success'
                 });
                 console.log(res)
             }).catch((res) => {
-
                 console.log(res);
             })
+            this.Refresh()
 
         },
         handleUpdate() {
-            this.Loading("Updateing")
             let data = this.content
             if (this.aceConfig.lang == 'yaml') {
                 data = JSON.stringify(yaml.load(data), null, 2);
@@ -308,17 +304,12 @@ export default {
                 });
                 console.log(res);
             })
+            this.Refresh()
         },
-        Loading(msg) {
-            const loading = ElLoading.service({
-                lock: true,
-                text: msg,
-                background: 'rgba(0, 0, 0, 0.7)',
-            })
+        Refresh() {
             setTimeout(() => {
-                loading.close()
                 this.reload()
-            }, 2000)
+            }, 1000)
 
         },
         changeshow() {

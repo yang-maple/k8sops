@@ -153,6 +153,7 @@ export default {
             })
         },
         handleSubmit(form) {
+
             this.$refs[form].validate((valid) => {
                 if (valid) {
                     this.$ajax.post(
@@ -168,7 +169,9 @@ export default {
                         this.$auth.setUserAuth(res.username, res.token, res.uid)
                         this.$auth.setUserCluster(res.cluster_name)
                         this.$router.push("/home")
+
                     }).catch((res) => {
+                        loading.close()
                         this.notify("error", "登录失败", res.msg)
                         this.GetCaptcha();
                         console.log(res);

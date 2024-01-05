@@ -18,8 +18,16 @@ type node struct{}
 var Node node
 
 type NodeList struct {
-	Total int        `json:"total"`
-	Item  []nodeInfo `json:"Item"`
+	Total     int        `json:"total"`
+	Item      []nodeInfo `json:"Item"`
+	Resources Resource   `json:"resource"`
+}
+
+type Resource struct {
+	FreeMemory  float64 `json:"free_memory"`
+	TotalMemory float64 `json:"total_memory"`
+	FreeCpu     float64 `json:"free_cpu"`
+	TotalCpu    float64 `json:"total_cpu"`
 }
 
 type nodeInfo struct {
@@ -58,6 +66,8 @@ func (n *node) GetNodeList(uuid int) (nodeList *NodeList, err error) {
 		return nil, errors.New("获取Node 失败" + err.Error())
 	}
 	item := make([]nodeInfo, 0, len(nodeLists.Items))
+	//计算memory 使用量
+	var freeMemory, totalMemory, freeCpu, totalCpu float64
 	for _, v := range nodeLists.Items {
 		status := "Ready"
 		if v.Status.Conditions[len(v.Status.Conditions)-1].Status != "True" {
@@ -74,10 +84,20 @@ func (n *node) GetNodeList(uuid int) (nodeList *NodeList, err error) {
 			CreateTime:     v.CreationTimestamp.Time.Format("2006-01-02 15:04:05"),
 			KubeletVersion: v.Status.NodeInfo.KubeletVersion,
 		})
+		freeMemory += v.Status.Allocatable.Memory().AsApproximateFloat64()
+		totalMemory += v.Status.Capacity.Memory().AsApproximateFloat64()
+		freeCpu += v.Status.Allocatable.Cpu().AsApproximateFloat64()
+		totalCpu += v.Status.Capacity.Cpu().AsApproximateFloat64()
 	}
 	return &NodeList{
 		Total: len(nodeLists.Items),
 		Item:  item,
+		Resources: Resource{
+			FreeMemory:  freeMemory,
+			TotalMemory: totalMemory,
+			FreeCpu:     freeCpu,
+			TotalCpu:    totalCpu,
+		},
 	}, err
 }
 

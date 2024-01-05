@@ -56,7 +56,6 @@ export default {
     GetNodelistaxios() {
       this.$ajax.get("/node/list").then((res) => {
         this.nodeItem = res.data.Item
-        console.log(res.data);
       }).catch(function (res) {
         console.log(res.data);
       })

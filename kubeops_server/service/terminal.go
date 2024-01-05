@@ -4,14 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/wonderivan/logger"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/remotecommand"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -30,9 +32,12 @@ func (t *terminal) WsHandler(w http.ResponseWriter, r *http.Request) {
 		logger.Error("parse failed" + err.Error())
 		return
 	}
+	clientset, err := kubernetes.NewForConfig(conf)
 	namespace := r.Form.Get("namespace")
 	podName := r.Form.Get("pod_name")
 	containerName := r.Form.Get("container_name")
+	//token := r.Header.Get("Sec-WebSocket-Protocol")
+	//claim, _ := utils.JWTToken.ParseToken(token, utils.UserSecret)
 	logger.Info("kubectl exec pod %s -c %s -n %s\n", podName, containerName, namespace)
 	pty, err := t.NewTerminalSession(w, r, nil)
 	if err != nil {
@@ -43,8 +48,13 @@ func (t *terminal) WsHandler(w http.ResponseWriter, r *http.Request) {
 		logger.Info("defer close TerminalSession")
 		pty.Close()
 	}()
-	uuid, _ := strconv.Atoi(r.Header.Get("Uuid"))
-	req := K8s.Clientset[uuid].CoreV1().RESTClient().Post().Resource("pods").
+	//解析出token ,通过token 获取uuid
+	fmt.Println("~~~~~~~~", namespace, podName, containerName)
+	list, _ := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
+	for _, pod := range list.Items {
+		fmt.Println(pod.Name)
+	}
+	req := K8s.Clientset[1].CoreV1().RESTClient().Post().Resource("pods").
 		Name(podName).
 		Namespace(namespace).
 		SubResource("exec").
@@ -195,7 +205,6 @@ func (t *TerminalSession) Close() {
 
 // Next resize方法，以及是否退出终端
 func (t *TerminalSession) Next() *remotecommand.TerminalSize {
-
 	select {
 	case size := <-t.sizeChan:
 		return &size

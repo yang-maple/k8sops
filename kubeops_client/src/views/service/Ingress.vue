@@ -20,7 +20,7 @@
         </el-col>
         <el-col :span="4">
             <div class="header-grid-content" style="text-align: center;">
-                <el-button type="info" @click="Loading(`Refresh`)" round>
+                <el-button type="info" @click="Refresh()" round>
                     <el-icon>
                         <Refresh />
                     </el-icon>
@@ -154,7 +154,7 @@
 </template>
 
 <script scoped>
-import { ElFormItem, ElLoading } from 'element-plus'
+import { ElFormItem } from 'element-plus'
 import { VAceEditor } from 'vue3-ace-editor';
 import '../../ace.config.js';
 import yaml from 'js-yaml';
@@ -249,7 +249,7 @@ export default {
             }).then((res) => {
                 this.total = res.data.total
                 this.ingressItem = res.data.item
-                console.log(res.data.item)
+
             }).catch(function (res) {
                 console.log(res);
             })
@@ -261,7 +261,6 @@ export default {
                     data: this.ruleForm
                 },
             ).then((res) => {
-                this.Loading("Creating")
                 this.$message({
                     message: res.msg,
                     type: 'success'
@@ -273,17 +272,12 @@ export default {
                     type: 'error'
                 });
             })
+            this.Refresh()
         },
-        Loading(msg) {
-            const loading = ElLoading.service({
-                lock: true,
-                text: msg + ".....",
-                background: 'rgba(0, 0, 0, 0.7)',
-            })
+        Refresh() {
             setTimeout(() => {
-                loading.close()
                 this.reload()
-            }, 2000)
+            }, 1000)
 
         },
         getnsselect() {
@@ -337,7 +331,6 @@ export default {
                 }
             }
             ).then((res) => {
-                this.Loading("Deleting")
                 this.$message({
                     showClose: true,
                     message: res.msg,
@@ -350,7 +343,7 @@ export default {
                     type: 'error'
                 });
             })
-
+            this.Refresh()
         },
         handleUpdate(namespace) {
             let data = this.content
@@ -364,7 +357,6 @@ export default {
                     data: JSON.parse(data)
                 },
             ).then((res) => {
-                this.Loading("Updateing")
                 this.$message({
                     showClose: true,
                     message: res.msg,
@@ -377,6 +369,7 @@ export default {
                     type: 'error'
                 });
             })
+            this.Refresh()
         },
         messageboxOperate(row, name) {
             this.$confirm(`是否${name}实例${row.name}`, '提示', {

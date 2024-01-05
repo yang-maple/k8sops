@@ -33,6 +33,12 @@ type daemonInfo struct {
 	Status     string            `json:"status"`
 }
 
+type CountDaemon struct {
+	Ready    int `json:"ready"`
+	NotReady int `json:"not_ready"`
+	Total    int `json:"total"`
+}
+
 // toCell 数据类型转换 from daemonCell to dataCell
 func (d *daemonSet) toCell(daemonSets []appsv1.DaemonSet) []DataCell {
 	cells := make([]DataCell, len(daemonSets))
@@ -130,4 +136,23 @@ func (d *daemonSet) UpdateDs(Namespace string, ds *appsv1.DaemonSet, uuid int) (
 	}
 
 	return nil
+}
+
+// DaemonCount 统计daemon set ready 数量
+func (d *daemonSet) DaemonCount(namespace string, uuid int) (*CountDaemon, error) {
+	dsList, err := K8s.Clientset[uuid].AppsV1().DaemonSets(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		logger.Info("获取 daemonSetList 失败" + err.Error())
+	}
+	count := 0
+	for _, v := range dsList.Items {
+		if v.Status.NumberReady == v.Status.DesiredNumberScheduled {
+			count++
+		}
+	}
+	return &CountDaemon{
+		Ready:    count,
+		NotReady: len(dsList.Items) - count,
+		Total:    len(dsList.Items),
+	}, err
 }

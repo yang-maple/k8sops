@@ -1,27 +1,27 @@
 <template>
     <div class="common-layout">
         <!-- container 布局-->
-        <el-container>
+        <el-container style="height: 100vh;">
             <!--侧边导航栏-->
-            <el-aside :width="asideWidth">
-                <!--固定控制标头组件-->
-                <div class="aside-logo" v-bind:translate="false">
-                    <el-image class="logo-image" :src="logo" />
-                    <span :class="[isCollapse ? 'is-collapse' : 'logo-name']">Kubernetes</span>
-                </div>
-                <!--菜单导航栏-->
-                <el-menu class="el-menu-vertical-demo" router :default-active="$route.path" :collapse="isCollapse"
-                    text-color="#bfcbd9" active-text-color="#20a0ff" background-color="#131b27">
+            <el-aside class="aside" :width="asideWidth">
+                <el-affix class="aside-affix" :z-index="12000">
+                    <div class="aside-logo">
+                        <el-image class="logo-image" :src="logo" />
+                        <span :class="[isCollapse ? 'is-collapse' : 'logo-name']">Kubernetes</span>
+                    </div>
+                </el-affix>
+                <!-- router 定义vue-router模式 菜单栏的index 跟路由规则的path 绑定-->
+                <!-- default-active 默认激活菜单栏，根据打开的path 来找到对应的栏 -->
+                <el-menu class="aside-menu" router :default-active="$route.path" :collapse="isCollapse"
+                    backgroup-color="#131b27" text-color="#bfcbd9" active-text-color="#20a0ff">
                     <!-- routers 就是路由规则的 route -->
-                    <!-- 第一种情况 children 只有一个的路由 -->
-                    <!-- 第一种情况 children 只有一个的路由 -->
-                    <template v-for="menu in routers" :key="menu">
-                        <el-menu-item v-if="menu.children && menu.children.length == 1" :index="menu.children[0].path">
+                    <div v-for="menu in routers" :key="menu" class="aside-menu-item">
+                        <!-- 第一种情况 children 只有一个的路由 -->
+                        <el-menu-item class="aside-menu-item" v-if="menu.children && menu.children.length == 1"
+                            :index="menu.children[0].path">
                             <!-- 处理图标和菜单栏 -->
                             <el-icon>
-                                <svg class="icon" aria-hidden="true">
-                                    <use :xlink:href="menu.children[0].icon"></use>
-                                </svg>
+                                <component :is="menu.children[0].icon" />
                             </el-icon>
                             <template #title>
                                 {{ menu.children[0].name }}
@@ -33,11 +33,9 @@
                             <!-- 处理父菜单栏 -->
                             <template #title>
                                 <el-icon>
-                                    <svg class="icon" aria-hidden="true">
-                                        <use :xlink:href="menu.children[0].icon"></use>
-                                    </svg>
+                                    <component :is="menu.icon" />
                                 </el-icon>
-                                <span>{{ menu.name }}</span>
+                                <span :class="[isCollapse ? 'is-collapse' : '']">{{ menu.name }}</span>
                             </template>
                             <!-- 处理子菜单栏 -->
                             <el-menu-item class="aside-children" v-for="child in menu.children" :key="child"
@@ -51,27 +49,28 @@
                                 </el-menu-item> -->
                             </el-menu-item>
                         </el-sub-menu>
-                    </template>
+                    </div>
                 </el-menu>
             </el-aside>
             <el-container>
-                <!--头部导航栏-->
-                <el-header>
+                <!-- 头部信息 -->
+                <el-header class="header">
                     <el-row :gutter="20">
                         <!-- 折叠按钮 -->
                         <el-col :span="1">
-                            <div class="header-collapse" @click="collapse()">
+                            <div class="header-collapse" @click="onCollapse">
+                                <!---->
                                 <el-icon>
                                     <component :is="isCollapse?'Expand':'Fold'" />
                                 </el-icon>
                             </div>
                         </el-col>
-                        <!--面包屑组件-->
+                        <!-- 面包屑组件 -->
                         <el-col :span="8">
                             <div class="header-breadcrumb">
                                 <el-breadcrumb separator="/">
                                     <!-- 最外层 固定 -->
-                                    <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+                                    <el-breadcrumb-item :to="{ path: '/' }">工作台</el-breadcrumb-item>
                                     <!-- 循环内层 name -->
                                     <template v-for="(matched, m) in this.$route.matched" :key="m">
                                         <el-breadcrumb-item v-if="matched.name != undefined">
@@ -84,42 +83,50 @@
                         <!--通过yaml 创建资源-->
                         <el-col :span="12">
                             <div style="text-align: right;">
-                                <el-button type="info" @click="dialogyaml = true">
+                                <el-button type="info" @click="dialogcreatens = true">
                                     YAML创建资源
                                 </el-button>
                             </div>
                         </el-col>
-                        <!--用户信息-->
+                        <!-- 用户信息 -->
                         <el-col :span="3">
-                            <el-dropdown>
-                                <div class="header-username" @mouseover="isOver = true" @mouseleave="isOver = false">
-                                    <el-image class="avator-image" :src="avator" />
-                                    <span style="font-size: 20px;">{{ username }}</span>
-                                    <el-icon size="16" style="padding-left: 5px; padding-bottom: 5px;">
-                                        <component :is="isOver?'ArrowDown':'ArrowLeft'" />
-                                    </el-icon>
-                                </div>
-                                <!-- 下拉框内容 -->
-                                <template #dropdown>
-                                    <el-dropdown-menu>
-                                        <el-dropdown-item>修改密码</el-dropdown-item>
-                                        <el-dropdown-item @click="logout">退出</el-dropdown-item>
-                                    </el-dropdown-menu>
-                                </template>
-                            </el-dropdown>
+                            <div class="header-user">
+                                <el-dropdown>
+                                    <div class="header-dropdown header-username" @mouseover="isOver = true"
+                                        @mouseleave="isOver = false">
+                                        <el-image class="avator-image" :src="avator" />
+                                        <span style="font-size: 20px;">{{ username }}</span>
+                                        <el-icon size="16" style="padding-left: 5px; padding-bottom: 5px;">
+                                            <component :is="isOver?'ArrowDown':'ArrowLeft'" />
+                                        </el-icon>
+                                    </div>
+                                    <!-- 下拉框内容 -->
+                                    <template #dropdown>
+                                        <el-dropdown-menu>
+                                            <el-dropdown-item>修改密码</el-dropdown-item>
+                                            <el-dropdown-item @click="logout">退出</el-dropdown-item>
+                                        </el-dropdown-menu>
+                                    </template>
+                                </el-dropdown>
+                            </div>
                         </el-col>
                     </el-row>
                 </el-header>
-                <!--Main导航栏-->
                 <el-main>
                     <div v-if="cluster != null && this.$route.path != '/clusterinfo'"><router-view></router-view></div>
                     <div v-if="this.$route.path == '/clusterinfo'"><router-view></router-view></div>
                     <div v-if="cluster == null"><el-empty description="还没有添加任何集群哦~"></el-empty></div>
                 </el-main>
+                <el-footer class="footer">
+                    <el-icon style="width: 2em;top: 3px;font-size: 18px;">
+                        <Place />
+                    </el-icon>
+                    <a>2022 adoo devops</a>
+                </el-footer>
             </el-container>
         </el-container>
     </div>
-    <el-dialog v-model="dialogyaml" title="YAML创建资源" center>
+    <el-dialog v-model="dialogcreatens" title="YAML创建资源" center>
         <el-tabs v-model="activeName" type="border-card" @tab-click="handleClick">
             <el-tab-pane label="YAML" name="yaml"><v-ace-editor v-model:value="content" :lang="aceConfig.lang"
                     style="min-height: 400px" :theme="aceConfig.theme" :options="aceConfig.options" /></el-tab-pane>
@@ -161,6 +168,28 @@ export default {
         const yamlfile = ref('yamlfile')
         return { yamlfile }
     },
+    data() {
+        return {
+            logo: require('@/assets/img/logo.png'),
+            avator: require('@/assets/img/user.png'),
+            asideWidth: '220px',
+            isCollapse: false,
+            isOver: false,
+            dialogcreatens: false,
+            routers: [],
+            aceConfig: {
+                lang: 'yaml',
+                theme: "cloud9_day",
+                options: {
+                    showPrintMargin: false,
+                }
+            },
+            validationErrors: [],
+            activeName: 'yaml',
+            content: '',
+            file_list: [],
+        }
+    },
     computed: {
         username() {
             let username = localStorage.getItem('user_name')
@@ -177,36 +206,28 @@ export default {
             return cluster ? cluster : null
         }
     },
-    data() {
-        return {
-            logo: require('@/assets/img/logo.png'),
-            avator: require('@/assets/img/user.png'),
-            asideWidth: "220px",
-            isCollapse: false,
-            isOver: false,
-            routers: [],
-            dialogyaml: false,
-            aceConfig: {
-                lang: 'yaml',
-                theme: "cloud9_day",
-                options: {
-                    showPrintMargin: false,
-                }
-            },
-            content: '',
-            file_list: [],
-            activeName: 'yaml',
-        }
+    beforeMount() {
+        this.routers = useRouter().options.routes
     },
     methods: {
-        collapse() {
-            if (this.isCollapse == false) {
-                this.isCollapse = true
-                this.asideWidth = "60px"
-            } else {
+        onCollapse() {
+            if (this.isCollapse) {
+                this.asideWidth = '220px'
                 this.isCollapse = false
-                this.asideWidth = "220px"
+            } else {
+                this.asideWidth = '63.2px'
+                this.isCollapse = true
             }
+        },
+        logout() {
+            this.$auth.delUserAuth()
+            this.$router.push('/login')
+        },
+        mouseover() {
+            this.isOver = true
+        },
+        handleClick(tab) {
+            console.log(tab)
         },
         createyaml() {
             try {
@@ -257,57 +278,32 @@ export default {
             });
             console.log(JSON.parse(error.message))
         },
-        handleClick(tab) {
-            console.log(tab)
-        },
-        logout() {
-            this.$auth.delUserAuth()
-            this.$router.push('/login')
-        },
-    },
-    beforeMount() {
-        this.routers = useRouter().options.routes
-    },
+    }
 }
+
 </script>
 
 <style>
-.common-layout {
-    height: 100vh;
-}
-
-.el-container {
-    height: 100%;
-}
-
-
-
-/* 
-    边框样式，隐藏X轴滚轮
-*/
-.el-aside {
+.aside {
     transition: all .5s;
     background-color: #131b27;
-    overflow-x: hidden !important;
 }
 
-/* 
-    边框样式，隐藏Y轴滚轮
-*/
-.el-aside::-webkit-scrollbar {
+/* 滚轴 */
+.aside::-webkir-scrollbar {
     display: none;
 }
 
-/* 
-   logo样式
-*/
+.aside-affix {
+    z-index: 12000;
+}
+
 .aside-logo {
+    color: white;
+    background-color: #131b27;
     height: 60px;
 }
 
-/* 
-   logo 图片样式
-*/
 .logo-image {
     width: 40px;
     height: 40px;
@@ -316,121 +312,59 @@ export default {
 
 }
 
-/* 
-   logo 名称样式
-*/
 .logo-name {
-    color: white;
     font-size: 20px;
     font-weight: bold;
     padding: 10px;
-    transition: none !important;
+    padding-left: 20px;
 }
 
-/* 
-    隐藏logo 名称
-*/
+.aside-menu:not(.el-menu--collapse) {
+    background-color: #131b27;
+    border-right-width: 0;
+}
+
 .is-collapse {
     display: none;
 }
 
-/* 
-   取消菜单栏的边框
-*/
-.el-menu {
-    border-right: solid 0px !important;
+/* 概要菜单栏背景色 */
+.aside-menu-item {
+    background-color: #131b27;
 }
 
-/* 
-   菜单栏折叠样式
-*/
-.el-menu-vertical-demo:not(.el-menu--collapse) {
-    width: 220px;
-    height: 100%;
-}
-
-/* 
-   鼠标悬浮菜单栏样式
-*/
-.el-menu .el-menu-item:hover {
-    background-color: rgba(3, 60, 174, 0.81);
-}
-
-/* 
-   鼠标选中菜单栏样式
-*/
-.el-menu .el-menu-item.is-active {
+.aside-menu-item.is-active {
     background-color: #263448;
 }
 
-/* 
-   main 页面样式
-*/
-.el-main {
-    width: 100%;
-    height: 100%;
-    padding: 5px !important;
-    padding-top: 10px !important;
+/* */
+.aside-submenu {
+    background-color: #131b27;
 }
 
-/* 
-   固定头部样式
-*/
-.el-header {
+.aside-children {
+    background-color: #131b27;
+
+}
+
+.aside-children.is-active {
+    background-color: #263448;
+}
+
+.header {
     z-index: 1200;
     line-height: 60px;
     font-size: 24px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, .12), 0 0 6px rgba(0, 0, 0, .04);
 }
 
-/* 
-  点击图标折叠
-*/
+/*可点击状态*/
 .header-collapse {
-    .el-icon {
-        cursor: pointer;
-    }
-
-}
-
-/* 
-  面包屑样式
-*/
-.header-breadcrumb {
-    padding-top: 0.85em;
-}
-
-/* 
-  el-dialog 中 yaml内边距样式
-*/
-.el-tabs--border-card>.el-tabs__content {
-    padding: 0px !important;
-    padding-top: 5px !important;
-}
-
-
-.el-dialog--center {
-    .el-dialog__body {
-        padding-top: 0px !important;
-        padding-bottom: 10px !important;
-    }
-}
-
-.el-dialog__footer {
-    padding: 0px !important;
-    padding-bottom: 10px !important;
-}
-
-
-
-
-.header-username {
-    line-height: 40px;
     cursor: pointer;
 }
 
-:focus-visible {
-    outline: -webkit-focus-ring-color auto 0px;
+.header-breadcrumb {
+    padding-top: 0.9em;
 }
 
 /*用户图片信息*/
@@ -443,11 +377,69 @@ export default {
     margin-right: 8px;
 }
 
+.header-user {
+    text-align: right;
+}
+
+.header-dropdown {
+    line-height: 60px;
+}
+
+.header-username {
+    cursor: pointer;
+}
+
+.footer {
+    z-index: 1200;
+    color: rgb(187, 184, 184);
+    font-size: 14px;
+    text-align: center;
+    line-height: 30px;
+}
+
+
+.el-menu .el-menu-item:hover {
+    background-color: rgba(3, 60, 174, 0.81);
+}
+
+.el-menu .el-sub-menu__title:hover {
+    background-color: rgba(3, 60, 174, 0.81);
+}
+
+.el-menu .el-sub-menu .el-menu-item:hover {
+    background-color: rgba(3, 60, 174, 0.81);
+}
+
+.el-main {
+    width: 100%;
+    height: 100%;
+    padding: 5px !important;
+    padding-top: 10px !important;
+}
+
+.el-footer {
+    height: 30px !important
+}
+
+
+.el-tabs--border-card>.el-tabs__content {
+    padding: 0px !important;
+    padding-top: 5px !important;
+}
+
+.el-dialog--center {
+    .el-dialog__body {
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+    }
+}
+
 .icon {
     width: 2em;
     height: 2em;
     vertical-align: -0.15em;
     fill: currentColor;
-
+    overflow: hidden;
+    color: #ffffffff;
 }
 </style>

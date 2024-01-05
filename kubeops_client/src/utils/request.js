@@ -1,4 +1,36 @@
 import axios from 'axios'
+import { ElLoading } from 'element-plus'
+let loading
+
+function startLoading() {
+    loading = ElLoading.service({
+        lock: true,
+        text: '努力加载中······',
+        background: 'rgba(0, 0, 0, 0.7)'
+    })
+}
+
+function endLoading() {
+    loading.close()
+}
+
+let needLoadingRequestCount = 0
+
+export function showFullScreenLoading() {
+    if (needLoadingRequestCount === 0) {
+        startLoading()
+    }
+    needLoadingRequestCount++
+}
+export function tryHideFullScreenLoading() {
+    if (needLoadingRequestCount <= 0) return
+    needLoadingRequestCount--
+    if (needLoadingRequestCount === 0) {
+        endLoading()
+    }
+}
+
+
 
 //新建axios 对象
 const httpClient = axios.create({
@@ -27,6 +59,12 @@ httpClient.interceptors.request.use(
                 config.data = {}
             }
         }
+        if (config.url == "/user/getCaptcha" || config.url == "/user/login") {
+            console.log(config.url)
+            return config
+        }
+        console.log(config.url)
+        showFullScreenLoading()
         return config
     },
     err => {
@@ -38,7 +76,7 @@ httpClient.interceptors.request.use(
 // 添加响应拦截器
 httpClient.interceptors.response.use(
     response => {
-        console.log(response)
+        tryHideFullScreenLoading()
         //处理状态码
         switch (response.status) {
             case 401:
