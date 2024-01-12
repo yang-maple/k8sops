@@ -61,6 +61,7 @@ func (router *router) InitApiRouter(r *gin.Engine) {
 	{
 		v6.GET("/list", Node.GetNodeList)
 		v6.GET("/detail", Node.GetNodeDeTal)
+		v6.POST("/schedule", Node.SetNodeSchedule)
 	}
 	v7 := r.Group("/v1/api/pv")
 	{
@@ -141,5 +142,20 @@ func (router *router) InitApiRouter(r *gin.Engine) {
 	v17 := r.Group("/v1/api/homepage")
 	{
 		v17.GET("/getInfo", HomePage.GetHomepage)
+	}
+
+	v18 := r.Group("/v1/api/ingressClass")
+	{
+		v18.GET("/list", IngressClass.GetIngressClassList)
+		v18.GET("/detail", IngressClass.GetIngressClassDetail)
+		v18.DELETE("/delete", IngressClass.DelIngressClass)
+		v18.PUT("/update", IngressClass.UpdateIngressClass)
+	}
+	v19 := r.Group("/v1/api/storageClass")
+	{
+		v19.GET("/list", StorageClass.GetStorageClassList)
+		v19.GET("/detail", StorageClass.GetStorageClassDetail)
+		v19.DELETE("/delete", StorageClass.DelStorageClass)
+		v19.PUT("/update", StorageClass.UpdateStorageClass)
 	}
 }

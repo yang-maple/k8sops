@@ -6,7 +6,6 @@ import (
 	"github.com/wonderivan/logger"
 	networkv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubeops/model"
 )
 
 type ingress struct{}
@@ -97,7 +96,8 @@ func (i *ingress) GetIngList(ingName, Namespace string, Limit, Page int, uuid in
 			Labels:    v.Labels,
 			Endpoint:  v.Status.LoadBalancer.Ingress,
 			Host:      host,
-			Age:       model.GetAge(v.CreationTimestamp.Unix()),
+
+			Age: v.CreationTimestamp.Time.Format("2006-01-02 15:04:05"),
 		})
 	}
 	return &IngResp{

@@ -64,24 +64,62 @@
                     :default-sort="{ prop: 'date', order: 'descending' }">
                     <el-table-column label="名称" prop="name" min-width="40" align="center">
                     </el-table-column>
-                    <el-table-column label="状态" align="center" width="100">
+                    <el-table-column label="状态" align="center" width="120">
                         <template #default="scope">
                             <div style="display: flex; align-items: center">
-                                <span slot="reference" v-if="scope.row.status == 'Ready'">
-                                    <el-tooltip placement="bottom" effect="light"><template #content>Ready</template>
+                                <span slot="reference"
+                                    v-if="scope.row.status == 'Ready' && scope.row.unschedulable == false">
+                                    <el-tooltip placement="top" effect="light"><template #content>Ready</template>
                                         <i class="dotClass" style="background-color: springgreen"></i></el-tooltip>
                                 </span>
+                                <span slot="reference"
+                                    v-if="scope.row.status == 'Ready' && scope.row.unschedulable == true">
+                                    <el-tooltip placement="top" effect="light"><template #content>Unschedulable</template>
+                                        <i class="dotClass" style="background-color: orange"></i></el-tooltip>
+                                </span>
                                 <span slot="reference" v-if="scope.row.status != 'Ready'">
-                                    <el-tooltip placement="bottom" effect="light"><template #content> NotReady </template>
+                                    <el-tooltip placement="top" effect="light"><template #content> NotReady </template>
                                         <i class="dotClass" style="background-color: red"></i></el-tooltip>
                                 </span>
-                                <span style="margin-left: 10px">{{ scope.row.status }}</span>
+                                <span>
+                                    <el-text v-if="scope.row.status == 'Ready' && scope.row.unschedulable == false"
+                                        style="margin-left: 5px;color: green;">
+                                        运行中
+                                    </el-text>
+                                    <el-text v-if="scope.row.status == 'Ready' && scope.row.unschedulable == true"
+                                        style="margin-left: 5px;color: orangered;">
+                                        不可调度
+                                    </el-text>
+                                    <el-text v-if="scope.row.status != 'Ready'" style="margin-left: 5px;color: red;">
+                                        异常
+                                    </el-text>
+                                </span>
                             </div>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="cpu" align="center" label="可分配CPU" width="100" />
-                    <el-table-column prop="memory" align="center" label="可分配内存" width="100">
+                    <el-table-column prop="cpu" align="center" label="已使用CPU" width="120">
+                        <template #default="scope">
+                            <div>
+                                <span>{{ node_resource["cpu_request"][scope.row.name] }}m</span>
+                                <span style="margin-left: 3px;">({{ toNumber(node_resource["cpu_request"][scope.row.name] *
+                                    100 / scope.row.cpu_total)
+                                }}%)</span>
+                            </div>
+                        </template>
                     </el-table-column>
+
+                    <el-table-column prop="memory" align="center" label="已使用内存" width="120">
+                        <template #default="scope">
+                            <div>
+                                <span>{{ node_resource["memory_request"][scope.row.name] }}Mi</span>
+                                <span style="margin-left: 3px;">({{ toNumber(node_resource["memory_request"][scope.row.name]
+                                    *
+                                    100 / scope.row.memory_total)
+                                }}%)</span>
+                            </div>
+                        </template>
+                    </el-table-column>
+
                     <el-table-column prop="pods" align="center" label="pod 数量" width="70">
                     </el-table-column>
                     <el-table-column prop="create_time" align="center" label="创建时间" />
@@ -236,7 +274,7 @@
         <el-row>
             <el-table :data="eventItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small"
                 :default-sort="{ prop: 'date', order: 'descending' }" height="320">
-                <el-table-column label="名称空间" prop="namespace" width="120" align="center"></el-table-column>
+                <el-table-column label="命名空间" prop="namespace" width="120" align="center"></el-table-column>
                 <el-table-column label="类型" prop="type" width="120" align="center">
                     <template #default="scope">
                         <div style="display: flex; align-items: center">
@@ -287,7 +325,13 @@ export default {
             k8snum: null,
             data: [],
             node_resource: {},
-            num: 12,
+            node_resource_used: {
+                cpu_used: 0,
+                memory_used: 0,
+                cpu_total: 0,
+                memory_total: 0,
+            },
+            // num: 12,
         }
     },
     computed: {
@@ -307,6 +351,15 @@ export default {
                 console.log(res.data)
                 //集群资源使用率
                 this.node_resource = res.data.node_resource
+                const resourceMap = new Map(Object.entries(res.data.node_resource.cpu_request))
+                resourceMap.forEach((value, key) => {
+                    this.node_resource_used.cpu_used += value
+                })
+                const resourceMap2 = new Map(Object.entries(res.data.node_resource.memory_request))
+                resourceMap2.forEach((value, key) => {
+                    this.node_resource_used.memory_used += value
+                })
+                console.log(this.node_resource_used.memory_used)
                 //集群节点信息
                 this.nodeItem = res.data.node_info
                 //集群信息
@@ -322,6 +375,8 @@ export default {
                 this.podInfo = res.data.pod_info
                 //echart pod 数量占比 数据统计
                 for (var i = 0; i < res.data.node_info.length; i++) {
+                    this.node_resource_used.cpu_total += res.data.node_info[i].cpu_total
+                    this.node_resource_used.memory_total += res.data.node_info[i].memory_total
                     this.data.push({
                         value: res.data.node_info[i].pods,
                         name: res.data.node_info[i].name
@@ -406,10 +461,10 @@ export default {
                         },
                         //给data 动态赋值
                         data: [{
-                            value: Math.floor(((this.node_resource.total_memory - this.node_resource.free_memory)) / (1024 * 1024 * 1024) * 100) / 100,
+                            value: this.node_resource_used.memory_used,
                             name: '内存总使用量(Gi)'
                         }, {
-                            value: Math.trunc(this.node_resource.free_memory / (1024 * 1024 * 1024) * 100) / 100,
+                            value: this.node_resource_used.memory_total - this.node_resource_used.memory_used,
                             name: '内存总剩余量(Gi)'
                         },
                         ],
@@ -446,10 +501,10 @@ export default {
                         },
                         //给data 动态赋值
                         data: [{
-                            value: Math.floor(((this.node_resource.total_cpu - this.node_resource.free_cpu)) * 100000) / 100,
+                            value: this.node_resource_used.cpu_used,
                             name: 'cpu总使用量(m)'
                         }, {
-                            value: Math.trunc(this.node_resource.total_cpu * 100000) / 100,
+                            value: this.node_resource_used.cpu_total - this.node_resource_used.cpu_used,
                             name: 'cpu总剩余量(m)'
                         }],
                         emphasis: {
@@ -516,6 +571,9 @@ export default {
                     }
                 ]
             })
+        },
+        toNumber(val) {
+            return Math.floor(val)
         },
     }
 }

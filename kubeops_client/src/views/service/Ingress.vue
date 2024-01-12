@@ -1,4 +1,22 @@
 <template>
+    <el-row style="padding-bottom: 10px;">
+        <el-col :span="24">
+            <el-card shadow="always" style="width: 100%;">
+                <span>
+                    <div>
+                        <svg class="icon-ing" aria-hidden="true">
+                            <use xlink:href="#icon-ingress"></use>
+                        </svg>
+                        <span
+                            style="font-size: 24px; color: #242e42;text-shadow: 0 4px 8px rgba(36,46,66,.1);font-weight: 600;">应用路由</span>
+                        <br>
+                        <span style="font-size: 12px;color: #79879c!important">应用路由（Ingress）提供一种聚合服务的方式，您可以通过一个外部可访问的 IP
+                            地址将集群的内部服务暴露给外部。</span>
+                    </div>
+                </span>
+            </el-card>
+        </el-col>
+    </el-row>
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
@@ -11,7 +29,8 @@
         </el-col>
         <el-col :span="16">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" class="input-with-select" clearable>
+                <el-input v-model="filter_name" placeholder="Please input" clearable @clear="getIngress()"
+                    @keyup.enter="getIngress()">
                     <template #prepend>
                         <el-button icon="Search" @click="getIngress()" />
                     </template>
@@ -33,7 +52,7 @@
     </el-row>
     <div class="table-bg-purple">
         <el-table :data="ingressItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small">
-            <el-table-column label="Name" width="300" align="center">
+            <el-table-column label="名称" width="300">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
                         <el-icon>
@@ -43,28 +62,25 @@
                     </div>
                 </template>
             </el-table-column>
-            <el-table-column label="labels" width="300" align="center">
-                <template #default="scope">
-                    <el-tag type="info" size="small" v-for="(v, k) in scope.row.labels " :key="k">{{ k }}:{{ v
-                    }}<br></el-tag>
-                </template>
-            </el-table-column>
-            <el-table-column label="Endpoints" width="200" align="center">
+            <el-table-column label="命名空间" prop="namespace" width="100" />
+            <el-table-column label="端点" width="200">
                 <template #default="scope">
                     <div v-for="(v, k) in scope.row.endpoint " :key="k">{{ v.ip }}<br></div>
                 </template>
             </el-table-column>
-            <el-table-column label="Hosts" width="200" align="center">
+            <el-table-column label="路由">
                 <template #default="scope">
                     <div v-for="(v, k) in scope.row.host " :key="k">{{ v }}<br></div>
                 </template>
             </el-table-column>
-            <el-table-column label="Age" prop="age" width="70" align="center" />
-            <el-table-column label="Operations" align="center">
+            <el-table-column label="创建时间" prop="age" width="140" />
+            <el-table-column label="操作" width="70" align="center">
                 <template #default="scope">
-                    <el-dropdown>
-                        <el-button type="primary">
-                            Operate<el-icon class="el-icon--right"><arrow-down /></el-icon>
+                    <el-dropdown trigger="click">
+                        <el-button type="primary" link>
+                            <el-icon :size="24">
+                                <Operation />
+                            </el-icon>
                         </el-button>
                         <template #dropdown>
                             <el-dropdown-menu>
@@ -87,8 +103,7 @@
             </el-tabs>
             <template #footer>
                 <span class="dialog-footer">
-                    <el-button type="primary"
-                        @click="dialogFormVisible = false, handleUpdate(detailnamespace)">更新</el-button>
+                    <el-button type="primary" @click="handleUpdate(detailnamespace)">更新</el-button>
                     <el-button @click="dialogFormVisible = false">
                         取消
                     </el-button>
@@ -116,8 +131,8 @@
             <el-form-item label="名称" prop="name">
                 <el-input v-model="ruleForm.name"></el-input>
             </el-form-item>
-            <el-form-item label="名称空间" prop="namespace">
-                <el-select v-model="ruleForm.namespace" placeholder="请选择名称空间" @visible-change="getnsselect()">
+            <el-form-item label="命名空间" prop="namespace">
+                <el-select v-model="ruleForm.namespace" placeholder="请选择命名空间" @visible-change="getnsselect()">
                     <el-option v-for="item in nslist" :key="item.namespace" :label="item.label" :value="item.namespace"
                         v-show="item.label != 'All'" />
                 </el-select>
@@ -221,7 +236,7 @@ export default {
                     { min: 3, max: 10, message: '长度在 3 到 10 个字符', trigger: 'change' }
                 ],
                 namespace: [
-                    { required: true, message: '请选择名称空间', trigger: 'change' }
+                    { required: true, message: '请选择命名空间', trigger: 'change' }
                 ],
                 resource: [
                     { message: '请选择一种协议', trigger: 'change' }
@@ -347,16 +362,28 @@ export default {
         },
         handleUpdate(namespace) {
             let data = this.content
-            if (this.aceConfig.lang == 'yaml') {
-                data = JSON.stringify(yaml.load(data), null, 2);
+            let datajson = {}
+            try {
+                if (this.aceConfig.lang == 'yaml') {
+                    data = JSON.stringify(yaml.load(data), null, 2);
+                }
+                datajson = JSON.parse(data)
+            } catch (e) {
+                this.$message({
+                    showClose: true,
+                    message: '格式错误,请检查格式',
+                    type: 'error'
+                });
+                return
             }
             this.$ajax.put(
                 '/ing/update',
                 {
                     namespace: namespace,
-                    data: JSON.parse(data)
+                    data: datajson
                 },
             ).then((res) => {
+                this.dialogFormVisible = false
                 this.$message({
                     showClose: true,
                     message: res.msg,
@@ -514,5 +541,13 @@ export default {
 
 .el-form-item__content .el-input {
     width: 400px;
+}
+
+.icon-ing {
+    width: 2.5em;
+    height: 2.5em;
+    vertical-align: -0.8em;
+    fill: currentColor;
+    overflow: hidden;
 }
 </style>

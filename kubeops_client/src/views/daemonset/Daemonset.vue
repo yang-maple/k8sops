@@ -1,4 +1,25 @@
 <template>
+    <el-row style="padding-bottom: 10px;">
+        <el-col :span="24">
+            <el-card shadow="always" style="width: 100%;">
+                <span>
+                    <div>
+                        <svg class="icon-dst" aria-hidden="true">
+                            <use xlink:href="#icon-deployment-copy"></use>
+                        </svg>
+                        <span
+                            style="font-size: 24px; color: #242e42;text-shadow: 0 4px 8px rgba(36,46,66,.1);font-weight: 600;">守护进程集</span>
+                        <br>
+                        <span style="font-size: 12px;color: #79879c!important">守护进程（DaemonSet）是一种用来管理 Pod 的控制器，它可以确保在每个 Node
+                            上运行一个或多个 Pod 副本。
+                        </span>
+                    </div>
+                </span>
+            </el-card>
+        </el-col>
+    </el-row>
+
+
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
@@ -11,7 +32,8 @@
         </el-col>
         <el-col :span="16">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" class="input-with-select" clearable>
+                <el-input v-model="filter_name" placeholder="Please input" clearable @clear="getDaemonset()"
+                    @keyup.enter="getDaemonset()">
                     <template #prepend>
                         <el-button icon="Search" @click="getDaemonset()" />
                     </template>
@@ -30,37 +52,59 @@
     </el-row>
     <div class="table-bg-purple">
         <el-table :data="daemonsetItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small">
-            <el-table-column label="Name" width="200">
+            <el-table-column label="名称" width="200">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
-                        <el-icon>
-                            <timer />
-                        </el-icon>
-                        <span style="margin-left: 5px">{{ scope.row.name }}</span>
+
+                        <span>{{ scope.row.name }}</span>
                     </div>
                 </template>
             </el-table-column>
-            <el-table-column label="Namespace" prop="namespaces" width="150" />
-            <el-table-column label="Images" width="210" align="center">
+            <el-table-column label="命名空间" prop="namespaces" width="150" />
+            <el-table-column label="标签">
+                <template #default="scope">
+                    <div v-for="(v, k, index) in scope.row.labels " :key="k">
+                        <div v-if="index < maxitem[scope.$index]">
+                            <el-tag type="info" style="margin-left: 5px;" size="small" effect="plain" round>
+                                {{ k }}:{{ v }}</el-tag>
+                        </div>
+                    </div>
+                    <div v-if="scope.row.labels == null" align="center">---</div>
+                    <div v-if="scope.row.labels != null"><el-button size="small" type="primary" link
+                            @click="showLabels(scope.$index)">{{
+                                maxitem[scope.$index] == 3 ?
+                                '展开' : '收起'
+                            }}</el-button></div>
+                </template>
+            </el-table-column>
+            <el-table-column label="容器组数量" prop="pods" width="100" align="center" />
+            <el-table-column label="状态" prop="status" width="100">
+                <template #default="scope">
+                    <div v-if="scope.row.status == 'Running'" style="color: #00a2ae">
+                        <el-tag type="success" size="small" effect="plain" round>
+                            Running
+                        </el-tag>
+                    </div>
+                    <div v-if="scope.row.status != 'Running'" style="color: #f56c6c">
+                        <el-tag type="danger" size="small" effect="plain" round>
+                            {{ scope.row.status }}
+                        </el-tag>
+                    </div>
+                </template>
+            </el-table-column>
+            <el-table-column label="镜像" width="200">
                 <template #default="scope">
                     <div v-for="(v, k) in scope.row.image " :key="k">{{ v }}<br></div>
                 </template>
             </el-table-column>
-            <el-table-column label="labels" width="280" align="center">
+            <el-table-column label="创建时间" prop="age" width="140" />
+            <el-table-column label="操作" width="70" align="center">
                 <template #default="scope">
-                    <el-tag type="info" size="small" style="margin-left: 5px;" v-for="(v, k) in scope.row.labels "
-                        :key="k">{{ k }}:{{ v
-                        }}<br></el-tag>
-                </template>
-            </el-table-column>
-            <el-table-column label="Status" prop="status" width="100" />
-            <el-table-column label="Pods" prop="pods" width="70" align="center" />
-            <el-table-column label="Age" prop="age" width="60" align="center" />
-            <el-table-column label="Operations" align="center">
-                <template #default="scope">
-                    <el-dropdown>
-                        <el-button type="primary">
-                            Operate<el-icon class="el-icon--right"><arrow-down /></el-icon>
+                    <el-dropdown trigger="click">
+                        <el-button type="primary" link>
+                            <el-icon :size="24">
+                                <Operation />
+                            </el-icon>
                         </el-button>
                         <template #dropdown>
                             <el-dropdown-menu>
@@ -99,7 +143,7 @@
         </el-tabs>
         <template #footer>
             <span class="dialog-footer">
-                <el-button type="primary" @click="dialogFormVisible = false, handleUpdate(detailnamespace)">更新</el-button>
+                <el-button type="primary" @click="handleUpdate(detailnamespace)">更新</el-button>
                 <el-button @click="dialogFormVisible = false">
                     取消
                 </el-button>
@@ -112,7 +156,7 @@
                     <el-form-item label="名称" prop="name">
                         <el-input v-model="ruleForm.name"></el-input>
                     </el-form-item>
-                    <el-form-item label="名称空间" prop="namespace">
+                    <el-form-item label="命名空间" prop="namespace">
                         <el-select v-model="ruleForm.namespace" placeholder="请选择活动区域" @visible-change="getnsselect()">
                             <el-option v-for="item in nslist" :key="item.namespace" :label="item.label"
                                 :value="item.namespace" style="width:100%" v-show="item.label != 'All'" />
@@ -202,6 +246,7 @@ export default {
     },
     data() {
         return {
+            maxitem: [],
             detailnamespace: null,
             dialogFormVisible: false,
             dialogcreatens: false,
@@ -251,7 +296,7 @@ export default {
                     { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
                 ],
                 namespace: [
-                    { required: true, message: '请选择名称空间', trigger: 'change' }
+                    { required: true, message: '请选择命名空间', trigger: 'change' }
                 ],
                 replica: [
                     { required: true, message: '请输入副本数量', trigger: 'change' }
@@ -279,6 +324,9 @@ export default {
             }).then((res) => {
                 this.total = res.data.total
                 this.daemonsetItem = res.data.item
+                for (let i = 0; i < res.data.item.length; i++) {
+                    this.maxitem.push(3)
+                }
             }).catch(function (res) {
                 console.log(res);
             })
@@ -352,21 +400,33 @@ export default {
         },
         handleUpdate(namespace) {
             let data = this.content
-            if (this.aceConfig.lang == 'yaml') {
-                data = JSON.stringify(yaml.load(data), null, 2);
+            let datajson = {}
+            try {
+                if (this.aceConfig.lang == 'yaml') {
+                    data = JSON.stringify(yaml.load(data), null, 2);
+                }
+                datajson = JSON.parse(data)
+            } catch (e) {
+                this.$message({
+                    showClose: true,
+                    message: '格式错误,请检查格式',
+                    type: 'error'
+                });
+                return
             }
             this.$ajax.put(
                 '/daemon/update',
                 {
                     namespace: namespace,
-                    data: JSON.parse(data)
+                    data: datajson
                 },
             ).then((res) => {
-                this.$message({
-                    showClose: true,
-                    message: res.msg,
-                    type: 'success'
-                });
+                this.dialogFormVisible = false,
+                    this.$message({
+                        showClose: true,
+                        message: res.msg,
+                        type: 'success'
+                    });
                 this.Refresh()
             }).catch((res) => {
                 this.$message({
@@ -425,6 +485,13 @@ export default {
                 return
             }
             this.jsonFormat()
+        },
+        showLabels(index) {
+            if (this.maxitem[index] == 3) {
+                this.maxitem[index] = 99
+            } else {
+                this.maxitem[index] = 3
+            }
         }
     }
 }
@@ -493,5 +560,13 @@ export default {
 
 .el-tabs--border-card>.el-tabs__content {
     padding: 0px;
+}
+
+.icon-dst {
+    width: 2.5em;
+    height: 2.5em;
+    vertical-align: -0.7em;
+    fill: currentColor;
+    overflow: hidden;
 }
 </style>

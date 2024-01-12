@@ -106,7 +106,7 @@ func (s *service) GetSvcList(svcName, Namespace string, Limit, Page int, uuid in
 			ClusterIp:  v.Spec.ClusterIP,
 			ExternalIp: externalIp,
 			Port:       v.Spec.Ports,
-			Age:        model.GetAge(v.CreationTimestamp.Unix()),
+			Age:        v.CreationTimestamp.Time.Format("2006-01-02 15:04:05"),
 		})
 	}
 	return &svcResp{

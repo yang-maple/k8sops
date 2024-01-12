@@ -20,22 +20,25 @@ var Node node
 type NodeList struct {
 	Total     int        `json:"total"`
 	Item      []nodeInfo `json:"Item"`
-	Resources Resource   `json:"resource"`
+	Resources *Resource  `json:"resource"`
 }
 
 type Resource struct {
-	FreeMemory  float64 `json:"free_memory"`
-	TotalMemory float64 `json:"total_memory"`
-	FreeCpu     float64 `json:"free_cpu"`
-	TotalCpu    float64 `json:"total_cpu"`
+	CpuRequest    map[string]float64 `json:"cpu_request"`
+	CpuLimit      map[string]float64 `json:"cpu_limit"`
+	MemoryRequest map[string]int64   `json:"memory_request"`
+	MemoryLimit   map[string]int64   `json:"memory_limit"`
 }
 
 type nodeInfo struct {
 	Name           string            `json:"name"`
 	Labels         map[string]string `json:"labels"`
 	Status         string            `json:"status"`
-	Cpu            string            `json:"cpu"`
-	Memory         string            `json:"memory"`
+	Unschedulable  bool              `json:"unschedulable"`
+	Taints         []corev1.Taint    `json:"taints"`
+	NodeIp         string            `json:"nodeIp"`
+	CpuTotal       float64           `json:"cpu_total"`
+	MemoryTotal    int64             `json:"memory_total"`
 	Pods           int               `json:"pods"`
 	CreateTime     string            `json:"create_time"`
 	KubeletVersion string            `json:"kubelet_version"`
@@ -58,6 +61,13 @@ type poddetail struct {
 	PodAge  string
 }
 
+const (
+	// MBMemory MB 内存 字节转MB
+	MBMemory = 1048576
+	// SmallCore 核数 大核心数 转小核心数
+	SmallCore = 1000
+)
+
 // GetNodeList  列表
 func (n *node) GetNodeList(uuid int) (nodeList *NodeList, err error) {
 	nodeLists, err := K8s.Clientset[uuid].CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
@@ -66,38 +76,29 @@ func (n *node) GetNodeList(uuid int) (nodeList *NodeList, err error) {
 		return nil, errors.New("获取Node 失败" + err.Error())
 	}
 	item := make([]nodeInfo, 0, len(nodeLists.Items))
-	//计算memory 使用量
-	var freeMemory, totalMemory, freeCpu, totalCpu float64
 	for _, v := range nodeLists.Items {
 		status := "Ready"
 		if v.Status.Conditions[len(v.Status.Conditions)-1].Status != "True" {
 			status = "NotReady"
 		}
-		memory, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", v.Status.Allocatable.Memory().AsApproximateFloat64()/float64(1024*1024*1024)), 64)
 		item = append(item, nodeInfo{
 			Name:           v.Name,
 			Labels:         v.Labels,
 			Status:         status,
-			Cpu:            strconv.FormatFloat(v.Status.Allocatable.Cpu().AsApproximateFloat64()*1000, 'f', -1, 64) + "m",
-			Memory:         strconv.FormatFloat(memory, 'f', -1, 64) + "Gi",
+			Unschedulable:  v.Spec.Unschedulable,
+			Taints:         v.Spec.Taints,
+			NodeIp:         v.Status.Addresses[0].Address,
+			CpuTotal:       float62(v.Status.Allocatable.Cpu().AsApproximateFloat64()),
+			MemoryTotal:    v.Status.Allocatable.Memory().Value() / MBMemory,
 			Pods:           len(*n.GetNodePods(v.Name, uuid)),
 			CreateTime:     v.CreationTimestamp.Time.Format("2006-01-02 15:04:05"),
 			KubeletVersion: v.Status.NodeInfo.KubeletVersion,
 		})
-		freeMemory += v.Status.Allocatable.Memory().AsApproximateFloat64()
-		totalMemory += v.Status.Capacity.Memory().AsApproximateFloat64()
-		freeCpu += v.Status.Allocatable.Cpu().AsApproximateFloat64()
-		totalCpu += v.Status.Capacity.Cpu().AsApproximateFloat64()
 	}
 	return &NodeList{
-		Total: len(nodeLists.Items),
-		Item:  item,
-		Resources: Resource{
-			FreeMemory:  freeMemory,
-			TotalMemory: totalMemory,
-			FreeCpu:     freeCpu,
-			TotalCpu:    totalCpu,
-		},
+		Total:     len(nodeLists.Items),
+		Item:      item,
+		Resources: Node.GetNodeResource(uuid),
 	}, err
 }
 
@@ -148,4 +149,68 @@ func (n *node) GetNodePods(NodeName string, uuid int) (detail *[]poddetail) {
 		}
 	}
 	return &nodepods
+}
+
+// SetNodeSchedule 设置节点是否可调度
+func (n *node) SetNodeSchedule(name string, status bool, uuid int) (err error) {
+	node, err := K8s.Clientset[uuid].CoreV1().Nodes().Get(context.TODO(), name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	node.Spec.Unschedulable = status
+	_, err = K8s.Clientset[uuid].CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
+	if err != nil {
+		logger.Info("设置失败" + err.Error())
+		return err
+	}
+	return nil
+}
+
+//// EmptyNode 排空节点操作
+//func (n *node) EmptyNode(name string, uuid int) (err error) {
+//	//获取node
+//	return nil
+//}
+
+// GetNodeResource 获取节点的资源,请求，limit,使用量
+func (n *node) GetNodeResource(uuid int) *Resource {
+	cpuLimit := make(map[string]float64)
+	cpuRequest := make(map[string]float64)
+	memoryLimit := make(map[string]int64)
+	memoryRequest := make(map[string]int64)
+	pods, _ := K8s.Clientset[uuid].CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{})
+	for _, pod := range pods.Items {
+		if pod.Spec.NodeName != "" {
+			for _, container := range pod.Spec.Containers {
+				if _, ok := cpuLimit[pod.Spec.NodeName]; ok {
+					cpuLimit[pod.Spec.NodeName] += float62(container.Resources.Limits.Cpu().AsApproximateFloat64())
+					cpuRequest[pod.Spec.NodeName] += float62(container.Resources.Requests.Cpu().AsApproximateFloat64())
+					memoryLimit[pod.Spec.NodeName] += container.Resources.Limits.Memory().Value() / MBMemory
+					memoryRequest[pod.Spec.NodeName] += container.Resources.Requests.Memory().Value() / MBMemory
+					continue
+				} else {
+					cpuLimit[pod.Spec.NodeName] += float62(container.Resources.Limits.Cpu().AsApproximateFloat64())
+					cpuRequest[pod.Spec.NodeName] += float62(container.Resources.Requests.Cpu().AsApproximateFloat64())
+					memoryLimit[pod.Spec.NodeName] += container.Resources.Limits.Memory().Value() / MBMemory
+					memoryRequest[pod.Spec.NodeName] += container.Resources.Requests.Memory().Value() / MBMemory
+				}
+			}
+		}
+	}
+
+	//
+
+	//百分比
+	return &Resource{
+		CpuRequest:    cpuRequest,
+		CpuLimit:      cpuLimit,
+		MemoryLimit:   memoryLimit,
+		MemoryRequest: memoryRequest,
+	}
+}
+
+// 保留2位小数
+func float62(f float64) float64 {
+	value, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", f*SmallCore), 64)
+	return value
 }

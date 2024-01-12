@@ -1,10 +1,30 @@
 <template>
+    <el-row style="padding-bottom: 10px;">
+        <el-col :span="24">
+            <el-card shadow="always" style="width: 100%;">
+                <span>
+                    <div>
+                        <svg class="icon-pv" aria-hidden="true">
+                            <use xlink:href="#icon-chijiujuan"></use>
+                        </svg>
+                        <span
+                            style="font-size: 24px; color: #242e42;text-shadow: 0 4px 8px rgba(36,46,66,.1);font-weight: 600;">持久卷</span>
+                        <br>
+                        <span style="font-size: 12px;color: #79879c!important">持久卷（Persistent Volume,
+                            PV）是Kubernetes中用于定义和管理集群中持久性存储资源的组件。</span>
+                    </div>
+                </span>
+            </el-card>
+        </el-col>
+    </el-row>
+
     <el-row>
         <el-col :span="8">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" clearable>
+                <el-input v-model="filter_name" placeholder="Please input" clearable @clear="getPersistentVolume()"
+                    @keyup.enter="getPersistentVolume()">
                     <template #prepend>
-                        <el-button icon="Search"><span style="font-size: 15px;">
+                        <el-button icon="Search"><span style="font-size: 18px;">
                                 搜索
                             </span></el-button>
                     </template>
@@ -29,7 +49,19 @@
     </el-row>
     <div class="table-bg-purple">
         <el-table :data="persistentvolumeItem" :header-cell-style="{ background: '#e6e7e9' }" size="small">
-            <el-table-column label="Name" min-width="370">
+            <el-table-column label="名称" width="300">
+                <template #default="scope">
+                    <div style="display: flex; align-items: center">
+                        <el-text size="small" style="margin-left: 10px">{{
+                            scope.row.name
+                        }}</el-text>
+                    </div>
+                </template>
+            </el-table-column>
+            <el-table-column label="容量" prop="capacity.storage" width="100" align="center" />
+            <el-table-column label="访问模式" prop="access_mode" width="120" />
+            <el-table-column label="回收策略" prop="reclaim_policy" width="100" align="center" />
+            <el-table-column label="状态" prop="status.phase" width="100">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
                         <span slot="reference" v-if="scope.row.status.phase == 'Bound'">
@@ -40,37 +72,36 @@
                             <el-tooltip placement="bottom" effect="light"><template #content> Available </template>
                                 <i class="dotClass" style="background-color: red"></i></el-tooltip>
                         </span>
-                        <el-link style="margin-left: 10px" type="primary" :underline="false" @click="handle(scope.row)">{{
-                            scope.row.name
-                        }}</el-link>
+                        <el-text size="small" style="margin-left: 10px">{{
+                            scope.row.status.phase
+                        }}</el-text>
                     </div>
                 </template>
             </el-table-column>
-            <el-table-column label="Lables" width="100" align="center">
-                <template #default="scope">
-                    <el-tag type="info" style="margin-left: 5px;" size="small" v-for="(v, k) in scope.row.labels "
-                        :key="k">{{ k }}:{{ v
-                        }}<br></el-tag>
-                </template>
+            <el-table-column label="绑定声明" prop="claim">
+                <template #default="scope">{{ scope.row.claim ? scope.row.claim : '---' }}</template>
             </el-table-column>
-            <el-table-column label="CAPACITY" prop="capacity.storage" width="100" align="center" />
-            <el-table-column label="ACCESS MODES" prop="access_mode" width="150" />
-            <el-table-column label="RECLAIM POLICY" prop="reclaim_policy" width="150" align="center" />
-            <el-table-column label="STATUS" prop="status.phase" width="120" />
-            <el-table-column label="CLAIM" prop="claim" width="220" />
-            <el-table-column label="STORAGECLASS" prop="storage_class" width="220" />
-            <el-table-column label="REASON" prop="reason" width="100" />
-            <el-table-column label="AGE" prop="age" width="80" />
-            <el-table-column fixed="right" label="Operations" width="150">
+            <el-table-column label="存储类型" prop="storage_class">
+                <template #default="scope">{{ scope.row.storage_class ? scope.row.storage_class : '---' }}</template>
+            </el-table-column>
+            <el-table-column label="创建时间" prop="age" width="140" />
+            <el-table-column label="操作" width="70" align="center">
                 <template #default="scope">
-                    <el-button type="primary" icon="Edit" plain
-                        @click="dialogFormVisible = true, handleEdit(scope.$index, scope.row)" />
-                    <el-popconfirm width="230" confirm-button-text="OK" cancel-button-text="No, Thanks" icon="InfoFilled"
-                        icon-color="#626AEF" title="Are you sure to delete this?"
-                        @confirm="handleDelete(scope.row)"><template #reference>
-                            <el-button type="danger" icon="Delete" plain />
+                    <el-dropdown trigger="click">
+                        <el-button type="primary" link>
+                            <el-icon :size="24">
+                                <Operation />
+                            </el-icon>
+                        </el-button>
+                        <template #dropdown>
+                            <el-dropdown-menu>
+                                <el-dropdown-item icon="Edit"
+                                    @click="dialogFormVisible = true, handleEdit(scope.row.name)">编辑</el-dropdown-item>
+                                <el-dropdown-item icon="Delete"
+                                    @click="messageboxOperate(scope.row, 'delete')">删除</el-dropdown-item>
+                            </el-dropdown-menu>
                         </template>
-                    </el-popconfirm>
+                    </el-dropdown>
                 </template>
             </el-table-column>
         </el-table>
@@ -98,7 +129,7 @@
         </el-tabs>
         <template #footer>
             <span class="dialog-footer">
-                <el-button type="primary" @click="dialogFormVisible = false, handleUpdate()">更新</el-button>
+                <el-button type="primary" @click="handleUpdate()">更新</el-button>
                 <el-button @click="dialogFormVisible = false">
                     取消
                 </el-button>
@@ -210,12 +241,12 @@ export default {
         this.getPersistentVolume()
     },
     methods: {
-        handleEdit(index, row) {
+        handleEdit(name) {
             this.$ajax({
                 method: 'get',
                 url: '/pv/detail',
                 params: {
-                    persistent_volume_name: row.name
+                    persistent_volume_name: name
                 }
             }).then((res) => {
                 this.activeName = 'json'
@@ -225,7 +256,6 @@ export default {
             }).catch((res) => {
                 console.log(res.data);
             })
-            console.log(index, row);
         },
         handleDelete(row) {
             this.$ajax({
@@ -246,11 +276,31 @@ export default {
             })
             this.Refresh()
         },
+        messageboxOperate(row, name) {
+            this.$confirm(`是否${name}实例${row.name}`, '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                this.handleDelete(row)
+            }).catch(() => {
+                this.$message({
+                    type: 'info',
+                    message: '已取消删除'
+                });
+            });
+        },
         getPersistentVolume() {
             this.$ajax({
                 method: 'get',
                 url: '/pv/list',
+                params: {
+                    page: this.page,
+                    limit: this.limit,
+                    filter_name: this.filter_name
+                }
             }).then((res) => {
+                this.total = res.data.total
                 this.persistentvolumeItem = res.data.item
             }).catch((res) => {
                 console.log(res);
@@ -281,20 +331,32 @@ export default {
         },
         handleUpdate() {
             let data = this.content
-            if (this.aceConfig.lang == 'yaml') {
-                data = JSON.stringify(yaml.load(data), null, 2);
+            let datajson = {}
+            try {
+                if (this.aceConfig.lang == 'yaml') {
+                    data = JSON.stringify(yaml.load(data), null, 2);
+                }
+                datajson = JSON.parse(data)
+            } catch (e) {
+                this.$message({
+                    showClose: true,
+                    message: '格式错误,请检查格式',
+                    type: 'error'
+                });
+                return
             }
             this.$ajax.put(
                 '/pv/update',
                 {
-                    data: JSON.parse(data)
+                    data: datajson
                 },
             ).then((res) => {
-                this.$message({
-                    showClose: true,
-                    message: res.msg,
-                    type: 'success'
-                });
+                this.dialogFormVisible = false,
+                    this.$message({
+                        showClose: true,
+                        message: res.msg,
+                        type: 'success'
+                    });
                 console.log(res)
             }).catch((res) => {
                 this.$message({
@@ -321,9 +383,11 @@ export default {
         handleSizeChange(limit) {
             this.limit = limit
             this.page = 1
+            this.getPersistentVolume()
         },
         handleCurrentChange(page) {
             this.page = page
+            this.getPersistentVolume()
         },
         handle(row) {
             this.$router.push({
@@ -436,5 +500,13 @@ export default {
             width: 180px;
         }
     }
+}
+
+.icon-pv {
+    width: 2.2em;
+    height: 2.2em;
+    vertical-align: -0.7em;
+    fill: currentColor;
+    overflow: hidden;
 }
 </style>

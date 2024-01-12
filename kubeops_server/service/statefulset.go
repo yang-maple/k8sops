@@ -92,7 +92,7 @@ func (s *statefulSet) GetStatefulList(StsName, Namespace string, Limit, Page int
 			Image:      images,
 			Labels:     v.Labels,
 			Pods:       pods,
-			Age:        model.GetAge(v.CreationTimestamp.Unix()),
+			Age:        v.CreationTimestamp.Time.Format("2006-01-02 15:04:05"),
 			Status:     status,
 		})
 	}

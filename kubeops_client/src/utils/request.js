@@ -60,10 +60,8 @@ httpClient.interceptors.request.use(
             }
         }
         if (config.url == "/user/getCaptcha" || config.url == "/user/login") {
-            console.log(config.url)
             return config
         }
-        console.log(config.url)
         showFullScreenLoading()
         return config
     },

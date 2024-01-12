@@ -6,7 +6,6 @@ import (
 	"github.com/wonderivan/logger"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubeops/model"
 )
 
 type configmap struct{}
@@ -21,6 +20,7 @@ type cmInfo struct {
 	Labels    map[string]string `json:"labels"`
 	Modify    *bool             `json:"modify"`
 	Age       string            `json:"age"`
+	Data      map[string]string `json:"data"`
 }
 
 type CreateConfig struct {
@@ -82,7 +82,8 @@ func (c *configmap) GetCmList(configName, Namespace string, Limit, Page, uuid in
 			Namespace: v.Namespace,
 			Labels:    v.Labels,
 			Modify:    v.Immutable,
-			Age:       model.GetAge(v.CreationTimestamp.Unix()),
+			Age:       v.CreationTimestamp.Time.Format("2006-01-02 15:04:05"),
+			Data:      v.Data,
 		})
 	}
 	return &CmsResp{

@@ -1,12 +1,32 @@
 <template>
+    <el-row style="padding-bottom: 10px;">
+        <el-col :span="24">
+            <el-card shadow="always" style="width: 100%;">
+                <span>
+                    <div>
+                        <svg class="icon-ns" aria-hidden="true">
+                            <use xlink:href="#icon-namespace1
+ "></use>
+                        </svg>
+                        <span
+                            style="font-size: 24px; color: #242e42;text-shadow: 0 4px 8px rgba(36,46,66,.1);font-weight: 600;">命名空间</span>
+                        <br>
+                        <span
+                            style="font-size: 12px;color: #79879c!important">命名空间（Namespace）提供了一种逻辑分隔的方式，可以将集群中的资源划分到不同的命名空间中，以实现不同用户或应用之间的资源隔离和管理。
+                        </span>
+                    </div>
+                </span>
+            </el-card>
+        </el-col>
+    </el-row>
+
     <el-row>
         <el-col :span="8">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" clearable>
+                <el-input v-model="filter_name" placeholder="Please input" clearable @clear="getNamespaces()"
+                    @keyup.enter="getNamespaces()">
                     <template #prepend>
-                        <el-button icon="Search"><span style="font-size: 15px;">
-                                搜索
-                            </span></el-button>
+                        <el-button icon="Search" @click="getNamespaces()"></el-button>
                     </template>
                 </el-input>
             </div>
@@ -16,7 +36,7 @@
         </el-col>
         <el-col :span="6">
             <div class="header-grid-content" style="text-align: center;">
-                <el-button type="info" @click="Refresh()" round>
+                <el-button type="info" @click="getNamespaces()" round>
                     <el-icon>
                         <Refresh />
                     </el-icon>
@@ -29,41 +49,66 @@
     </el-row>
     <div class="table-bg-purple">
         <el-table :data="namespacesItem" :header-cell-style="{ background: '#e6e7e9' }" size="small">
-            <el-table-column label="Name" width="200">
+            <el-table-column label="名称" width="200">
+                <template #default="scope">
+                    <div style="display: flex; align-items: center">
+                        <el-text style="margin-left: 10px" size="small">{{
+                            scope.row.name
+                        }}</el-text>
+                    </div>
+                </template>
+            </el-table-column>
+            <el-table-column label="标签">
+                <template #default="scope">
+                    <div v-for="(v, k, index) in scope.row.labels " :key="k">
+                        <div v-if="index < maxitem[scope.$index]">
+                            <el-tag type="info" style="margin-left: 5px;" size="small" effect="plain" round>
+                                {{ k }}:{{ v }}</el-tag>
+                        </div>
+                    </div>
+                    <div v-if="scope.row.labels == null" align="center">---</div>
+                    <div v-if="scope.row.labels != null"><el-button size="small" type="primary" link
+                            @click="showLabels(scope.$index)">{{
+                                maxitem[scope.$index] == 3 ?
+                                '展开' : '收起'
+                            }}</el-button></div>
+                </template>
+            </el-table-column>
+            <el-table-column label="状态" prop="status" width="300">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
                         <span slot="reference" v-if="scope.row.status == 'Active'">
-                            <el-tooltip placement="bottom" effect="light"><template #content>Ready</template>
+                            <el-tooltip placement="top" effect="light"><template #content>Active</template>
                                 <i class="dotClass" style="background-color: springgreen"></i></el-tooltip>
                         </span>
                         <span slot="reference" v-if="scope.row.status != 'Active'">
-                            <el-tooltip placement="bottom" effect="light"><template #content> NotReady </template>
+                            <el-tooltip placement="bottom" effect="light"><template #content> UnActive </template>
                                 <i class="dotClass" style="background-color: red"></i></el-tooltip>
                         </span>
                         <el-link style="margin-left: 10px" type="primary" :underline="false" @click="handle(scope.row)">{{
-                            scope.row.name
+                            scope.row.status
                         }}</el-link>
                     </div>
                 </template>
             </el-table-column>
-            <el-table-column label="Lables" width="360" align="center">
+            <el-table-column label="创建时间" prop="age" width="140" />
+            <el-table-column label="操作" width="70" align="center">
                 <template #default="scope">
-                    <el-tag type="info" style="margin-left: 5px;" size="small" v-for="(v, k) in scope.row.labels "
-                        :key="k">{{ k }}:{{ v
-                        }}<br></el-tag>
-                </template>
-            </el-table-column>
-            <el-table-column label="Status" prop="status" width="200" align="center" />
-            <el-table-column label="Age" prop="age" width="200" align="center" />
-            <el-table-column label="Operations" align="center">
-                <template #default="scope">
-                    <el-button type="primary" icon="Edit" plain
-                        @click="dialogFormVisible = true, handleEdit(scope.$index, scope.row)" />
-                    <el-popconfirm confirm-button-text="YES" cancel-button-text="No" icon="InfoFilled" icon-color="#626AEF"
-                        title="delete this?" @confirm="handleDelete(scope.row)"><template #reference>
-                            <el-button type="danger" icon="Delete" plain />
+                    <el-dropdown trigger="click">
+                        <el-button type="primary" link>
+                            <el-icon :size="24">
+                                <Operation />
+                            </el-icon>
+                        </el-button>
+                        <template #dropdown>
+                            <el-dropdown-menu>
+                                <el-dropdown-item icon="Edit"
+                                    @click="dialogFormVisible = true, handleEdit(scope.row.name)">编辑</el-dropdown-item>
+                                <el-dropdown-item icon="Delete"
+                                    @click="messageboxOperate(scope.row, 'delete')">删除</el-dropdown-item>
+                            </el-dropdown-menu>
                         </template>
-                    </el-popconfirm>
+                    </el-dropdown>
                 </template>
             </el-table-column>
         </el-table>
@@ -93,14 +138,14 @@
         </el-tabs>
         <template #footer>
             <span class="dialog-footer">
-                <el-button type="primary" @click="dialogFormVisible = false, handleUpdate()">更新</el-button>
+                <el-button type="primary" @click="handleUpdate()">更新</el-button>
                 <el-button @click="dialogFormVisible = false">
                     取消
                 </el-button>
             </span>
         </template>
     </el-dialog>
-    <el-dialog v-model="dialogcreatens" title="创建名称空间" center>
+    <el-dialog v-model="dialogcreatens" title="创建命名空间" center>
         <el-form :model="form" label-width="25%">
             <el-form-item label="名称">
                 <el-input v-model="form.newnamespaces" autocomplete="off" style="width: 80%;" />
@@ -128,6 +173,7 @@ export default {
     },
     data() {
         return {
+            maxitem: [],
             namespacesItem: [],
             dialogFormVisible: false,
             dialogcreatens: false,
@@ -162,12 +208,12 @@ export default {
         this.getNamespaces()
     },
     methods: {
-        handleEdit(index, row) {
+        handleEdit(name) {
             this.$ajax({
                 method: 'get',
                 url: '/namespaces/detail',
                 params: {
-                    namespace_name: row.name
+                    namespace_name: name
                 }
             }).then((res) => {
                 this.activeName = 'json'
@@ -179,20 +225,32 @@ export default {
         },
         handleUpdate() {
             let data = this.content
-            if (this.aceConfig.lang == 'yaml') {
-                data = JSON.stringify(yaml.load(data), null, 2);
+            let datajson = {}
+            try {
+                if (this.aceConfig.lang == 'yaml') {
+                    data = JSON.stringify(yaml.load(data), null, 2);
+                }
+                datajson = JSON.parse(data)
+            } catch (e) {
+                this.$message({
+                    showClose: true,
+                    message: '格式错误,请检查格式',
+                    type: 'error'
+                });
+                return
             }
             this.$ajax.put(
                 '/namespaces/update',
                 {
-                    data: JSON.parse(data)
+                    data: datajson
                 },
             ).then((res) => {
-                this.$message({
-                    showClose: true,
-                    message: res.msg,
-                    type: 'success'
-                });
+                this.dialogFormVisible = false,
+                    this.$message({
+                        showClose: true,
+                        message: res.msg,
+                        type: 'success'
+                    });
             }).catch((res) => {
                 this.$message({
                     showClose: true,
@@ -221,12 +279,35 @@ export default {
             })
             this.Refresh()
         },
+        messageboxOperate(row, name) {
+            this.$confirm(`是否${name}实例${row.name}`, '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(() => {
+                this.handleDelete(row)
+            }).catch(() => {
+                this.$message({
+                    type: 'info',
+                    message: '已取消删除'
+                });
+            });
+        },
         getNamespaces() {
             this.$ajax({
                 method: 'get',
                 url: '/namespaces/list',
+                params: {
+                    page: this.page,
+                    limit: this.limit,
+                    filter_name: this.filter_name
+                }
             }).then((res) => {
+                this.total = res.data.total
                 this.namespacesItem = res.data.item
+                for (let i = 0; i < res.data.item.length; i++) {
+                    this.maxitem.push(3)
+                }
             }).catch((res) => {
                 console.log(res);
             })
@@ -255,9 +336,11 @@ export default {
         handleSizeChange(limit) {
             this.limit = limit
             this.page = 1
+            this.getNamespaces()
         },
         handleCurrentChange(page) {
             this.page = page
+            this.getNamespaces()
         },
         handle(row) {
             this.$router.push({
@@ -288,6 +371,13 @@ export default {
                 return
             }
             this.jsonFormat()
+        },
+        showLabels(index) {
+            if (this.maxitem[index] == 3) {
+                this.maxitem[index] = 99
+            } else {
+                this.maxitem[index] = 3
+            }
         }
     }
 }
@@ -359,5 +449,13 @@ export default {
 
 .el-tabs--border-card>.el-tabs__content {
     padding: 0px;
+}
+
+.icon-ns {
+    width: 2.5em;
+    height: 2.5em;
+    vertical-align: -0.7em;
+    fill: currentColor;
+    overflow: hidden;
 }
 </style>

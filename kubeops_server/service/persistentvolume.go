@@ -50,15 +50,51 @@ type CreatePVConfig struct {
 	Server     string                              `json:"server"`
 }
 
+func (p *persistenvolume) toCells(pvs []corev1.PersistentVolume) []DataCell {
+	cells := make([]DataCell, len(pvs))
+	for i := range pvs {
+		cells[i] = pvCell(pvs[i])
+	}
+	return cells
+}
+
+func (p *persistenvolume) fromCells(cells []DataCell) []corev1.PersistentVolume {
+	pvs := make([]corev1.PersistentVolume, len(cells))
+	for i := range cells {
+		pvs[i] = corev1.PersistentVolume(cells[i].(pvCell))
+	}
+	return pvs
+}
+
 // GetPvList PersistentVolume列表
-func (p *persistenvolume) GetPvList(uuid int) (*pvList, error) {
+func (p *persistenvolume) GetPvList(pvName string, Limit, Page int, uuid int) (*pvList, error) {
 	pvs, err := K8s.Clientset[uuid].CoreV1().PersistentVolumes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取PersistentVolume 失败" + err.Error())
 		return nil, errors.New("获取PersistentVolume 失败" + err.Error())
 	}
+
+	//组装数据
+	selectData := &dataselector{
+		GenericDataList: p.toCells(pvs.Items),
+		DataSelect: &DataSelectQuery{
+			Paginate: &PaginateQuery{
+				limit: Limit,
+				page:  Page,
+			},
+			Filter: &FilterQuery{
+				Name: pvName,
+			},
+		},
+	}
+	//筛选数据
+	filtered := selectData.Filter()
+	total := len(filtered.GenericDataList)
+	//排序 并分页
+	dataPage := filtered.Sort().Pagination()
+	volumes := p.fromCells(dataPage.GenericDataList)
 	item := make([]pvInfo, 0, len(pvs.Items))
-	for _, pv := range pvs.Items {
+	for _, pv := range volumes {
 		item = append(item, pvInfo{
 			Name:          pv.Name,
 			Labels:        pv.Labels,
@@ -68,11 +104,11 @@ func (p *persistenvolume) GetPvList(uuid int) (*pvList, error) {
 			Status:        pv.Status,
 			Claim:         getClaim(pv.Spec.ClaimRef),
 			StorageClass:  pv.Spec.StorageClassName,
-			Age:           model.GetAge(pv.CreationTimestamp.Unix()),
+			Age:           pv.CreationTimestamp.Time.Format("2006-01-02 15:04:05"),
 		})
 	}
 	return &pvList{
-		Total: len(pvs.Items),
+		Total: total,
 		Item:  item,
 	}, nil
 }

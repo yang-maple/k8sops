@@ -6,7 +6,6 @@ import (
 	"github.com/wonderivan/logger"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubeops/model"
 )
 
 type secret struct{}
@@ -73,7 +72,7 @@ func (s *secret) GetSecretList(secretName, Namespace string, Limit, Page int, uu
 	//先过滤 后排序
 	filtered := selectData.Filter()
 	total := len(filtered.GenericDataList)
-	//分页
+	//排序并分页
 	dataPage := filtered.Sort().Pagination()
 	secrets := s.fromCells(dataPage.GenericDataList)
 	item := make([]secretInfo, 0, total)
@@ -84,7 +83,7 @@ func (s *secret) GetSecretList(secretName, Namespace string, Limit, Page int, uu
 			Labels:    v.Labels,
 			Immutable: v.Immutable,
 			Type:      v.Type,
-			Age:       model.GetAge(v.CreationTimestamp.Unix()),
+			Age:       v.CreationTimestamp.Time.Format("2006-01-02 15:04:05"),
 		})
 	}
 	return &SecretResp{

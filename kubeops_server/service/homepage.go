@@ -13,12 +13,12 @@ type homepage struct {
 type homepageInfo struct {
 	ClusterInfo  []clusterInfo     `json:"cluster_info"`
 	NodeInfo     []nodeInfo        `json:"node_info"`
+	NodeResource *Resource         `json:"node_resource"`
 	DeployInfo   *CountDeploy      `json:"deploy_info"`
 	StatefulInfo *CountStateful    `json:"stateful_info"`
 	DaemonInfo   *CountDaemon      `json:"daemon_info"`
 	PodInfo      *CountPodReady    `json:"pod_info"`
 	PodTotal     map[string]nsInfo `json:"pod_total"`
-	NodeResource Resource          `json:"node_resource"`
 	EventTotal   EventResp         `json:"event_total"`
 }
 
@@ -70,11 +70,11 @@ func (h *homepage) GetHomepage(uuid int) (info *homepageInfo, err error) {
 	return &homepageInfo{
 		ClusterInfo:  cInfo.Item,
 		NodeInfo:     nInfo.Item,
+		NodeResource: nInfo.Resources,
 		DeployInfo:   dInfo,
 		StatefulInfo: sInfo,
 		DaemonInfo:   daeInfo,
 		PodInfo:      podsInfo,
-		NodeResource: nInfo.Resources,
 		PodTotal:     podCountPerNamespace,
 		EventTotal:   *eventTotal,
 	}, nil

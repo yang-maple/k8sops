@@ -94,7 +94,7 @@ func (d *daemonSet) GetDsList(DsName, Namespace string, Limit, Page int, uuid in
 			Image:      images,
 			Labels:     v.Labels,
 			Pods:       pods,
-			Age:        model.GetAge(v.CreationTimestamp.Unix()),
+			Age:        v.CreationTimestamp.Time.Format("2006-01-02 15:04:05"),
 			Status:     status,
 		})
 	}

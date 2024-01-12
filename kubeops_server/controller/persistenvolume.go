@@ -16,8 +16,21 @@ var Persistentvolume persistenvolume
 
 // GetPersistentVolumeList 获取PersistentVolume清单
 func (p *persistenvolume) GetPersistentVolumeList(c *gin.Context) {
+	params := new(struct {
+		FilterName string `form:"filter_name"`
+		Limit      int    `form:"limit"`
+		Page       int    `form:"page"`
+	})
+	err := c.ShouldBind(&params)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"msg":  "绑定参数失败" + err.Error(),
+			"data": nil,
+		})
+		return
+	}
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	data, err := service.Persistenvolume.GetPvList(uuid)
+	data, err := service.Persistenvolume.GetPvList(params.FilterName, params.Limit, params.Page, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":  "获取PersistentVolume失败",

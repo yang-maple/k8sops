@@ -16,10 +16,6 @@ var Pod pod
 
 type pod struct {
 }
-type podNp struct {
-	Name   string
-	Number int
-}
 
 //类型转换的两个方法
 // core1.pod --> Data cell
@@ -105,7 +101,7 @@ func (p *pod) GetPods(FilterName, NameSpaces string, Limit, Page int, uuid int) 
 			Restart:   model.GetRestart(v.Status),
 			Cpu:       model.GetResourcesRequests("Cpu", v.Spec),
 			Memory:    model.GetResourcesRequests("Memory", v.Spec),
-			Age:       model.GetAge(v.CreationTimestamp.Unix()),
+			Age:       v.CreationTimestamp.Time.Format("2006-01-02 15:04:05"),
 		})
 	}
 
@@ -252,5 +248,5 @@ func GetPodStatus(status corev1.PodStatus) string {
 	//if status.Phase == "Pending" {
 	//	return "Pending"
 	//}
-	return "UnKnow"
+	return "Pending"
 }

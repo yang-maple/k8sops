@@ -6,7 +6,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kubeops/model"
 )
 
 type pvClaim struct{}
@@ -22,7 +21,7 @@ type pvcInfo struct {
 	Volume       string                            `json:"volume"`
 	Claim        string                            `json:"claim"`
 	AccessModes  []string                          `json:"access_modes"`
-	StorageClass string                            `json:"storage_class"`
+	StorageClass *string                           `json:"storage_class"`
 	Age          string                            `json:"age"`
 }
 
@@ -92,8 +91,8 @@ func (p *pvClaim) GetPVClaimList(claimName, Namespace string, Limit, Page int, u
 			Volume:       v.Spec.VolumeName,
 			Claim:        v.Spec.Resources.Requests.Storage().String(),
 			AccessModes:  aModes,
-			StorageClass: *v.Spec.StorageClassName,
-			Age:          model.GetAge(v.CreationTimestamp.Unix()),
+			StorageClass: v.Spec.StorageClassName,
+			Age:          v.CreationTimestamp.Time.Format("2006-01-02 15:04:05"),
 		})
 	}
 	return &PvClaimResp{

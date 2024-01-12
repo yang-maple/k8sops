@@ -1,4 +1,22 @@
 <template>
+    <el-row style="padding-bottom: 10px;">
+        <el-col :span="24">
+            <el-card shadow="always" style="width: 100%;">
+                <span>
+                    <div>
+                        <svg class="icon-secret" aria-hidden="true">
+                            <use xlink:href="#icon-a-nav_secretkey-copy"></use>
+                        </svg>
+                        <span
+                            style="font-size: 24px; color: #242e42;text-shadow: 0 4px 8px rgba(36,46,66,.1);font-weight: 600;">保密字典</span>
+                        <br>
+                        <span
+                            style="font-size: 12px;color: #79879c!important">保密字典（Secret）是一种包含少量敏感信息的资源对象，例如密码、令牌、保密字典等，以键值对形式保存并且可以在容器组中使用。</span>
+                    </div>
+                </span>
+            </el-card>
+        </el-col>
+    </el-row>
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
@@ -12,7 +30,8 @@
         </el-col>
         <el-col :span="16">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" class="input-with-select" clearable>
+                <el-input v-model="filter_name" placeholder="Please input" clearable @keyup.enter="getSecret()"
+                    @clear="getSecret()">
                     <template #prepend>
                         <el-button icon="Search" @click="getSecret()" />
                     </template>
@@ -34,42 +53,54 @@
     </el-row>
     <div class="table-bg-purple">
         <el-table :data="secretItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small">
-            <el-table-column label="Name" width="300" align="center">
+            <el-table-column label="名称" width="300">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
                         <el-icon>
-                            <timer />
+                            <Key />
                         </el-icon>
                         <span style="margin-left: 10px">{{ scope.row.name }}</span>
                     </div>
                 </template>
             </el-table-column>
-            <el-table-column label="namespace" prop="namespace" width="200" align="center" />
-            <el-table-column label="labels" width="300" align="center">
+            <el-table-column label="命名空间" prop="namespace" width="100" />
+            <el-table-column label="标签">
                 <template #default="scope">
-                    <el-tag size="small" v-for="(v, k) in scope.row.labels " :key="k">{{ k }}:{{ v
-                    }}<br></el-tag>
+                    <div v-for="(v, k, index) in scope.row.labels " :key="k">
+                        <div v-if="index < maxitem[scope.$index]">
+                            <el-tag type="info" style="margin-left: 5px;" size="small" effect="plain" round>
+                                {{ k }}:{{ v }}</el-tag>
+                        </div>
+                    </div>
+                    <div v-if="scope.row.labels == null">---</div>
+                    <div v-if="scope.row.labels != null"><el-button size="small" type="primary" link
+                            @click="showLabels(scope.$index)">{{
+                                maxitem[scope.$index] == 3 ?
+                                '展开' : '收起'
+                            }}</el-button></div>
                 </template>
             </el-table-column>
+            <el-table-column label="类型" prop="type" />
             <el-table-column label="修改" prop="immutable" width="50" align="center">
                 <template #default="scope">
                     <span slot="reference" v-if="scope.row.immutable != true">
-                        <el-tooltip placement="right"><template #content> 支持修改 </template>
+                        <el-tooltip placement="top"><template #content> 允许修改 </template>
                             <i class="dotClass" style="background-color: springgreen"></i></el-tooltip>
                     </span>
                     <span slot="reference" v-if="scope.row.immutable == true">
-                        <el-tooltip placement="right"><template #content> 禁止修改 </template>
+                        <el-tooltip placement="top"><template #content> 禁止修改 </template>
                             <i class="dotClass" style="background-color: red"></i></el-tooltip>
                     </span>
                 </template>
             </el-table-column>
-            <el-table-column label="Age" prop="age" width="122" align="center" />
-            <el-table-column label="Type" prop="type" width="100" align="center" />
-            <el-table-column label="Operations" align="center">
+            <el-table-column label="创建时间" prop="age" width="140" />
+            <el-table-column label="操作" width="70" align="center">
                 <template #default="scope">
-                    <el-dropdown>
-                        <el-button type="primary">
-                            Operate<el-icon class="el-icon--right"><arrow-down /></el-icon>
+                    <el-dropdown trigger="click">
+                        <el-button type="primary" link>
+                            <el-icon :size="24">
+                                <Operation />
+                            </el-icon>
                         </el-button>
                         <template #dropdown>
                             <el-dropdown-menu>
@@ -92,8 +123,7 @@
             </el-tabs>
             <template #footer>
                 <span class="dialog-footer">
-                    <el-button type="primary"
-                        @click="dialogFormVisible = false, handleUpdate(detailnamespace)">更新</el-button>
+                    <el-button type="primary" @click="handleUpdate(detailnamespace)">更新</el-button>
                     <el-button @click="dialogFormVisible = false">
                         取消
                     </el-button>
@@ -122,7 +152,7 @@
             <el-form-item label="名称" prop="name">
                 <el-input v-model="ruleForm.name"></el-input>
             </el-form-item>
-            <el-form-item label="名称空间" prop="namespace">
+            <el-form-item label="命名空间" prop="namespace">
                 <el-select v-model="ruleForm.namespace" placeholder="Select" @visible-change="getnsselect()">
                     <el-option-group v-for="group in  nslist " :key="group.label">
                         <el-option v-for=" item  in  group.options " :key="item.namespace" :value="item.namespace"
@@ -165,6 +195,8 @@ export default {
     },
     data() {
         return {
+            maxitem: [],
+            iscollapse: true,
             detailnamespace: null,
             dialogFormVisible: false,
             dialogcreatens: false,
@@ -210,7 +242,7 @@ export default {
                     { min: 3, max: 10, message: '长度在 3 到 10 个字符', trigger: 'blur' }
                 ],
                 namespace: [
-                    { required: true, message: '请选择名称空间', trigger: 'change' }
+                    { required: true, message: '请选择命名空间', trigger: 'change' }
                 ],
                 resource: [
                     { message: '请选择一种协议', trigger: 'change' }
@@ -239,6 +271,9 @@ export default {
             }).then((res) => {
                 this.total = res.data.total
                 this.secretItem = res.data.item
+                for (let i = 0; i < res.data.item.length; i++) {
+                    this.maxitem.push(3)
+                }
             }).catch((res) => {
                 console.log(res);
             })
@@ -349,23 +384,33 @@ export default {
         },
         handleUpdate(namespace) {
             let data = this.content
-            if (this.aceConfig.lang == 'yaml') {
-                data = JSON.stringify(yaml.load(data), null, 2);
+            let datajson = {}
+            try {
+                if (this.aceConfig.lang == 'yaml') {
+                    data = JSON.stringify(yaml.load(data), null, 2);
+                }
+                datajson = JSON.parse(data)
+            } catch (e) {
+                this.$message({
+                    showClose: true,
+                    message: '格式错误,请检查格式',
+                    type: 'error'
+                });
+                return
             }
             this.$ajax.put(
                 '/secret/update',
                 {
                     namespace: namespace,
-                    data: JSON.parse(data)
+                    data: datajson
                 },
             ).then((res) => {
-
-                this.$message({
-                    showClose: true,
-                    message: res.msg,
-                    type: 'success'
-                });
-                console.log(res)
+                this.dialogFormVisible = false,
+                    this.$message({
+                        showClose: true,
+                        message: res.msg,
+                        type: 'success'
+                    });
             }).catch((res) => {
                 this.$message({
                     showClose: true,
@@ -425,6 +470,13 @@ export default {
                 return
             }
             this.jsonFormat()
+        },
+        showLabels(index) {
+            if (this.maxitem[index] == 3) {
+                this.maxitem[index] = 99
+            } else {
+                this.maxitem[index] = 3
+            }
         }
     }
 }
@@ -508,5 +560,13 @@ export default {
 
 .el-form-item__content .el-input {
     width: 400px;
+}
+
+.icon-secret {
+    width: 2.5em;
+    height: 2.5em;
+    vertical-align: -0.7em;
+    fill: currentColor;
+    overflow: hidden;
 }
 </style>

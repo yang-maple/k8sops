@@ -33,7 +33,7 @@
                             <!-- 处理父菜单栏 -->
                             <template #title>
                                 <el-icon>
-                                    <svg class="icon" aria-hidden="true">
+                                    <svg class="icon-layui" aria-hidden="true">
                                         <use :xlink:href="menu.children[0].icon"></use>
                                     </svg>
                                 </el-icon>
@@ -139,7 +139,7 @@
             <span class="dialog-footer">
                 <el-button type="primary" v-if="activeName == 'yaml'" @click="createyaml()">创建</el-button>
                 <el-button type="primary" v-if="activeName == 'yamlfile'" @click="submitUpload">上传并创建</el-button>
-                <el-button @click="dialogcreatens = false">
+                <el-button @click="handleCancel">
                     取消
                 </el-button>
             </span>
@@ -168,8 +168,10 @@ export default {
         },
         config() {
             let token = localStorage.getItem('user_token')
+            let uuid = localStorage.getItem('user_id')
             return {
                 Authorization: token,
+                Uuid: uuid
             };
         },
         cluster() {
@@ -210,6 +212,13 @@ export default {
         },
         createyaml() {
             try {
+                if (this.content == '') {
+                    this.$message({
+                        message: '内容不能为空',
+                        type: 'error'
+                    });
+                    return
+                }
                 let data = jsyaml.load(this.content);
                 this.$ajax.post(
                     '/upload/uploadYaml',
@@ -221,7 +230,7 @@ export default {
                         message: res.msg,
                         type: 'success'
                     });
-                    this.dialogcreatens = false
+                    this.dialogyaml = false
                     this.content = ''
                     console.log(res)
                 }).catch((res) => {
@@ -247,7 +256,7 @@ export default {
                 message: response.msg,
                 type: 'success'
             });
-            this.dialogcreatens = false
+            this.dialogyaml = false
             console.log(response)
         },
         submiterror(error, uploadFile, uploadFiles) {
@@ -256,6 +265,10 @@ export default {
                 type: 'error'
             });
             console.log(JSON.parse(error.message))
+        },
+        handleCancel() {
+            this.dialogyaml = false
+            this.content = ''
         },
         handleClick(tab) {
             console.log(tab)
@@ -443,11 +456,12 @@ export default {
     margin-right: 8px;
 }
 
-.icon {
-    width: 2em;
-    height: 2em;
+.icon-layui {
+    width: 3em;
+    height: 3em;
     vertical-align: -0.15em;
     fill: currentColor;
+    overflow: hidden;
 
 }
 </style>

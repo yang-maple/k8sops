@@ -1,4 +1,23 @@
 <template>
+    <el-row style="padding-bottom: 10px;">
+        <el-col :span="24">
+            <el-card shadow="always" style="width: 100%;">
+                <span>
+                    <div>
+                        <svg class="icon-pod" aria-hidden="true">
+                            <use xlink:href="#icon-gitpod"></use>
+                        </svg>
+                        <span
+                            style="font-size: 24px; color: #242e42;text-shadow: 0 4px 8px rgba(36,46,66,.1);font-weight: 600;">容器组</span>
+                        <br>
+                        <span style="font-size: 12px;color: #79879c!important">
+                            容器组（Pod）是 Kubernetes 应用程序的基本执行单元，是您创建或部署的 Kubernetes 对象模型中最小和最简单的单元。
+                        </span>
+                    </div>
+                </span>
+            </el-card>
+        </el-col>
+    </el-row>
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
@@ -11,7 +30,8 @@
         </el-col>
         <el-col :span="16">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" class="input-with-select" clearable>
+                <el-input v-model="filter_name" placeholder="Please input" clearable @clear="getPod()"
+                    @keyup.enter="getPod()">
                     <template #prepend>
                         <el-button icon="Search" @click="getPod()" />
                     </template>
@@ -30,39 +50,64 @@
     </el-row>
     <div class="table-bg-purple">
         <el-table :data="podItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small">
-            <el-table-column label="Name" width="200">
+            <el-table-column label="名称" width="200">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
-                        <el-icon>
-                            <timer />
-                        </el-icon>
-                        <span style="margin-left: 10px">{{ scope.row.name }}</span>
+                        <el-text type="primary" size="small" style="margin-left: 5px;">
+                            {{ scope.row.name }}
+                        </el-text>
+                    </div>
+                    <div v-for="(v, k) in scope.row.image " :key="k">
+                        <svg class="icon-pods" aria-hidden="true">
+                            <use xlink:href="#icon-Docker"></use>
+                        </svg>
+                        <span style="margin-left: 10px">{{ v }}</span>
                     </div>
                 </template>
             </el-table-column>
-            <el-table-column label="Images" width="200" align="center">
+            <el-table-column label="命名空间" prop="namespace" width="100" />
+            <el-table-column label="标签">
                 <template #default="scope">
-                    <div v-for="(v, k) in scope.row.image " :key="k">{{ v }}<br></div>
+                    <div v-for="(v, k, index) in scope.row.labels " :key="k">
+                        <div v-if="index < maxitem[scope.$index]">
+                            <el-tag type="info" style="margin-left: 5px;" size="small" effect="plain" round>
+                                {{ k }}:{{ v }}</el-tag>
+                        </div>
+                    </div>
+                    <div v-if="scope.row.labels == null" align="center">---</div>
+                    <div v-if="scope.row.labels != null"><el-button size="small" type="primary" link
+                            @click="showLabels(scope.$index)">{{
+                                maxitem[scope.$index] == 3 ?
+                                '展开' : '收起'
+                            }}</el-button></div>
                 </template>
             </el-table-column>
-            <el-table-column label="labels" width="270" align="center">
+            <el-table-column label="状态" prop="status" width="150">
                 <template #default="scope">
-                    <el-tag type="info" size="small" style="margin-left: 5px;" v-for="(v, k) in scope.row.labels"
-                        :key="k">{{ k }}:{{ v
-                        }}<br></el-tag>
+                    <div v-if="scope.row.status == 'Running' || scope.row.status == 'Completed'" style="color: #00a2ae">
+                        <el-tag type="success" size="small" effect="plain" round>
+                            {{ scope.row.status }}
+                        </el-tag>
+                    </div>
+                    <div v-if="scope.row.status != 'Running' && scope.row.status != 'Completed'" style="color: #f56c6c">
+                        <el-tag type="danger" size="small" effect="plain" round>
+                            {{ scope.row.status }}
+                        </el-tag>
+                    </div>
                 </template>
             </el-table-column>
-            <el-table-column label="Node" prop="node" width="110" />
-            <el-table-column label="Status" prop="status" width="80" />
-            <el-table-column label="Restart" prop="restart" width="60" />
-            <el-table-column label="RCpu" prop="cpu" width="50" />
-            <el-table-column label="RMemory" prop="memory" width="80" />
-            <el-table-column label="Age" prop="age" width="50" />
-            <el-table-column label="Operations" align="center">
+            <el-table-column label="节点" prop="node" width="110" />
+            <el-table-column label="重启次数" prop="restart" width="70" />
+            <el-table-column label="请求CPU" prop="cpu" width="70" />
+            <el-table-column label="请求内存" prop="memory" width="70" />
+            <el-table-column label="创建时间" prop="age" width="140" />
+            <el-table-column label="操作" width="70" align="center">
                 <template #default="scope">
-                    <el-dropdown>
-                        <el-button type="primary">
-                            Operate<el-icon class="el-icon--right"><arrow-down /></el-icon>
+                    <el-dropdown trigger="click">
+                        <el-button type="primary" link>
+                            <el-icon :size="24">
+                                <Operation />
+                            </el-icon>
                         </el-button>
                         <template #dropdown>
                             <el-dropdown-menu>
@@ -109,7 +154,7 @@
         </el-tabs>
         <template #footer>
             <span class="dialog-footer">
-                <el-button type="primary" @click="dialogFormVisible = false, handleUpdate(detailnamespace)">更新</el-button>
+                <el-button type="primary" @click="handleUpdate(detailnamespace)">更新</el-button>
                 <el-button @click="dialogFormVisible = false">
                     取消
                 </el-button>
@@ -129,6 +174,7 @@ export default {
     },
     data() {
         return {
+            maxitem: [],
             detailnamespace: null,
             dialogFormVisible: false,
             podItem: [],
@@ -167,6 +213,9 @@ export default {
             }).then((res) => {
                 this.total = res.data.total
                 this.podItem = res.data.item
+                for (let i = 0; i < res.data.item.length; i++) {
+                    this.maxitem.push(3)
+                }
             }).catch((res) => {
                 console.log(res);
             })
@@ -240,22 +289,33 @@ export default {
         },
         handleUpdate(namespace) {
             let data = this.content
-            if (this.aceConfig.lang == 'yaml') {
-                data = JSON.stringify(yaml.load(data), null, 2);
+            let datajson = {}
+            try {
+                if (this.aceConfig.lang == 'yaml') {
+                    data = JSON.stringify(yaml.load(data), null, 2);
+                }
+                datajson = JSON.parse(data)
+            } catch (e) {
+                this.$message({
+                    showClose: true,
+                    message: '格式错误,请检查格式',
+                    type: 'error'
+                });
+                return
             }
             this.$ajax.put(
                 '/pod/update',
                 {
                     namespace: namespace,
-                    data: JSON.parse(data)
+                    data: datajson
                 },
             ).then((res) => {
-                this.$message({
-                    showClose: true,
-                    message: res.msg,
-                    type: 'success'
-                });
-                console.log(res)
+                this.dialogFormVisible = false,
+                    this.$message({
+                        showClose: true,
+                        message: res.msg,
+                        type: 'success'
+                    });
             }).catch((res) => {
                 this.$message({
                     showClose: true,
@@ -321,6 +381,13 @@ export default {
                 return
             }
             this.jsonFormat()
+        },
+        showLabels(index) {
+            if (this.maxitem[index] == 3) {
+                this.maxitem[index] = 99
+            } else {
+                this.maxitem[index] = 3
+            }
         }
     }
 }
@@ -393,5 +460,22 @@ export default {
 
 .el-tabs--border-card>.el-tabs__content {
     padding: 0px;
+}
+
+.icon-pod {
+    width: 2.5em;
+    height: 2.5em;
+    vertical-align: -0.7em;
+    fill: currentColor;
+    overflow: hidden;
+}
+
+.icon-pods {
+    width: 1.5em;
+    height: 1.5em;
+    padding-left: 5px;
+    vertical-align: -0.65em;
+    fill: currentColor;
+    overflow: hidden;
 }
 </style>

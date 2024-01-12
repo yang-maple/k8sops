@@ -5,38 +5,59 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1c9e6155-8b5c-406b-970a-8620e29aa5b8" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/service/event.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/controller/ingressclass.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/controller/storageclass.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/service/ingressclass.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/service/storageclass.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/assets/img/logo.png" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/assets/img/logo.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/assets/aliicon/demo_index.html" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/assets/aliicon/demo_index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/assets/aliicon/iconfont.css" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/assets/aliicon/iconfont.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/assets/aliicon/iconfont.js" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/assets/aliicon/iconfont.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/assets/aliicon/iconfont.json" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/assets/aliicon/iconfont.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/assets/aliicon/iconfont.ttf" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/assets/aliicon/iconfont.ttf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/assets/aliicon/iconfont.woff" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/assets/aliicon/iconfont.woff" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/assets/aliicon/iconfont.woff2" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/assets/aliicon/iconfont.woff2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/layout/Layout copy.vue" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/../kubeops_client/src/layout/Layout.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/layout/Layout.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/main.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../kubeops_client/src/router/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/router/index.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../kubeops_client/src/utils/request.js" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/utils/request.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/PersistentVolume/PersistentVolume.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/PersistentVolume/PersistentVolume.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/clustermanager/Cluster.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/clustermanager/Cluster.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/daemonset/Daemonset.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/daemonset/Daemonset.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/deployment/Deployment copy.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/deployment/Deployment copy.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/deployment/Deployment copy.vue" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/deployment/Deployment.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/deployment/Deployment.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/homepage/Homepage.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/homepage/Homepage.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/namespace/Namespace.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/namespace/Namespace.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/nodes/Node.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/nodes/Node.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/pod/Pod.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/pod/Pod.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/pod/Xlogs.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/pod/Xlogs.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/pod/Xtrem.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/pod/Xtrem.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/service/Class.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/service/Class.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/service/Ingress.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/service/Ingress.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/service/Service.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/service/Service.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/service/Servicedetail.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/service/Servicedetail.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/statefulset/Statefulset.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/statefulset/Statefulset.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/storage/Class.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/storage/Class.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/storage/Configmap.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/storage/Configmap.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/storage/Persistenvolumeclaim.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/storage/Persistenvolumeclaim.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../kubeops_client/src/views/storage/Secret.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../kubeops_client/src/views/storage/Secret.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/controller/namespaces.go" beforeDir="false" afterPath="$PROJECT_DIR$/controller/namespaces.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/controller/node.go" beforeDir="false" afterPath="$PROJECT_DIR$/controller/node.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/controller/persistenvolume.go" beforeDir="false" afterPath="$PROJECT_DIR$/controller/persistenvolume.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/controller/router.go" beforeDir="false" afterPath="$PROJECT_DIR$/controller/router.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/configmap.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/configmap.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/service/daemonset.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/daemonset.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/dataselector.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/dataselector.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/service/deployment.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/deployment.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/service/homepage.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/homepage.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/ingress.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/ingress.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/namespace.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/namespace.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/service/node.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/node.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/persistentvolume.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/persistentvolume.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/persistentvolumeclaim.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/persistentvolumeclaim.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/service/pod.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/pod.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/secret.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/secret.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/service.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/service/statefulset.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/statefulset.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/terminal.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/terminal.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -47,6 +68,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="HTML File" />
+        <option value="OpenAPI" />
         <option value="Go File" />
       </list>
     </option>
@@ -116,5 +138,16 @@
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/service/node.go</url>
+          <line>4</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

@@ -1,6 +1,7 @@
 package service
 
 import (
+	storagev1 "k8s.io/api/storage/v1"
 	"sort"
 	"strings"
 	"time"
@@ -16,7 +17,7 @@ type dataselector struct {
 	DataSelect      *DataSelectQuery
 }
 
-// DataCell 接口用于各种资源list 的类型转换，转化后可以使用dataselector 的排序过滤分页
+// DataCell 接口用于各种资源list 的类型转换，转化后可以使用data selector 的排序过滤分页
 // 接口定义了 两个方法
 type DataCell interface {
 	// GetCreation 该方法用于获取资源的创建时间
@@ -75,7 +76,7 @@ func (d *dataselector) Filter() *dataselector {
 		return d
 	}
 	// 定义新的数组 用于存储过滤出来的数据 并返回
-	filterList := []DataCell{}
+	filterList := make([]DataCell, 0, len(d.GenericDataList))
 	//若传入的 Name != nil 则返回包含Name 的数组
 	for _, value := range d.GenericDataList {
 		// 定义一个匹配的标识
@@ -98,7 +99,6 @@ func (d *dataselector) Filter() *dataselector {
 }
 
 // Pagination 方法用于数组的分页，根据 limit 和 Page 的传参，取一定范围内的数据并返回
-
 func (d *dataselector) Pagination() *dataselector {
 	//定义变量获取变量值
 
@@ -118,13 +118,13 @@ func (d *dataselector) Pagination() *dataselector {
 	if endindex >= len(d.GenericDataList) {
 		endindex = len(d.GenericDataList) - 1
 	}
-	// 取出在 startindex 和 endindex 直接的数据 并返回
+	// 取出在 start index 和 end index 直接的数据 并返回
 	d.GenericDataList = d.GenericDataList[startindex : endindex+1]
 	return d
 }
 
 // 定义 podCell 类型 实现DataCell接口 用于数据转换
-// podcell 实现了 DataCell接口的 两个方法
+// pod cell 实现了 DataCell接口的 两个方法
 type podCell corev1.Pod
 
 func (p podCell) GetCreation() time.Time {
@@ -147,8 +147,8 @@ func (d deploymentCell) GetName() string {
 	return d.Name
 }
 
-// 定义 daemonsetCell 类型 实现DataCell接口 用于数据转换
-// daemonsetCell 实现了 DataCell接口的 两个方法
+// 定义 daemon setCell 类型 实现DataCell接口 用于数据转换
+// daemon setCell 实现了 DataCell接口的 两个方法
 type daemonsetCell appsv1.DaemonSet
 
 func (d daemonsetCell) GetCreation() time.Time {
@@ -159,7 +159,7 @@ func (d daemonsetCell) GetName() string {
 	return d.Name
 }
 
-// 定义 statefulsetCell 类型 实现 DataCell 接口 用于数据转换
+// 定义 statefulCell 类型 实现 DataCell 接口 用于数据转换
 type statefulsetCell appsv1.StatefulSet
 
 func (s statefulsetCell) GetCreation() time.Time {
@@ -223,4 +223,49 @@ func (p pvcCell) GetCreation() time.Time {
 
 func (p pvcCell) GetName() string {
 	return p.Name
+}
+
+// 定义 pvCell 类型 实现 DataCell 接口 用于数据转换
+type pvCell corev1.PersistentVolume
+
+func (pv pvCell) GetCreation() time.Time {
+	return pv.CreationTimestamp.Time
+}
+
+func (pv pvCell) GetName() string {
+	return pv.Name
+}
+
+//定义 nsCell 类型 实现 DataCell 接口 用于数据转换
+
+type nsCell corev1.Namespace
+
+func (n nsCell) GetCreation() time.Time {
+	return n.CreationTimestamp.Time
+}
+
+func (n nsCell) GetName() string {
+	return n.Name
+}
+
+// 定义storageClassCell 类型 实现 DataCell 接口 用于数据转换
+type storageClassCell storagev1.StorageClass
+
+func (sc storageClassCell) GetCreation() time.Time {
+	return sc.CreationTimestamp.Time
+}
+
+func (sc storageClassCell) GetName() string {
+	return sc.Name
+}
+
+// 定义ingressClassCell 类型 实现 DataCell 接口 用于数据转换
+type ingressClassCell networkv1.IngressClass
+
+func (i ingressClassCell) GetCreation() time.Time {
+	return i.CreationTimestamp.Time
+}
+
+func (i ingressClassCell) GetName() string {
+	return i.Name
 }

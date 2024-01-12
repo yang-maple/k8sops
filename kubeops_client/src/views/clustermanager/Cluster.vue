@@ -1,4 +1,23 @@
 <template>
+    <el-row style="padding-bottom: 10px;">
+        <el-col :span="24">
+            <el-card shadow="always" style="width: 100%;">
+                <span>
+                    <div>
+                        <svg class="icon-cluster" aria-hidden="true">
+                            <use xlink:href="#icon-jiqun"></use>
+                        </svg>
+                        <span
+                            style="font-size: 24px; color: #242e42;text-shadow: 0 4px 8px rgba(36,46,66,.1);font-weight: 600;">集群config配置</span>
+                        <br>
+                        <span style="font-size: 12px;color: #79879c!important">集在 Kubernetes 集群中，config 资源用于存储集群的配置信息，包括 API
+                            Server 的地址、认证信息、授权信息等。通过 config 资源，可以方便地连接和管理 Kubernetes 集群。
+                        </span>
+                    </div>
+                </span>
+            </el-card>
+        </el-col>
+    </el-row>
     <el-row class="cluster-header">
         <el-col :span="6">
             <el-statistic title="集群总数" :value="clusteritem.length" />
@@ -351,5 +370,13 @@ export default {
     width: 178px;
     height: 178px;
     text-align: center;
+}
+
+.icon-cluster {
+    width: 3em;
+    height: 3em;
+    vertical-align: -1em;
+    fill: currentColor;
+    overflow: hidden;
 }
 </style>

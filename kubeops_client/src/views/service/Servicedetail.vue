@@ -7,7 +7,7 @@
             <div>
               <el-descriptions direction="vertical" :column="4">
                 <el-descriptions-item label="名   称">{{ metadata.name }}</el-descriptions-item>
-                <el-descriptions-item label="名称空间">{{ metadata.namespace }}</el-descriptions-item>
+                <el-descriptions-item label="命名空间">{{ metadata.namespace }}</el-descriptions-item>
                 <el-descriptions-item label="创建时间">{{ metadata.creationTimestamp }}</el-descriptions-item>
                 <el-descriptions-item label="Age">{{ age }}</el-descriptions-item>
               </el-descriptions>

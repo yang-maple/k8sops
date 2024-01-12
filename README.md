@@ -1,18 +1,34 @@
 # k8sops
 gin-vue3 realize k8s-dashboard
 
-​	
+1. bug 终端连接还需要调试
+2. node 资源使用量
 
-1. 实现的基础资源的增删改查
+```go
+cpulimit := make(map[string]float64)
+	cpurequest := make(map[string]float64)
+	memlimit := make(map[string]int64)
+	memrequest := make(map[string]int64)
+	start := time.Now().Unix()
+	for _, pod := range pods.Items {
+		if pod.Spec.NodeName != "" {
+			for _, container := range pod.Spec.Containers {
+				if _, ok := cpulimit[pod.Spec.NodeName]; ok {
+					cpulimit[pod.Spec.NodeName] += float62(container.Resources.Limits.Cpu().AsApproximateFloat64())
+					cpurequest[pod.Spec.NodeName] += float62(container.Resources.Requests.Cpu().AsApproximateFloat64())
+					memlimit[pod.Spec.NodeName] += container.Resources.Limits.Memory().Value()
+					memrequest[pod.Spec.NodeName] += container.Resources.Requests.Memory().Value()
+					continue
+				} else {
+					cpulimit[pod.Spec.NodeName] += float62(container.Resources.Limits.Cpu().AsApproximateFloat64())
+					cpurequest[pod.Spec.NodeName] += float62(container.Resources.Requests.Cpu().AsApproximateFloat64())
+					memlimit[pod.Spec.NodeName] += container.Resources.Limits.Memory().Value()
+					memrequest[pod.Spec.NodeName] += container.Resources.Requests.Memory().Value()
+				}
+			}
+		}
+	}
 
-2. 实现了 yaml 文件 和yaml 内容进行资源的创建
+Math.trunc(this.node_resource.memory_used * 100) / 10
+```
 
-3. 待实现 config 文件的上传和初始化。
-
-   ​	文件上传后端的优化，写入数据库。并关联user表
-
-   完成，切换config完成
-
-4. 首页的渲染。 （首页基本完成）
-
-4. bug 终端连接还需要调试

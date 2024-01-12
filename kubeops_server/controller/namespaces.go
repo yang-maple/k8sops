@@ -15,8 +15,22 @@ type namespace struct{}
 var Namespace namespace
 
 func (n *namespace) GetNsList(c *gin.Context) {
+	params := new(struct {
+		FilterName string `form:"filter_name"`
+		Limit      int    `form:"limit"`
+		Page       int    `form:"page"`
+	})
+	err := c.ShouldBind(&params)
+	if err != nil {
+		logger.Info("绑定参数失败" + err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg":  "绑定参数失败" + err.Error(),
+			"data": nil,
+		})
+		return
+	}
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	data, err := service.Namespace.GetNsList(uuid)
+	data, err := service.Namespace.GetNsList(params.FilterName, params.Limit, params.Page, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"msg":    "获取namespaces失败",

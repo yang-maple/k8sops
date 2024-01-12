@@ -30,24 +30,60 @@ type NamespaceDetail struct {
 	Age    string            `json:"age"`
 }
 
+func (n *namespace) toCells(ns []corev1.Namespace) []DataCell {
+	cells := make([]DataCell, len(ns))
+	for i := range ns {
+		cells[i] = nsCell(ns[i])
+	}
+	return cells
+}
+
+func (n *namespace) fromCells(cells []DataCell) []corev1.Namespace {
+	ns := make([]corev1.Namespace, len(cells))
+	for i := range cells {
+		ns[i] = corev1.Namespace(cells[i].(nsCell))
+	}
+	return ns
+}
+
 // GetNsList  列表
-func (n *namespace) GetNsList(uuid int) (namespacesList *NsList, err error) {
+func (n *namespace) GetNsList(Name string, Limit, Page int, uuid int) (namespacesList *NsList, err error) {
 	nsList, err := K8s.Clientset[uuid].CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取namespaces-list 失败" + err.Error())
 		return nil, errors.New("获取namespaces-list 失败" + err.Error())
 	}
+
+	//组装数据
+	selectData := &dataselector{
+		DataSelect: &DataSelectQuery{
+			Paginate: &PaginateQuery{
+				limit: Limit,
+				page:  Page,
+			},
+			Filter: &FilterQuery{
+				Name: Name,
+			},
+		},
+		GenericDataList: n.toCells(nsList.Items),
+	}
+
+	//筛选
+	filtered := selectData.Filter()
+	total := len(filtered.GenericDataList)
+	//排序并分页
+	dataPage := filtered.Sort().Pagination()
 	list := make([]namespacesInfo, 0, len(nsList.Items))
-	for _, v := range nsList.Items {
+	for _, v := range n.fromCells(dataPage.GenericDataList) {
 		list = append(list, namespacesInfo{
 			Name:   v.Name,
 			Labels: v.Labels,
 			Status: v.Status.Phase,
-			Age:    model.GetAge(v.CreationTimestamp.Unix()),
+			Age:    v.CreationTimestamp.Time.Format("2006-01-02 15:04:05"),
 		})
 	}
 	return &NsList{
-		Total: len(nsList.Items),
+		Total: total,
 		Item:  list,
 	}, err
 }

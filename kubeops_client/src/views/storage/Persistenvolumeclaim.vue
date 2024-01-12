@@ -1,4 +1,22 @@
 <template>
+    <el-row style="padding-bottom: 10px;">
+        <el-col :span="24">
+            <el-card shadow="always" style="width: 100%;">
+                <span>
+                    <div>
+                        <svg class="icon-pvc" aria-hidden="true">
+                            <use xlink:href="#icon-cunchulei"></use>
+                        </svg>
+                        <span
+                            style="font-size: 24px; color: #242e42;text-shadow: 0 4px 8px rgba(36,46,66,.1);font-weight: 600;">持久卷声明</span>
+                        <br>
+                        <span style="font-size: 12px;color: #79879c!important">持久卷声明（Persistent Volume Claim,
+                            PVC）是Kubernetes中用于定义和管理应用程序对其它持久卷（Persistent Volume, PV）的请求和绑定的组件。</span>
+                    </div>
+                </span>
+            </el-card>
+        </el-col>
+    </el-row>
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
@@ -13,7 +31,8 @@
         </el-col>
         <el-col :span="16">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" class="input-with-select" clearable>
+                <el-input v-model="filter_name" placeholder="Please input" clearable @clear="getPersistentVolumeClaims()"
+                    @keyup.enter="getPersistentVolumeClaims()">
                     <template #prepend>
                         <el-button icon="Search" @click="getPersistentVolumeClaims()" />
                     </template>
@@ -35,37 +54,53 @@
     </el-row>
     <div class="table-bg-purple">
         <el-table :data="claimsItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small">
-            <el-table-column label="Name" width="180" align="center">
+            <el-table-column label="名称" width="300">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
                         <el-icon>
-                            <timer />
+                            <Coin />
                         </el-icon>
                         <span style="margin-left: 10px">{{ scope.row.name }}</span>
                     </div>
                 </template>
             </el-table-column>
-            <el-table-column label="labels" width="150" align="center">
+            <el-table-column label="容量" prop="claim" width="100" align="center" />
+            <el-table-column label="持久卷" prop="volume" width="300">
+                <template #default="scope">{{ scope.row.volume ? scope.row.volume : '---' }}</template>
+            </el-table-column>
+            <el-table-column label="状态" prop="status" width="100">
                 <template #default="scope">
-                    <el-tag size="small" v-for="(v, k) in scope.row.labels " :key="k">{{ k }}:{{ v
-                    }}<br></el-tag>
+                    <div style="display: flex; align-items: center">
+                        <span slot="reference" v-if="scope.row.status == 'Bound'">
+                            <el-tooltip placement="bottom" effect="light"><template #content>Bound</template>
+                                <i class="dotClass" style="background-color: springgreen"></i></el-tooltip>
+                        </span>
+                        <span slot="reference" v-if="scope.row.status != 'Bound'">
+                            <el-tooltip placement="bottom" effect="light"><template #content> Available </template>
+                                <i class="dotClass" style="background-color: red"></i></el-tooltip>
+                        </span>
+                        <el-text size="small" style="margin-left: 10px">{{
+                            scope.row.status
+                        }}</el-text>
+                    </div>
                 </template>
             </el-table-column>
-            <el-table-column label="Status" prop="status" width="80" align="center" />
-            <el-table-column label="Volume" prop="volume" width="300" align="center" />
-            <el-table-column label="Claim" prop="claim" width="100" align="center" />
-            <el-table-column label="AccessModes" width="110" align="center">
+            <el-table-column label="访问模式" width="150">
                 <template #default="scope">
                     <div v-for="(v, k) in scope.row.access_modes " :key="k">{{ v }}<br></div>
                 </template>
             </el-table-column>
-            <el-table-column label="StorageClass" prop="storage_class" width="110" align="center" />
-            <el-table-column label="Age" prop="age" width="50" align="center" />
-            <el-table-column label="Operations" align="center">
+            <el-table-column label="存储类型" prop="storage_class">
+                <template #default="scope">{{ scope.row.storage_class ? scope.row.storage_class : '---' }}</template>
+            </el-table-column>
+            <el-table-column label="创建时间" prop="age" width="140" />
+            <el-table-column label="操作" width="70" align="center">
                 <template #default="scope">
-                    <el-dropdown>
-                        <el-button type="primary">
-                            Operate<el-icon class="el-icon--right"><arrow-down /></el-icon>
+                    <el-dropdown trigger="click">
+                        <el-button type="primary" link>
+                            <el-icon :size="24">
+                                <Operation />
+                            </el-icon>
                         </el-button>
                         <template #dropdown>
                             <el-dropdown-menu>
@@ -99,7 +134,7 @@
             <el-form-item label="名称" prop="name">
                 <el-input v-model="ruleForm.name"></el-input>
             </el-form-item>
-            <el-form-item label="名称空间" prop="namespace">
+            <el-form-item label="命名空间" prop="namespace">
                 <el-select v-model="ruleForm.namespace" placeholder="Select" @visible-change="getnsselect()">
                     <el-option-group v-for="group in  nslist " :key="group.label">
                         <el-option v-for=" item  in  group.options " :key="item.namespace" :value="item.namespace"
@@ -153,7 +188,7 @@
         </el-tabs>
         <template #footer>
             <span class="dialog-footer">
-                <el-button type="primary" @click="dialogFormVisible = false, handleUpdate(detailnamespace)">更新</el-button>
+                <el-button type="primary" @click="handleUpdate(detailnamespace)">更新</el-button>
                 <el-button @click="dialogFormVisible = false">
                     取消
                 </el-button>
@@ -219,7 +254,7 @@ export default {
                     { min: 3, max: 10, message: '长度在 3 到 10 个字符', trigger: 'blur' }
                 ],
                 namespace: [
-                    { required: true, message: '请选择名称空间', trigger: 'change' }
+                    { required: true, message: '请选择命名空间', trigger: 'change' }
                 ],
                 resource: [
                     { message: '请选择一种协议', trigger: 'change' }
@@ -339,7 +374,6 @@ export default {
                 }
             }
             ).then((res) => {
-
                 this.$message({
                     showClose: true,
                     message: res.msg,
@@ -357,17 +391,28 @@ export default {
         },
         handleUpdate(namespace) {
             let data = this.content
-            if (this.aceConfig.lang == 'yaml') {
-                data = JSON.stringify(yaml.load(data), null, 2);
+            let datajson = {}
+            try {
+                if (this.aceConfig.lang == 'yaml') {
+                    data = JSON.stringify(yaml.load(data), null, 2);
+                }
+                datajson = JSON.parse(data)
+            } catch (e) {
+                this.$message({
+                    showClose: true,
+                    message: '格式错误,请检查格式',
+                    type: 'error'
+                });
+                return
             }
             this.$ajax.put(
                 '/pvc/update',
                 {
                     namespace: namespace,
-                    data: JSON.parse(data)
+                    data: datajson
                 },
             ).then((res) => {
-
+                this.dialogFormVisible = false
                 this.$message({
                     showClose: true,
                     message: res.msg,
@@ -508,5 +553,21 @@ export default {
 
 .el-form-item__content .el-input {
     width: 400px;
+}
+
+.dotClass {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: block;
+    margin-left: 10px;
+}
+
+.icon-pvc {
+    width: 2.2em;
+    height: 2.2em;
+    vertical-align: -0.7em;
+    fill: currentColor;
+    overflow: hidden;
 }
 </style>

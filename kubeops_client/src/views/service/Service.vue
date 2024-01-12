@@ -1,4 +1,23 @@
 <template>
+    <el-row style="padding-bottom: 10px;">
+        <el-col :span="24">
+            <el-card shadow="always" style="width: 100%;">
+                <span>
+                    <div>
+                        <svg class="icon-svc" aria-hidden="true">
+                            <use xlink:href="#icon-ingress2"></use>
+                        </svg>
+                        <span
+                            style="font-size: 24px; color: #242e42;text-shadow: 0 4px 8px rgba(36,46,66,.1);font-weight: 600;">服务</span>
+                        <br>
+                        <span
+                            style="font-size: 12px;color: #79879c!important">服务（Service）提供一种抽象的方法，将运行在容器组（Pod）上的应用程序公开为网络服务。</span>
+                    </div>
+                </span>
+            </el-card>
+        </el-col>
+    </el-row>
+
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
@@ -10,7 +29,8 @@
         </el-col>
         <el-col :span="16">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" class="input-with-select" clearable>
+                <el-input v-model="filter_name" placeholder="Please input" clearable @clear="getSevices()"
+                    @keyup.enter="getSevices()">
                     <template #prepend>
                         <el-button icon="Search" @click="getSevices()" />
                     </template>
@@ -32,7 +52,7 @@
     </el-row>
     <div class="table-bg-purple">
         <el-table :data="serviceItem" :header-cell-style="{ background: '#e6e7e9' }" size="small">
-            <el-table-column label="Name" prop="name" width="200" align="center">
+            <el-table-column label="名称" prop="name" width="200">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
                         {{ scope.row.name
@@ -40,23 +60,35 @@
                     </div>
                 </template>
             </el-table-column>
-            <el-table-column label="Namespace" prop="namespace" width="150" align="center" />
-            <el-table-column label="labels" width="280" align="center">
+            <el-table-column label="命名空间" prop="namespace" width="100" />
+            <el-table-column label="标签">
                 <template #default="scope">
-                    <el-tag type="info" size="small" v-for="(v, k) in scope.row.labels " :key="k">{{ k }}:{{ v
-                    }}<br></el-tag>
+                    <div v-for="(v, k, index) in scope.row.labels " :key="k">
+                        <div v-if="index < maxitem[scope.$index]">
+                            <el-tag type="info" style="margin-left: 5px;" size="small" effect="plain" round>
+                                {{ k }}:{{ v }}</el-tag>
+                        </div>
+                    </div>
+                    <div v-if="scope.row.labels == null" align="center">---</div>
+                    <div v-if="scope.row.labels != null"><el-button size="small" type="primary" link
+                            @click="showLabels(scope.$index)">{{
+                                maxitem[scope.$index] == 3 ?
+                                '展开' : '收起'
+                            }}</el-button></div>
                 </template>
             </el-table-column>
-            <el-table-column label="Type" prop="type" width="100" align="center" />
-            <el-table-column label="ClusterIP" prop="cluster_ip" width="100" align="center" />
-            <el-table-column label="ExternalIP" width="100" align="center">
+            <el-table-column label="类型" prop="type" width="120" />
+            <el-table-column label="集群 IP" prop="cluster_ip" width="110" />
+            <el-table-column label="外部访问IP" width="100">
                 <template #default="scope">
-                    <div v-if="scope.row.external_ip == undefined">-</div>
-                    <div v-if="scope.row.external_ip != undefined" v-for="(v, k) in scope.row.external_ip " :key="k">{{ v
-                    }}</div>
+                    <div v-if="scope.row.external_ip[0] == null">---</div>
+                    <div v-for="(v, k) in scope.row.external_ip " :key="k">
+                        <div>{{ v
+                        }}</div>
+                    </div>
                 </template>
             </el-table-column>
-            <el-table-column label="Ports" width="130" align="center">
+            <el-table-column label="端口" width="140">
                 <template #default="scope">
                     <div v-for="(v, k) in scope.row.port " :key="k">
                         <span v-if="v.nodePort == undefined">{{ v.port }}/{{ v.protocol }}</span>
@@ -65,12 +97,14 @@
                     </div>
                 </template>
             </el-table-column>
-            <el-table-column label="Age" prop="age" width="50" align="center" />
-            <el-table-column label="Operations" align="center">
+            <el-table-column label="创建时间" prop="age" width="140" />
+            <el-table-column label="操作" width="50" align="center">
                 <template #default="scope">
-                    <el-dropdown>
-                        <el-button type="primary">
-                            Operate<el-icon class="el-icon--right"><arrow-down /></el-icon>
+                    <el-dropdown trigger="click">
+                        <el-button type="primary" link>
+                            <el-icon :size="24">
+                                <Operation />
+                            </el-icon>
                         </el-button>
                         <template #dropdown>
                             <el-dropdown-menu>
@@ -93,8 +127,7 @@
             </el-tabs>
             <template #footer>
                 <span class="dialog-footer">
-                    <el-button type="primary"
-                        @click="dialogFormVisible = false, handleUpdate(detailnamespace)">更新</el-button>
+                    <el-button type="primary" @click="handleUpdate(detailnamespace)">更新</el-button>
                     <el-button @click="dialogFormVisible = false">
                         取消
                     </el-button>
@@ -122,8 +155,8 @@
             <el-form-item label="名称" prop="name">
                 <el-input v-model="ruleForm.name"></el-input>
             </el-form-item>
-            <el-form-item label="名称空间" prop="namespace">
-                <el-select v-model="ruleForm.namespace" placeholder="请选择名称空间" @visible-change="getnsselect()">
+            <el-form-item label="命名空间" prop="namespace">
+                <el-select v-model="ruleForm.namespace" placeholder="请选择命名空间" @visible-change="getnsselect()">
                     <el-option v-for="item in nslist" :key="item.namespace" :label="item.label" :value="item.namespace"
                         v-show="item.label != 'All'" />
                 </el-select>
@@ -167,7 +200,7 @@
     </el-dialog>
 </template>
 
-<script scoped>
+<script >
 import { ElFormItem } from 'element-plus'
 import { VAceEditor } from 'vue3-ace-editor';
 import '../../ace.config.js';
@@ -179,6 +212,7 @@ export default {
     },
     data() {
         return {
+            maxitem: [],
             detailnamespace: '',
             dialogFormVisible: false,
             dialogcreatens: false,
@@ -232,7 +266,7 @@ export default {
                     { min: 3, max: 10, message: '长度在 3 到 10 个字符', trigger: 'change' }
                 ],
                 namespace: [
-                    { required: true, message: '请选择名称空间', trigger: 'change' }
+                    { required: true, message: '请选择命名空间', trigger: 'change' }
                 ],
                 resource: [
                     { message: '请选择一种协议', trigger: 'change' }
@@ -260,6 +294,9 @@ export default {
             }).then((res) => {
                 this.total = res.data.total
                 this.serviceItem = res.data.item
+                for (let i = 0; i < res.data.item.length; i++) {
+                    this.maxitem.push(3)
+                }
             }).catch(function (res) {
                 console.log(res);
             })
@@ -355,22 +392,33 @@ export default {
         },
         handleUpdate(namespace) {
             let data = this.content
-            if (this.aceConfig.lang == 'yaml') {
-                data = JSON.stringify(yaml.load(data), null, 2);
+            let datajson = {}
+            try {
+                if (this.aceConfig.lang == 'yaml') {
+                    data = JSON.stringify(yaml.load(data), null, 2);
+                }
+                datajson = JSON.parse(data)
+            } catch (e) {
+                this.$message({
+                    showClose: true,
+                    message: '格式错误,请检查格式',
+                    type: 'error'
+                });
+                return
             }
             this.$ajax.put(
                 '/svc/update',
                 {
                     namespace: namespace,
-                    data: JSON.parse(data)
+                    data: datajson
                 },
             ).then((res) => {
-                this.$message({
-                    showClose: true,
-                    message: res.msg,
-                    type: 'success'
-                });
-                console.log(res)
+                this.dialogFormVisible = false,
+                    this.$message({
+                        showClose: true,
+                        message: res.msg,
+                        type: 'success'
+                    });
             }).catch((res) => {
                 this.$message({
                     showClose: true,
@@ -450,6 +498,13 @@ export default {
                 return
             }
             this.jsonFormat()
+        },
+        showLabels(index) {
+            if (this.maxitem[index] == 3) {
+                this.maxitem[index] = 99
+            } else {
+                this.maxitem[index] = 3
+            }
         }
     }
 }
@@ -525,5 +580,13 @@ export default {
             width: 180px;
         }
     }
+}
+
+.icon-svc {
+    width: 2.5em;
+    height: 2.5em;
+    vertical-align: -0.8em;
+    fill: currentColor;
+    overflow: hidden;
 }
 </style>
