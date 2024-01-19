@@ -56,6 +56,7 @@ func (c *configmap) GetCmList(configName, Namespace string, Limit, Page, uuid in
 	cmList, err := K8s.Clientset[uuid].CoreV1().ConfigMaps(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取 configmap 失败" + err.Error())
+		return nil, err
 	}
 
 	//组装数据

@@ -16,7 +16,7 @@ func (r *register) RegisterUser(c *gin.Context) {
 	err := c.ShouldBindJSON(&registerInfo)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"code": 0,
+			"code": 400,
 			"msg":  err.Error(),
 		})
 		return
@@ -25,13 +25,13 @@ func (r *register) RegisterUser(c *gin.Context) {
 	err = service.Register.RegisterUser(&registerInfo)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"code": 0,
-			"msg":  err.Error(),
+			"code": 400,
+			"msg":  "注册失败" + err.Error(),
 		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"code": 1,
+		"code": 200,
 		"msg":  "用户" + registerInfo.Username + "注册成功",
 	})
 }
@@ -44,7 +44,7 @@ func (r *register) SendEmail(c *gin.Context) {
 	err := c.ShouldBindJSON(&params)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"code": 0,
+			"code": 400,
 			"msg":  err.Error(),
 		})
 		return
@@ -52,13 +52,13 @@ func (r *register) SendEmail(c *gin.Context) {
 	err = service.Register.SendEmail(params.Email)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"code": 0,
-			"msg":  err.Error(),
+			"code": 400,
+			"msg":  "发送失败" + err.Error(),
 		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"code": 1,
+		"code": 200,
 		"msg":  "验证码已发送至邮箱",
 	})
 }

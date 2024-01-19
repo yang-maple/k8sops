@@ -3,7 +3,6 @@ package dao
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/go-redis/redis/v8"
 	"kubeops/db"
 	"time"
@@ -30,7 +29,6 @@ func (rdb *rdbValue) GetValue(key string) (value string, err error) {
 	} else if err != nil {
 		return "", errors.New("redis get value error:" + err.Error())
 	}
-	fmt.Println(value)
 	return value, err
 }
 

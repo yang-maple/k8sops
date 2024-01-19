@@ -71,7 +71,7 @@ func (p *persistenvolume) GetPvList(pvName string, Limit, Page int, uuid int) (*
 	pvs, err := K8s.Clientset[uuid].CoreV1().PersistentVolumes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取PersistentVolume 失败" + err.Error())
-		return nil, errors.New("获取PersistentVolume 失败" + err.Error())
+		return nil, err
 	}
 
 	//组装数据

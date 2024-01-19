@@ -73,6 +73,7 @@ func (s *service) GetSvcList(svcName, Namespace string, Limit, Page int, uuid in
 	svcList, err := K8s.Clientset[uuid].CoreV1().Services(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取 svc list 失败" + err.Error())
+		return nil, err
 	}
 	//组装数据
 	selectData := &dataselector{
@@ -112,7 +113,7 @@ func (s *service) GetSvcList(svcName, Namespace string, Limit, Page int, uuid in
 	return &svcResp{
 		Total: total,
 		Item:  item,
-	}, err
+	}, nil
 }
 
 // GetSvcDetail 获取 services 详情

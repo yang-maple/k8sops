@@ -53,13 +53,15 @@ httpClient.interceptors.request.use(
         config.headers['Accept-Language'] = 'zh-CN'
         config.headers['Authorization'] = localStorage.getItem("user_token") //可以全局设置接口请求 header 中带token
         config.headers['Uuid'] = localStorage.getItem("user_id")
+        // config.headers['Username'] = localStorage.getItem("user_name")
+
         // 处理post 请求
         if (config.method === 'post') {
             if (!config.data) { //没有参数时，config.data 为null
                 config.data = {}
             }
         }
-        if (config.url == "/user/getCaptcha" || config.url == "/user/login") {
+        if (config.url == "/user/getCaptcha" || config.url == "/user/login" || config.url == "/user/register" || config.url == "/user/register/email" || config.url == "/user/findPassword/email") {
             return config
         }
         showFullScreenLoading()

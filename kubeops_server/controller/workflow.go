@@ -24,7 +24,7 @@ func (w *workflow) GetWorkflowList(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  "绑定参数失败",
 			"data": nil,
 		})
@@ -32,7 +32,7 @@ func (w *workflow) GetWorkflowList(c *gin.Context) {
 	}
 	data, err := service.Workflow.GetWorkflowList(params.FilterName, params.Namespace, params.Limit, params.Page)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  err.Error(),
 			"data": nil,
 		})
@@ -53,7 +53,7 @@ func (w *workflow) GetWorkflowDetail(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  "绑定参数失败",
 			"data": nil,
 		})
@@ -61,7 +61,7 @@ func (w *workflow) GetWorkflowDetail(c *gin.Context) {
 	}
 	data, err := service.Workflow.GetWorkflowDetail(params.Id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": err.Error(),
 		})
 		return
@@ -80,7 +80,7 @@ func (w *workflow) DeleteWorkflow(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  "绑定参数失败",
 			"data": nil,
 		})
@@ -89,7 +89,7 @@ func (w *workflow) DeleteWorkflow(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Workflow.DeleteById(params.Id, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": err.Error(),
 		})
 		return
@@ -105,7 +105,7 @@ func (w *workflow) CreateWorkflow(c *gin.Context) {
 	err := c.ShouldBindJSON(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  "绑定参数失败",
 			"data": nil,
 		})
@@ -114,7 +114,7 @@ func (w *workflow) CreateWorkflow(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Workflow.CreateWorkflow(params, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": err.Error(),
 		})
 		return

@@ -31,5 +31,5 @@ const (
 
 	/*redis 配置*/
 	RedisHost     = "10.1.131.32:6379"
-	RedisPassword = "123456"
+	RedisPassword = "admin123"
 )

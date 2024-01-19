@@ -70,7 +70,7 @@ func (l *login) VerifyInfo(c *gin.Context) {
 	}
 	//判断验证码是否正确 不正确直接返回
 	if !store.Verify(params.CaptchaId, params.VerifyValue, true) {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":   "验证码错误",
 			"token": "",
 		})
@@ -79,7 +79,7 @@ func (l *login) VerifyInfo(c *gin.Context) {
 	// 验证码验证成功后，判断用户名密码
 	uid, token, clusterName, err := service.Login.VerifyUserInfo(params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":   err.Error(),
 			"token": nil,
 		})

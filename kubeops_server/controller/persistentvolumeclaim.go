@@ -24,7 +24,7 @@ func (p *persistentVolumeClaim) GetPersistentVolumeClaimList(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "绑定参数失败",
 		})
 		return
@@ -32,8 +32,8 @@ func (p *persistentVolumeClaim) GetPersistentVolumeClaimList(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	data, err := service.Claim.GetPVClaimList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": "获取PersistentVolumeClaim失败",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "获取PersistentVolumeClaim失败" + err.Error(),
 		})
 		return
 	}
@@ -53,7 +53,7 @@ func (p *persistentVolumeClaim) GetPersistentVolumeClaimDetail(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "绑定参数失败",
 		})
 		return
@@ -61,8 +61,8 @@ func (p *persistentVolumeClaim) GetPersistentVolumeClaimDetail(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	detail, err := service.Claim.GetPVClaimDetail(params.Namespace, params.PersistentVolumeClaimName, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": "获取PersistentVolumeClaim 详情失败",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "获取PersistentVolumeClaim 详情失败" + err.Error(),
 		})
 		return
 	}
@@ -81,7 +81,7 @@ func (p *persistentVolumeClaim) CreatePersistentVolumeClaim(c *gin.Context) {
 	err := c.ShouldBindJSON(&createPvc)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "绑定参数失败",
 		})
 		return
@@ -89,8 +89,8 @@ func (p *persistentVolumeClaim) CreatePersistentVolumeClaim(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Claim.CreatePVClaim(createPvc.Data, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": "创建PersistentVolumeClaim失败",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "创建PersistentVolumeClaim失败" + err.Error(),
 		})
 		return
 	}
@@ -109,7 +109,7 @@ func (p *persistentVolumeClaim) DelPersistentVolumeClaim(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "绑定参数失败",
 		})
 		return
@@ -117,8 +117,8 @@ func (p *persistentVolumeClaim) DelPersistentVolumeClaim(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Claim.DelPVClaim(params.Namespace, params.PersistentVolumeClaimName, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": "删除 PersistentVolumeClaim 失败",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "删除 PersistentVolumeClaim 失败" + err.Error(),
 		})
 		return
 	}
@@ -137,7 +137,7 @@ func (p *persistentVolumeClaim) UpdatePersistentVolumeClaim(c *gin.Context) {
 	err := c.ShouldBindJSON(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "绑定参数失败",
 		})
 		return
@@ -145,8 +145,8 @@ func (p *persistentVolumeClaim) UpdatePersistentVolumeClaim(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Claim.UpdatePVClaim(params.Namespace, params.Data, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": "更新 PersistentVolumeClaim 失败",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "更新 PersistentVolumeClaim 失败" + err.Error(),
 		})
 		return
 	}

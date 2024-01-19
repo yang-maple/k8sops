@@ -5,7 +5,7 @@
                 <span>
                     <div>
                         <svg class="icon-pv" aria-hidden="true">
-                            <use xlink:href="#icon-chijiujuan"></use>
+                            <use xlink:href="#icon-cunchujuan1"></use>
                         </svg>
                         <span
                             style="font-size: 24px; color: #242e42;text-shadow: 0 4px 8px rgba(36,46,66,.1);font-weight: 600;">持久卷</span>
@@ -21,12 +21,10 @@
     <el-row>
         <el-col :span="8">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" clearable @clear="getPersistentVolume()"
+                <el-input v-model="filter_name" placeholder="请输入搜索资源的名称" clearable @clear="getPersistentVolume()"
                     @keyup.enter="getPersistentVolume()">
                     <template #prepend>
-                        <el-button icon="Search"><span style="font-size: 18px;">
-                                搜索
-                            </span></el-button>
+                        <el-button icon="Search"></el-button>
                     </template>
                 </el-input>
             </div>
@@ -35,8 +33,8 @@
             <div class="header-grid-content" style="min-height: 32px;"></div>
         </el-col>
         <el-col :span="6">
-            <div class="header-grid-content" style="text-align: center;">
-                <el-button type="info" @click="Refresh()" round>
+            <div class="header-grid-content" style="text-align: right;">
+                <el-button type="info" @click="getPersistentVolume()" round>
                     <el-icon>
                         <Refresh />
                     </el-icon>
@@ -48,11 +46,15 @@
         </el-col>
     </el-row>
     <div class="table-bg-purple">
-        <el-table :data="persistentvolumeItem" :header-cell-style="{ background: '#e6e7e9' }" size="small">
+        <el-table :data="persistentvolumeItem" :header-cell-style="{ background: '#e6e7e9' }" size="small"
+            empty-text="抱歉，暂无数据">
             <el-table-column label="名称" width="300">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
-                        <el-text size="small" style="margin-left: 10px">{{
+                        <svg class="icon-table-pv" aria-hidden="true">
+                            <use xlink:href="#icon-cunchujuan1"></use>
+                        </svg>
+                        <el-text style="margin-left:3px" size="small">{{
                             scope.row.name
                         }}</el-text>
                     </div>
@@ -142,10 +144,10 @@
                 <el-input v-model="form.name" autocomplete="off" />
             </el-form-item>
             <el-form-item label="标签">
-                <el-input v-model="form.labels"></el-input>
+                <el-input v-model="form.labels" placeholder="`请输入如下格式 {'a':'b'}`"></el-input>
             </el-form-item>
             <el-form-item label="容量">
-                <el-input v-model="form.storage" placeholder="Please input" style="width: fit-content;">
+                <el-input v-model="form.storage" style="width: fit-content;">
                     <template #append>
                         <el-select v-model="storage_type" placeholder="Select">
                             <el-option label="Gi" value="Gi" />
@@ -221,7 +223,7 @@ export default {
                 volume_mode: '',
             },
             formLabelWidth: '140px',
-            total: 1,
+            total: 0,
             page_size: [1, 10, 20, 50, 100],
             limit: 10,
             page: 1,
@@ -254,6 +256,11 @@ export default {
                 this.content = JSON.stringify(res.data.detail, null, 2)
                 console.log(res.data);
             }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res.data);
             })
         },
@@ -272,6 +279,11 @@ export default {
                     type: 'warning'
                 });
             }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res);
             })
             this.Refresh()
@@ -303,6 +315,11 @@ export default {
                 this.total = res.data.total
                 this.persistentvolumeItem = res.data.item
             }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res);
             })
         },
@@ -323,10 +340,16 @@ export default {
                     type: 'success'
                 });
                 console.log(res)
+                this.reload()
             }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res);
             })
-            this.Refresh()
+
 
         },
         handleUpdate() {
@@ -357,16 +380,15 @@ export default {
                         message: res.msg,
                         type: 'success'
                     });
-                console.log(res)
+                this.reload()
             }).catch((res) => {
                 this.$message({
                     showClose: true,
-                    message: res.msg + res.reason,
+                    message: res.msg,
                     type: 'error'
                 });
                 console.log(res);
             })
-            this.Refresh()
         },
         Refresh() {
             setTimeout(() => {
@@ -503,9 +525,17 @@ export default {
 }
 
 .icon-pv {
-    width: 2.2em;
-    height: 2.2em;
+    width: 2.5em;
+    height: 2.5em;
     vertical-align: -0.7em;
+    fill: currentColor;
+    overflow: hidden;
+}
+
+.icon-table-pv {
+    width: 1.5em;
+    height: 1.5em;
+    vertical-align: -0.5em;
     fill: currentColor;
     overflow: hidden;
 }

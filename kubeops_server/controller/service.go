@@ -25,7 +25,7 @@ func (s *services) GetServiceList(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  "绑定参数失败",
 			"data": nil,
 		})
@@ -34,9 +34,8 @@ func (s *services) GetServiceList(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	data, err := service.Services.GetSvcList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":    "获取Services失败",
-			"reason": errors.New(err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "获取Services失败" + err.Error(),
 		})
 		return
 	}
@@ -56,7 +55,7 @@ func (s *services) GetServiceDetail(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  "绑定参数失败",
 			"data": nil,
 		})
@@ -66,9 +65,8 @@ func (s *services) GetServiceDetail(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	detail, err := service.Services.GetSvcDetail(params.Namespace, params.ServiceName, uuid)
 	if err != nil {
-		logger.Info("获取Services 详情失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":  "获取Services 详情失败",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg":  "获取Services 详情失败" + err.Error(),
 			"data": nil,
 		})
 		return
@@ -89,7 +87,7 @@ func (s *services) DelServices(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  "绑定参数失败",
 			"data": nil,
 		})
@@ -98,9 +96,8 @@ func (s *services) DelServices(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Services.DelSvc(params.Namespace, params.ServiceName, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":    "删除 Services 失败",
-			"reason": err.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "删除 Services 失败" + err.Error(),
 		})
 		return
 	}
@@ -127,9 +124,8 @@ func (s *services) CreateService(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Services.CreateSvc(createSvc.Data, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":    "创建 Services 失败",
-			"reason": errors.New(err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "创建 Services 失败" + err.Error(),
 		})
 		return
 	}
@@ -149,17 +145,16 @@ func (s *services) UpdateService(c *gin.Context) {
 	err := c.ShouldBindJSON(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"err": errors.New("绑定参数失败" + err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": errors.New("绑定参数失败" + err.Error()),
 		})
 		return
 	}
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Services.UpdateSvc(params.Namespace, params.Data, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":    "更新失败",
-			"reason": err.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "更新失败" + err.Error(),
 		})
 		return
 	}

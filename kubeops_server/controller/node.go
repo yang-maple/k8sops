@@ -77,7 +77,7 @@ func (n *node) SetNodeSchedule(c *gin.Context) {
 	err = service.Node.SetNodeSchedule(params.NodeName, params.Status, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  err.Error(),
+			"msg":  "设置失败" + err.Error(),
 			"data": nil,
 		})
 		return

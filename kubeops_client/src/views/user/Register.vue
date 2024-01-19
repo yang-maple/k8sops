@@ -26,8 +26,12 @@
                     </el-input> -->
                     <el-input v-model="user.verifycode" maxlength="6" placeholder="请输入验证码">
                         <template #append>
-                            <el-button :disabled="button.disabled" @click="sendemail()">{{
-                                button.text }}</el-button>
+                            <el-button :disabled="button.disabled" @click="sendemail()"><template #default>
+                                    <span v-if="button.disabled == true"><el-icon class="is-loading">
+                                            <Loading />
+                                        </el-icon></span>
+                                    <span>{{ button.text }}</span>
+                                </template></el-button>
                         </template>
                     </el-input>
                 </el-form-item>
@@ -92,16 +96,11 @@ export default {
 
         }
     },
-    created() {
-
+    unmounted() {
+        clearInterval(this.button.timer);
     },
     methods: {
         sendemail() {
-            // 倒计时期间按钮不能点击
-            if (this.button.duration !== 90) {
-                this.button.disabled = true
-                return
-            }
             //清除计时器
             this.button.timer && clearInterval(this.button.timer)
             if (this.user.email != "") {
@@ -113,13 +112,15 @@ export default {
                 ).then((res) => {
                     this.notify("success", "发送成功", res.msg)
                     this.button.timer = setInterval(() => {
+                        // 倒计时期间按钮不能点击
+                        this.button.disabled = true
                         const tmp = this.button.duration--
-                        this.button.text = `${tmp}秒后获取`
+                        this.button.text = `剩余${tmp}秒`
                         if (tmp <= 0) {
                             // 清除掉定时器
                             clearInterval(this.button.timer)
                             this.button.duration = 90
-                            this.button.text = '重新获取'
+                            this.button.text = '请重新获取'
                             // 设置按钮可以单击
                             this.button.disabled = false
                         }
@@ -183,14 +184,14 @@ export default {
     width: 100%;
     background-size: cover;
     background-repeat: no-repeat;
-    background-image: url('@/assets/00001.jpg');
+    background-image: url('@/assets/img/00001.jpg');
     opacity: 0.9;
     position: fixed;
     pointer-events: none;
 }
 
 .loginPart {
-    position: absolute;
+    position: fixed;
     /*定位方式绝对定位absolute*/
     top: 50%;
     left: 80%;

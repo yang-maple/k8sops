@@ -71,6 +71,7 @@ func (p *pod) GetPods(FilterName, NameSpaces string, Limit, Page int, uuid int) 
 	postList, err := K8s.Clientset[uuid].CoreV1().Pods(NameSpaces).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取post-list 失败" + err.Error())
+		return nil, err
 	}
 	//实例化data select对象
 	selectData := &dataselector{
@@ -108,7 +109,7 @@ func (p *pod) GetPods(FilterName, NameSpaces string, Limit, Page int, uuid int) 
 	return &PodResp{
 		Total: total,
 		Item:  items,
-	}, err
+	}, nil
 }
 
 // GetPodDetail 获取pod 详情
@@ -116,7 +117,7 @@ func (p *pod) GetPodDetail(Name, Namespace string, uuid int) (pod *corev1.Pod, e
 	podDetail, err := K8s.Clientset[uuid].CoreV1().Pods(Namespace).Get(context.TODO(), Name, metav1.GetOptions{})
 	if err != nil {
 		logger.Info("获取pod 详情失败" + err.Error())
-		return nil, errors.New("获取pod 详情失败")
+		return nil, err
 	}
 	podDetail.Kind = "Pod"
 	podDetail.APIVersion = "v1"

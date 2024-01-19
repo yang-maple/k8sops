@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"github.com/wonderivan/logger"
 	"kubeops/dao"
 	"kubeops/utils"
 )
@@ -14,6 +15,7 @@ type resetPassword struct{}
 func (rs *resetPassword) VerifyIdentity(email string) (err error) {
 	// 判断用户是否存在
 	if err := dao.ResetPassword.VerifyIdentity(email); err != nil {
+		logger.Info("未注册" + err.Error())
 		return err
 	}
 	//组装数据，生成随机数
@@ -24,32 +26,48 @@ func (rs *resetPassword) VerifyIdentity(email string) (err error) {
 	// 将随机数缓存至redis
 	err = dao.RdbValue.SetValue(verity.Email, verity.Value, 90)
 	if err != nil {
+		logger.Info("redis缓存失败" + err.Error())
 		return err
 	}
 	// 随机数验证码发送邮件
 	err = utils.Emails(email, utils.FormatEmailBody("view/verfityidentify.html", verity), "KubeOps找回密码")
 	if err != nil {
+		logger.Info("邮件发送失败" + err.Error())
 		return err
 	}
 	return nil
 }
 
-// Reset  重置密码
-func (rs *resetPassword) Reset(email, verifyCode, password string) (err error) {
+// FindPasswd  找回并重置密码
+func (rs *resetPassword) FindPasswd(email, verifyCode, password string) (err error) {
 	//读取缓存中的验证码
 	value, err := dao.RdbValue.GetValue(email + "_rsp")
 	if err != nil {
+		logger.Info("redis读缓存失败" + err.Error())
 		return err
 	}
 	if value != verifyCode {
+		logger.Info("验证码错误" + err.Error())
 		return errors.New("验证码错误")
 	}
 	//重置密码
-	if err := dao.ResetPassword.Reset(email, password); err != nil {
+	if err := dao.ResetPassword.FindPasswd(email, password); err != nil {
+		logger.Info("重置密码失败" + err.Error())
 		return err
 	}
 	//重置成功后删除缓存中的验证码
 	_ = dao.RdbValue.DelValue(email + "_rsp")
 	return nil
 
+}
+
+// ResetPasswd 重置密码
+func (rs *resetPassword) ResetPasswd(Id uint, OldPasswd, NewPasswd string) (err error) {
+	//数据库验证密码
+	err = dao.ResetPassword.ResetPasswd(Id, OldPasswd, NewPasswd)
+	if err != nil {
+		logger.Error(err.Error())
+		return err
+	}
+	return nil
 }

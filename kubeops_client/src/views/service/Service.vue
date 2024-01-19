@@ -21,15 +21,15 @@
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
-                <el-select v-model="namespace" placeholder="Select" @visible-change="getnsselect()" @change="getSevices()"
-                    clearable>
+                <el-select v-model="namespace" placeholder="命名空间（默认ALL）" @visible-change="getnsselect()"
+                    @change="getSevices()" clearable>
                     <el-option v-for="item in nslist" :key="item.namespace" :label="item.label" :value="item.namespace" />
                 </el-select>
             </div>
         </el-col>
         <el-col :span="16">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" clearable @clear="getSevices()"
+                <el-input v-model="filter_name" placeholder="请输入搜索资源的名称" clearable @clear="getSevices()"
                     @keyup.enter="getSevices()">
                     <template #prepend>
                         <el-button icon="Search" @click="getSevices()" />
@@ -38,8 +38,8 @@
             </div>
         </el-col>
         <el-col :span="4">
-            <div class="header-grid-content" style="text-align: center;">
-                <el-button type="info" @click="Refresh()" round>
+            <div class="header-grid-content" style="text-align: right;">
+                <el-button type="info" @click="getSevices()" round>
                     <el-icon>
                         <Refresh />
                     </el-icon>
@@ -51,12 +51,17 @@
         </el-col>
     </el-row>
     <div class="table-bg-purple">
-        <el-table :data="serviceItem" :header-cell-style="{ background: '#e6e7e9' }" size="small">
+        <el-table :data="serviceItem" :header-cell-style="{ background: '#e6e7e9' }" size="small" empty-text="抱歉，暂无数据">
             <el-table-column label="名称" prop="name" width="200">
                 <template #default="scope">
+
                     <div style="display: flex; align-items: center">
-                        {{ scope.row.name
-                        }}
+                        <svg class="icon-table-svc" aria-hidden="true">
+                            <use xlink:href="#icon-ingress2"></use>
+                        </svg>
+                        <el-text style="margin-left:3px" size="small">{{
+                            scope.row.name
+                        }}</el-text>
                     </div>
                 </template>
             </el-table-column>
@@ -69,9 +74,9 @@
                                 {{ k }}:{{ v }}</el-tag>
                         </div>
                     </div>
-                    <div v-if="scope.row.labels == null" align="center">---</div>
-                    <div v-if="scope.row.labels != null"><el-button size="small" type="primary" link
-                            @click="showLabels(scope.$index)">{{
+                    <div v-if="scope.row.labels == null">---</div>
+                    <div v-if="scope.row.labels != null && Object.keys(scope.row.labels).length > 3"><el-button size="small"
+                            type="primary" link @click="showLabels(scope.$index)">{{
                                 maxitem[scope.$index] == 3 ?
                                 '展开' : '收起'
                             }}</el-button></div>
@@ -111,7 +116,7 @@
                                 <el-dropdown-item icon="Edit"
                                     @click="dialogFormVisible = true, handleEdit(scope.row.namespace, scope.row.name)">编辑</el-dropdown-item>
                                 <el-dropdown-item icon="Delete"
-                                    @click="messageboxOperate(scope.row, 'delete')">删除</el-dropdown-item>
+                                    @click="messageboxOperate(scope.row, '删除')">删除</el-dropdown-item>
                             </el-dropdown-menu>
                         </template>
                     </el-dropdown>
@@ -162,7 +167,7 @@
                 </el-select>
             </el-form-item>
             <el-form-item label="标签" prop="labels">
-                <el-input v-model="ruleForm.labels"></el-input>
+                <el-input v-model="ruleForm.labels" placeholder="`请输入如下格式 {'a':'b'}`"></el-input>
             </el-form-item>
             <el-form-item label="类型" prop="type">
                 <el-select v-model="ruleForm.type" placeholder="请选择服务类型">
@@ -263,7 +268,7 @@ export default {
             rules: {
                 name: [
                     { required: true, message: '请输入资源名称', trigger: 'change' },
-                    { min: 3, max: 10, message: '长度在 3 到 10 个字符', trigger: 'change' }
+                    { min: 3, max: 15, message: '长度在 3 到 10 个字符', trigger: 'change' }
                 ],
                 namespace: [
                     { required: true, message: '请选择命名空间', trigger: 'change' }
@@ -318,7 +323,7 @@ export default {
                     type: 'error'
                 });
             })
-            this.Refresh()
+            this.reload()
         },
         Refresh() {
             setTimeout(() => {
@@ -388,7 +393,7 @@ export default {
                     type: 'error'
                 });
             })
-            this.Refresh()
+            this.reload()
         },
         handleUpdate(namespace) {
             let data = this.content
@@ -419,6 +424,7 @@ export default {
                         message: res.msg,
                         type: 'success'
                     });
+                this.reload()
             }).catch((res) => {
                 this.$message({
                     showClose: true,
@@ -426,7 +432,6 @@ export default {
                     type: 'error'
                 });
             })
-            this.Refresh()
         },
         messageboxOperate(row, name) {
             this.$confirm(`是否${name}实例${row.name}`, '提示', {
@@ -586,6 +591,14 @@ export default {
     width: 2.5em;
     height: 2.5em;
     vertical-align: -0.8em;
+    fill: currentColor;
+    overflow: hidden;
+}
+
+.icon-table-svc {
+    width: 1.5em;
+    height: 1.5em;
+    vertical-align: -0.5em;
     fill: currentColor;
     overflow: hidden;
 }

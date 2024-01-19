@@ -84,8 +84,8 @@ func (sc *storageClass) DelStorageClass(c *gin.Context) {
 	err := service.StorageClass.DelStorageClass(param, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"code": 200,
-			"msg":  err.Error(),
+			"code": 400,
+			"msg":  "删除失败" + err.Error(),
 			"data": nil,
 		})
 		return

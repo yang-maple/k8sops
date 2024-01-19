@@ -20,7 +20,7 @@
   </el-row>
   <div class="table-bg-purple">
     <el-table :data="nodeItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small"
-      :default-sort="{ prop: 'date', order: 'descending' }">
+      :default-sort="{ prop: 'date', order: 'descending' }" empty-text="抱歉，暂无数据">
       <el-table-column label="名称" width="200">
         <template #default="scope">
           <el-row>
@@ -48,9 +48,9 @@
                 {{ k }}:{{ v }}</el-tag>
             </div>
           </div>
-          <div v-if="scope.row.labels == null" align="center">---</div>
-          <div v-if="scope.row.labels != null"><el-button size="small" type="primary" link
-              @click="showLabels(scope.$index)">{{
+          <div v-if="scope.row.labels == null">---</div>
+          <div v-if="scope.row.labels != null && Object.keys(scope.row.labels).length > 3"><el-button size="small"
+              type="primary" link @click="showLabels(scope.$index)">{{
                 maxitem[scope.$index] == 3 ?
                 '展开' : '收起'
               }}</el-button></div>
@@ -193,7 +193,6 @@ export default {
   methods: {
     GetNodelistaxios() {
       this.$ajax.get("/node/list").then((res) => {
-        console.log(res.data);
         this.nodeItem = res.data.Item
         this.resource = res.data.resource
         for (let i = 0; i < res.data.Item.length; i++) {
@@ -220,7 +219,6 @@ export default {
       }
     },
     setNodeSchedule(row) {
-      console.log(row)
       if (row.unschedulable == false) {
         this.$ajax.post("/node/schedule", {
           node_name: row.name,

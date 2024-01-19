@@ -5,7 +5,7 @@
                 <span>
                     <div>
                         <svg class="icon-pvc" aria-hidden="true">
-                            <use xlink:href="#icon-cunchulei"></use>
+                            <use xlink:href="#icon-cunchujuan"></use>
                         </svg>
                         <span
                             style="font-size: 24px; color: #242e42;text-shadow: 0 4px 8px rgba(36,46,66,.1);font-weight: 600;">持久卷声明</span>
@@ -20,7 +20,7 @@
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
-                <el-select v-model="namespace" placeholder="Select" @visible-change="getnsselect()"
+                <el-select v-model="namespace" placeholder="命名空间（默认ALL）" @visible-change="getnsselect()"
                     @change="getPersistentVolumeClaims()">
                     <el-option-group v-for="group in nslist" :key="group.label" :label="group.label">
                         <el-option v-for="item in group.options" :key="item.namespace" :label="item.label"
@@ -31,7 +31,7 @@
         </el-col>
         <el-col :span="16">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" clearable @clear="getPersistentVolumeClaims()"
+                <el-input v-model="filter_name" placeholder="请输入搜索资源的名称" clearable @clear="getPersistentVolumeClaims()"
                     @keyup.enter="getPersistentVolumeClaims()">
                     <template #prepend>
                         <el-button icon="Search" @click="getPersistentVolumeClaims()" />
@@ -40,8 +40,8 @@
             </div>
         </el-col>
         <el-col :span="4">
-            <div class="header-grid-content" style="text-align: center;">
-                <el-button type="info" @click="Refresh()" round>
+            <div class="header-grid-content" style="text-align: right;">
+                <el-button type="info" @click="getPersistentVolumeClaims()" round>
                     <el-icon>
                         <Refresh />
                     </el-icon>
@@ -53,14 +53,15 @@
         </el-col>
     </el-row>
     <div class="table-bg-purple">
-        <el-table :data="claimsItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small">
+        <el-table :data="claimsItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small"
+            empty-text="抱歉，暂无数据">
             <el-table-column label="名称" width="300">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
                         <el-icon>
                             <Coin />
                         </el-icon>
-                        <span style="margin-left: 10px">{{ scope.row.name }}</span>
+                        <span style="margin-left: 3px">{{ scope.row.name }}</span>
                     </div>
                 </template>
             </el-table-column>
@@ -281,6 +282,10 @@ export default {
                 this.total = res.data.total
                 this.claimsItem = res.data.item
             }).catch((res) => {
+                this.$message({
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res);
             })
         },
@@ -296,13 +301,13 @@ export default {
                     message: res.msg,
                     type: 'success'
                 });
+                this.reload()
             }).catch((res) => {
                 this.$message({
                     message: res.msg,
                     type: 'error'
                 });
             })
-            this.Refresh()
         },
         Refresh() {
             setTimeout(() => {
@@ -386,7 +391,7 @@ export default {
                     type: 'error'
                 });
             })
-            this.Refresh()
+            this.reload()
 
         },
         handleUpdate(namespace) {
@@ -419,6 +424,7 @@ export default {
                     type: 'success'
                 });
                 console.log(res)
+                this.reload()
             }).catch((res) => {
                 this.$message({
                     showClose: true,
@@ -426,7 +432,6 @@ export default {
                     type: 'error'
                 });
             })
-            this.Refresh()
         },
         messageboxOperate(row, name) {
             this.$confirm(`是否${name}实例${row.name}`, '提示', {
@@ -564,8 +569,8 @@ export default {
 }
 
 .icon-pvc {
-    width: 2.2em;
-    height: 2.2em;
+    width: 2.5em;
+    height: 2.5em;
     vertical-align: -0.7em;
     fill: currentColor;
     overflow: hidden;

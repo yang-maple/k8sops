@@ -8,47 +8,43 @@
         </el-row>
         <el-row :gutter="10">
             <el-col :span="6" style="padding-left: 10px;">
-                <div class="statistic-card">
-                    <el-statistic :value="clusternum">
-                        <template #title>
-                            <div style="display: inline-flex; align-items: center">
-                                集群总数
-                            </div>
-                        </template>
-                    </el-statistic>
-                </div>
+
+                <el-statistic :value="clusternum">
+                    <template #title>
+                        <div style="display: inline-flex; align-items: center">
+                            集群总数
+                        </div>
+                    </template>
+                </el-statistic>
             </el-col>
             <el-col :span="6">
-                <div class="statistic-card">
-                    <el-space direction="vertical">
-                        <el-text
-                            style="font-size: 12px;font-weight: 400; color:#606266;line-height: 20px;margin-bottom: -4px;">当前集群名称</el-text>
-                        <el-text style="font-size: 28px; font-weight: 400; color:#303133; margin-bottom: -8px ;">{{
-                            clusterName }}</el-text>
-                    </el-space>
-                </div>
+                <el-statistic title="当前集群" :value="null">
+                    <template #prefix>
+                        {{ clusterName }}
+                    </template>
+                </el-statistic>
             </el-col>
             <el-col :span="6">
-                <div class="statistic-card">
-                    <el-statistic :value="k8snum">
-                        <template #title>
-                            <div style="display: inline-flex; align-items: center">
-                                私有云集群
-                            </div>
-                        </template>
-                    </el-statistic>
-                </div>
+
+                <el-statistic :value="k8snum">
+                    <template #title>
+                        <div style="display: inline-flex; align-items: center">
+                            私有云集群
+                        </div>
+                    </template>
+                </el-statistic>
+
             </el-col>
             <el-col :span="6" style="padding-right: 10px;">
-                <div class="statistic-card">
-                    <el-statistic :value="clusternum - k8snum">
-                        <template #title>
-                            <div style="display: inline-flex; align-items: center">
-                                公有云集群
-                            </div>
-                        </template>
-                    </el-statistic>
-                </div>
+
+                <el-statistic :value="clusternum - k8snum">
+                    <template #title>
+                        <div style="display: inline-flex; align-items: center">
+                            公有云集群
+                        </div>
+                    </template>
+                </el-statistic>
+
             </el-col>
         </el-row>
     </div>
@@ -348,7 +344,6 @@ export default {
                 method: 'get',
                 url: '/homepage/getInfo',
             }).then((res) => {
-                console.log(res.data)
                 //集群资源使用率
                 this.node_resource = res.data.node_resource
                 const resourceMap = new Map(Object.entries(res.data.node_resource.cpu_request))
@@ -359,7 +354,6 @@ export default {
                 resourceMap2.forEach((value, key) => {
                     this.node_resource_used.memory_used += value
                 })
-                console.log(this.node_resource_used.memory_used)
                 //集群节点信息
                 this.nodeItem = res.data.node_info
                 //集群信息

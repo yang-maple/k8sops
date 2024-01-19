@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"github.com/wonderivan/logger"
 	networkv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -43,6 +44,7 @@ func (ic *ingressClass) fromCells(cells []DataCell) []networkv1.IngressClass {
 func (ic *ingressClass) GetIngressClass(Name string, Limit, Page int, uuid int) (ingressClass *IngressClassInfo, err error) {
 	ingressClasses, err := K8s.Clientset[uuid].NetworkingV1().IngressClasses().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
+		logger.Info("ingressClass list error" + err.Error())
 		return nil, errors.New("获取失败" + err.Error())
 	}
 	//组装数据
@@ -81,6 +83,7 @@ func (ic *ingressClass) GetIngressClass(Name string, Limit, Page int, uuid int) 
 func (ic *ingressClass) GetIngressClassDetail(Name string, uuid int) (ingressClass *networkv1.IngressClass, err error) {
 	ingressClass, err = K8s.Clientset[uuid].NetworkingV1().IngressClasses().Get(context.TODO(), Name, metav1.GetOptions{})
 	if err != nil {
+		logger.Info("ingressClass detail error" + err.Error())
 		return nil, errors.New("获取失败" + err.Error())
 	}
 	ingressClass.Kind = "IngressClass"
@@ -92,6 +95,7 @@ func (ic *ingressClass) GetIngressClassDetail(Name string, uuid int) (ingressCla
 func (ic *ingressClass) DelIngressClass(Name string, uuid int) (err error) {
 	err = K8s.Clientset[uuid].NetworkingV1().IngressClasses().Delete(context.TODO(), Name, metav1.DeleteOptions{})
 	if err != nil {
+		logger.Info("ingressClass delete error" + err.Error())
 		return errors.New("删除失败" + err.Error())
 	}
 	return nil
@@ -101,6 +105,7 @@ func (ic *ingressClass) DelIngressClass(Name string, uuid int) (err error) {
 func (ic *ingressClass) UpdateIngressClass(ingressClass *networkv1.IngressClass, uuid int) (err error) {
 	_, err = K8s.Clientset[uuid].NetworkingV1().IngressClasses().Update(context.TODO(), ingressClass, metav1.UpdateOptions{})
 	if err != nil {
+		logger.Info("ingressClass update error" + err.Error())
 		return errors.New("更新失败" + err.Error())
 	}
 	return nil

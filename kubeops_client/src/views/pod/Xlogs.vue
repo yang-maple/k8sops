@@ -92,6 +92,7 @@ export default {
     unmounted() {
         clearInterval(this.positionTimer);
         this.positionTimer = null;
+
     },
     methods: {
         initXterm() {
@@ -160,7 +161,7 @@ export default {
             }).then((res) => {
                 this.data = res.data
                 this.runFakeTerminal()
-            }).catch(function (res) {
+            }).catch((res) => {
                 console.log(res);
             })
         },

@@ -65,6 +65,7 @@ func (i *ingress) GetIngList(ingName, Namespace string, Limit, Page int, uuid in
 	ingList, err := K8s.Clientset[uuid].NetworkingV1().Ingresses(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取 ingress 失败" + err.Error())
+		return nil, err
 	}
 
 	//组装数据
@@ -103,7 +104,7 @@ func (i *ingress) GetIngList(ingName, Namespace string, Limit, Page int, uuid in
 	return &IngResp{
 		Total: total,
 		Item:  item,
-	}, err
+	}, nil
 }
 
 // GetIngDetail 获取 ingress 资源详情

@@ -32,9 +32,8 @@ func (n *namespace) GetNsList(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	data, err := service.Namespace.GetNsList(params.FilterName, params.Limit, params.Page, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":    "获取namespaces失败",
-			"reason": errors.New(err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "获取namespaces失败" + err.Error(),
 		})
 		return
 	}
@@ -52,7 +51,7 @@ func (n *namespace) GetNsDetail(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  "绑定参数失败",
 			"data": nil,
 		})
@@ -61,9 +60,8 @@ func (n *namespace) GetNsDetail(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	data, err := service.Namespace.GetNsDetail(params.NamespaceName, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":    "获取namespaces失败",
-			"reason": errors.New(err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "获取namespaces失败" + err.Error(),
 		})
 		return
 	}
@@ -81,18 +79,16 @@ func (n *namespace) DelNs(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":    "绑定参数失败",
-			"reason": nil,
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "绑定参数失败",
 		})
 		return
 	}
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Namespace.DelNs(params.NamespaceName, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":    "名称空间" + params.NamespaceName + "删除失败",
-			"reason": errors.New(err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "名称空间" + params.NamespaceName + "删除失败" + " " + err.Error(),
 		})
 		return
 	}
@@ -109,18 +105,16 @@ func (n *namespace) CreateNs(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":    "绑定参数失败",
-			"reason": nil,
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "绑定参数失败",
 		})
 		return
 	}
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Namespace.CreateNs(params.NamespaceName, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":    params.NamespaceName + "创建失败",
-			"reason": errors.New(err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": params.NamespaceName + "创建失败" + " " + err.Error(),
 		})
 		return
 	}
@@ -137,7 +131,7 @@ func (n *namespace) UpdateNs(c *gin.Context) {
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"err": errors.New("绑定参数失败" + err.Error()),
+			"msg": errors.New("绑定参数失败" + err.Error()),
 		})
 		return
 	}
@@ -145,8 +139,7 @@ func (n *namespace) UpdateNs(c *gin.Context) {
 	err = service.Namespace.UpdateNs(params.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":    "更新失败",
-			"reason": errors.New(err.Error()),
+			"msg": "更新失败" + " " + err.Error(),
 		})
 		return
 	}

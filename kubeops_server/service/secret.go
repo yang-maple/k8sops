@@ -56,6 +56,7 @@ func (s *secret) GetSecretList(secretName, Namespace string, Limit, Page int, uu
 	secretList, err := K8s.Clientset[uuid].CoreV1().Secrets(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取 secret 失败" + err.Error())
+		return nil, err
 	}
 
 	//组装数据
@@ -89,7 +90,7 @@ func (s *secret) GetSecretList(secretName, Namespace string, Limit, Page int, uu
 	return &SecretResp{
 		Total: total,
 		Item:  item,
-	}, err
+	}, nil
 }
 
 // GetSecretDetail 详情

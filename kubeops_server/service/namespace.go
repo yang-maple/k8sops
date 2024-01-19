@@ -85,7 +85,7 @@ func (n *namespace) GetNsList(Name string, Limit, Page int, uuid int) (namespace
 	return &NsList{
 		Total: total,
 		Item:  list,
-	}, err
+	}, nil
 }
 
 // GetNsDetail 获取namespace 详情

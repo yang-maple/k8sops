@@ -7,26 +7,22 @@ import (
 	"kubeops/db"
 	"kubeops/middle"
 	"kubeops/service"
+	"kubeops/utils"
 	"net/http"
 )
 
 func main() {
-	////初始化k8s
-	//初始化db
-	db.Init()
-	//初始化redis
-	db.InitRedis()
+	//初始化服务
+	r := initServer()
 	//初始化 gin
-	r := gin.Default()
+	//r := gin.Default()
 	//使用全局中间件
-	r.Use(middle.CrosHandler()) //跨域中间件
-	r.Use(middle.JwtAuth())     //jwt 验证中间件
-	//初始化路由
-	controller.Router.InitApiRouter(r)
+	//r.Use(middle.CrosHandler()) //跨域中间件
+	//r.Use(middle.JwtAuth())     //jwt 验证中间件
+	////初始化路由
+	//controller.Router.InitApiRouter(r)
 	//启动ws 服务并监听 ws 端口
 	go func() {
-		//获取uuid
-
 		http.HandleFunc("/ws", service.Terminal.WsHandler)
 		_ = http.ListenAndServe(":8081", nil)
 	}()
@@ -36,4 +32,24 @@ func main() {
 	_ = db.Close()
 	// 关闭redis连接
 	_ = db.CloseRedis()
+}
+
+// 初始化各种服务
+func initServer() *gin.Engine {
+	//初始化db
+	db.Init()
+	//初始化redis
+	db.InitRedis()
+	//初始化gin服务
+	r := gin.Default()
+	//启动中间件
+	r.Use(middle.CrosHandler()) //跨域中间件
+	r.Use(middle.JwtAuth())     //jwt 验证中间件
+	//启动日志服务
+	utils.InitLog()
+	//初始化路由
+	controller.Router.InitApiRouter(r)
+
+	//返回 gin.Engine
+	return r
 }

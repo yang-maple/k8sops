@@ -63,6 +63,7 @@ func (d *daemonSet) GetDsList(DsName, Namespace string, Limit, Page int, uuid in
 	daemonList, err := K8s.Clientset[uuid].AppsV1().DaemonSets(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取 daemonSetList 失败" + err.Error())
+		return nil, err
 	}
 	//组装数据
 	selectData := &dataselector{
@@ -143,6 +144,7 @@ func (d *daemonSet) DaemonCount(namespace string, uuid int) (*CountDaemon, error
 	dsList, err := K8s.Clientset[uuid].AppsV1().DaemonSets(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取 daemonSetList 失败" + err.Error())
+		return nil, err
 	}
 	count := 0
 	for _, v := range dsList.Items {

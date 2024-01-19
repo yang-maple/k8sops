@@ -99,7 +99,7 @@ func (n *node) GetNodeList(uuid int) (nodeList *NodeList, err error) {
 		Total:     len(nodeLists.Items),
 		Item:      item,
 		Resources: Node.GetNodeResource(uuid),
-	}, err
+	}, nil
 }
 
 // GetNodeDetail  获取namespace 详情
@@ -124,19 +124,20 @@ func (n *node) GetNodeDetail(NodeName string, uuid int) (details *NodeDetail, er
 // GetNodePods 获取node 详情
 func (n *node) GetNodePods(NodeName string, uuid int) (detail *[]poddetail) {
 	//获取pod list
-	podlist, err := K8s.Clientset[uuid].CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{})
+	podList, err := K8s.Clientset[uuid].CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取Node 详情失败" + err.Error())
+		return nil
 	}
-	nodepods := make([]poddetail, 0)
-	for _, pods := range podlist.Items {
+	nodePods := make([]poddetail, 0)
+	for _, pods := range podList.Items {
 		if pods.Spec.NodeName == NodeName {
 			containers := make([]string, 0)
 			for _, container := range pods.Spec.Containers {
 				containers = append(containers, container.Image)
 			}
 			if pods.Status.Phase != corev1.PodCompleted {
-				nodepods = append(nodepods, poddetail{
+				nodePods = append(nodePods, poddetail{
 					Name:    pods.Name,
 					Image:   containers,
 					Labels:  pods.Labels,
@@ -148,19 +149,20 @@ func (n *node) GetNodePods(NodeName string, uuid int) (detail *[]poddetail) {
 
 		}
 	}
-	return &nodepods
+	return &nodePods
 }
 
 // SetNodeSchedule 设置节点是否可调度
 func (n *node) SetNodeSchedule(name string, status bool, uuid int) (err error) {
 	node, err := K8s.Clientset[uuid].CoreV1().Nodes().Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
+		logger.Info("获取节点失败" + err.Error())
 		return err
 	}
 	node.Spec.Unschedulable = status
 	_, err = K8s.Clientset[uuid].CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
 	if err != nil {
-		logger.Info("设置失败" + err.Error())
+		logger.Info("调度设置失败" + err.Error())
 		return err
 	}
 	return nil

@@ -19,39 +19,36 @@
         </el-col>
     </el-row>
     <el-row class="cluster-header">
-        <el-col :span="6">
+        <el-col :span="8">
             <el-statistic title="集群总数" :value="clusteritem.length" />
         </el-col>
-        <el-col :span="6">
+        <el-col :span="8">
             <el-statistic :value="k8stotal.length">
                 <template #title>
                     <div style="display: inline-flex; align-items: center">
                         私有云集群
-                        <el-icon style="margin-left: 4px" :size="12">
-                            <Male />
-                        </el-icon>
                     </div>
                 </template>
             </el-statistic>
         </el-col>
-        <el-col :span="6">
-            <el-statistic title="阿里云集群" :value="acktotal.length" />
+        <el-col :span="8">
+            <el-statistic title="公有云集群" :value="clusteritem.length - k8stotal.length" />
         </el-col>
-        <el-col :span="6">
-            <el-statistic title="Feedback number" :value="562">
+        <!-- <el-col :span="6">
+            <el-statistic title="Feedback number" :value="null">
                 <template #suffix>
+                    <el-text>111</el-text>
                     <el-icon style="vertical-align: -0.125em">
                         <ChatLineRound />
                     </el-icon>
                 </template>
             </el-statistic>
-        </el-col>
+        </el-col> -->
     </el-row>
     <el-row :gutter="10">
-        <el-col v-for="(value, index) in clusteritem" :key="value" :span="6" class="cluster-card-content">
-            <el-card :body-style="{ padding: '0px' }">
-                <img :src="k8s" v-if="value.type == 'k8s'" class="image">
-                <img :src="ack" v-if="value.type == 'ack'" class="image">
+        <el-col v-for="(value, index) in clusteritem" :key="value" :span="5" class="cluster-card-content">
+            <el-card :body-style="{ padding: '0px' }" shadow="always">
+                <img :src="imageUrls(value.type)" class="image">
                 <div style="padding: 14px">
                     <span>{{ value.cluster_name }}</span>
                     <div class="bottom">
@@ -63,22 +60,24 @@
                                 v-if="value.status == true">已应用</el-tag>
                         </div>
                     </div>
-                    <el-button text class="button" v-if="value.status == false"
+                    <el-button link type="primary" class="button" v-if="value.status == false"
                         @click="change(value.cluster_name)">应用</el-button>
-                    <el-button text class="button" disabled v-if="value.status == true">应用中</el-button>
-                    <el-button text class="button" type="danger" @click="remove(value.cluster_name)"
+                    <el-button link class="button" type="success" disabled v-if="value.status == true">应用中</el-button>
+                    <el-button link class="button" type="danger" @click="remove(value.cluster_name)"
                         v-if="value.status == false">删除</el-button>
-
+                    <el-button link type="info" class="button" @click="editcluster(value.cluster_name)">编辑</el-button>
                 </div>
             </el-card>
         </el-col>
         <el-col :span="6" style="padding-top: 10px;">
-            <div class="config-add" @click="dialogcreatens = true">
-                <img v-if="imageUrl" :src="imageUrl" class="avatar" />
-                <el-icon v-else class="avatar-uploader-icon">
-                    <Plus />
-                </el-icon>
-            </div>
+            <el-tooltip content=" 点 击 添 加 集 群 " placement="top" effect="light">
+                <div class="config-add" @click="dialogcreatens = true">
+                    <!-- <img v-if="imageUrl" :src="imageUrl" class="avatar" /> -->
+                    <el-icon class="avatar-uploader-icon">
+                        <Plus />
+                    </el-icon>
+                </div>
+            </el-tooltip>
         </el-col>
     </el-row>
     <el-dialog v-model="dialogcreatens" title="新增集群" center>
@@ -90,6 +89,8 @@
                 <el-select v-model="ruleForm.cluster_type" placeholder="请选择集群类型">
                     <el-option label="私有云K8S" value="k8s" />
                     <el-option label="阿里云ACK" value="ack" />
+                    <el-option label="腾讯云TKE" value="tke" />
+                    <el-option label="华为云CCE" value="cce" />
                 </el-select>
             </el-form-item>
             <el-form-item label="集群config" prop="cluster_file">
@@ -119,12 +120,36 @@
             </span>
         </template>
     </el-dialog>
+
+    <el-dialog v-model="dialogcluster" title="编辑集群" center>
+        <el-form :model="clusterForm" label-width="25%">
+            <el-form-item label="集群名称" prop="cluster_name">
+                <el-input v-model="clusterForm.cluster_name" autocomplete="off" style="width: 80%;" />
+            </el-form-item>
+            <el-form-item label="集群类型" prop="cluster_type">
+                <el-select v-model="clusterForm.cluster_type" placeholder="请选择集群类型" :value="clusterForm.cluster_type">
+                    <el-option label="私有云K8S" value="k8s" />
+                    <el-option label="阿里云ACK" value="ack" />
+                    <el-option label="腾讯云TKE" value="tke" />
+                    <el-option label="华为云CCE" value="cce" />
+                </el-select>
+            </el-form-item>
+        </el-form>
+        <template #footer>
+            <span class="dialog-footer">
+                <el-button type="primary" @click="submitcluster()"
+                    style="margin-right:50px;padding-left:20px;padding-right:20px">更新</el-button>
+                <el-button @click="dialogcluster = false" style="margin-right:50px;padding-left:20px;padding-right:20px">
+                    取消
+                </el-button>
+            </span>
+        </template>
+    </el-dialog>
 </template>
 
 <script>
 import { ref } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ChatLineRound, Male } from '@element-plus/icons-vue'
 export default {
     inject: ['reload'],
     setup() {
@@ -134,21 +159,28 @@ export default {
     },
     data() {
         return {
-            k8s: require('@/assets/k8s.jpg'),
-            ack: require('@/assets/ack1.png'),
+            k8s: require('@/assets/img/k8s.png'),
+            ack: require('@/assets/img/ack.png'),
+            tke: require('@/assets/img/tke.png'),
+            cce: require('@/assets/img/cce.png'),
             currentDate: new Date(),
             upload: [],
             uploadfile: [],
             disabled: false,
             dialogcreatens: false,
+            dialogcluster: false,
             ruleForm: {
+                cluster_name: '',
+                cluster_type: '',
+            },
+            clusterForm: {
+                cluster_id: null,
                 cluster_name: '',
                 cluster_type: '',
             },
             name: '',
             clusteritem: [],
             k8stotal: [],
-            acktotal: [],
         };
     },
     computed: {
@@ -208,6 +240,10 @@ export default {
                 this.clusteritem = res.data.item
                 this.Counter()
             }).catch((res) => {
+                this.$message({
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res);
             })
         },
@@ -221,10 +257,51 @@ export default {
                 this.notify("success", "成功", res.msg)
                 this.$auth.setUserCluster(clustername)
                 this.reload()
-                console.log(res)
             }).catch((res) => {
                 this.notify("error", "失败", res.msg)
                 console.log(res);
+            })
+        },
+        editcluster(clustername) {
+            this.dialogcluster = true
+            this.$ajax({
+                method: 'get',
+                url: '/cluster/detail',
+                params: {
+                    cluster_name: clustername
+                }
+            }).then((res) => {
+                this.clusterForm.cluster_id = res.data.id
+                this.clusterForm.cluster_type = res.data.type
+                this.clusterForm.cluster_name = res.data.cluster_name
+                console.log(res.data)
+            }).catch((res) => {
+                console.log(res);
+
+            })
+        },
+        submitcluster() {
+            if (!this.clusterForm.cluster_name || !this.clusterForm.cluster_type) {
+                this.$message({
+                    message: '请填写完整信息',
+                    type: 'error'
+                });
+                return;
+            }
+            this.$ajax.put(
+                '/cluster/update',
+                {
+                    cluster_id: this.clusterForm.cluster_id,
+                    cluster_name: this.clusterForm.cluster_name,
+                    cluster_type: this.clusterForm.cluster_type
+                },
+            ).then((res) => {
+                this.dialogcluster = false
+                this.notify("success", "成功", res.msg)
+                this.$auth.setUserCluster(this.clusterForm.cluster_name)
+                this.clusterlist()
+            }).catch((res) => {
+                this.notify("error", "失败", res.msg)
             })
         },
         onChange(file, fileList) {
@@ -273,17 +350,27 @@ export default {
             });
         },
         Counter() {
-            this.acktotal = [];
             this.k8stotal = [];
             for (let i = 0; i < this.clusteritem.length; i++) {
                 if (this.clusteritem[i].type == 'k8s') {
                     this.k8stotal.push(this.clusteritem[i])
-                } else if (this.clusteritem[i].type == 'ack') {
-                    this.acktotal.push(this.clusteritem[i])
-
                 }
             }
-        }
+        },
+        imageUrls(type) {
+            switch (type) {
+                case 'k8s':
+                    return this.k8s;
+                case 'ack':
+                    return this.ack;
+                case 'tke':
+                    return this.tke;
+                case 'cce':
+                    return this.cce;
+                default:
+                    return '';
+            }
+        },
     }
 }
 </script>
@@ -326,8 +413,8 @@ export default {
 
 .image {
     width: 100%;
-    display: block;
-
+    /* height: 100%;
+    display: block; */
 }
 
 .el-row {
@@ -352,24 +439,21 @@ export default {
 .config-add {
     border: 1px dashed var(--el-border-color);
     border-radius: 6px;
-    cursor: pointer;
     position: relative;
     overflow: hidden;
     transition: var(--el-transition-duration-fast);
-    width: 178px;
-    height: 200px;
-}
-
-.config-add {
     border-color: var(--el-color-primary);
+    width: 180px;
+    height: 210px;
 }
 
 .el-icon.avatar-uploader-icon {
-    font-size: 28px;
+    font-size: 48px;
     color: #8c939d;
     width: 178px;
-    height: 178px;
+    height: 210px;
     text-align: center;
+    cursor: pointer;
 }
 
 .icon-cluster {

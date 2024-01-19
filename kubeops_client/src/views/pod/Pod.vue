@@ -21,7 +21,7 @@
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
-                <el-select v-model="namespace" filterable placeholder="Select" @visible-change="getnsselect()"
+                <el-select v-model="namespace" filterable placeholder="命名空间（默认ALL）" @visible-change="getnsselect()"
                     @change="getPod()" clearable>
                     <el-option v-for="item in nslist" :key="item.namespace" :label="item.label" :value="item.namespace"
                         style="width:100%" />
@@ -30,7 +30,7 @@
         </el-col>
         <el-col :span="16">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" clearable @clear="getPod()"
+                <el-input v-model="filter_name" placeholder="请输入搜索资源的名称" clearable @clear="getPod()"
                     @keyup.enter="getPod()">
                     <template #prepend>
                         <el-button icon="Search" @click="getPod()" />
@@ -39,8 +39,8 @@
             </div>
         </el-col>
         <el-col :span="4">
-            <div class="header-grid-content" style="text-align: center;">
-                <el-button type="info" @click="Refresh()" round>
+            <div class="header-grid-content" style="text-align: right;">
+                <el-button type="info" @click="getPod()" round>
                     <el-icon>
                         <Refresh />
                     </el-icon>
@@ -49,11 +49,12 @@
         </el-col>
     </el-row>
     <div class="table-bg-purple">
-        <el-table :data="podItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small">
+        <el-table :data="podItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small"
+            empty-text="抱歉，暂无数据">
             <el-table-column label="名称" width="200">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
-                        <el-text type="primary" size="small" style="margin-left: 5px;">
+                        <el-text type="primary" size="small">
                             {{ scope.row.name }}
                         </el-text>
                     </div>
@@ -61,7 +62,7 @@
                         <svg class="icon-pods" aria-hidden="true">
                             <use xlink:href="#icon-Docker"></use>
                         </svg>
-                        <span style="margin-left: 10px">{{ v }}</span>
+                        <span style="margin-left: 5px">{{ v }}</span>
                     </div>
                 </template>
             </el-table-column>
@@ -74,9 +75,9 @@
                                 {{ k }}:{{ v }}</el-tag>
                         </div>
                     </div>
-                    <div v-if="scope.row.labels == null" align="center">---</div>
-                    <div v-if="scope.row.labels != null"><el-button size="small" type="primary" link
-                            @click="showLabels(scope.$index)">{{
+                    <div v-if="scope.row.labels == null">---</div>
+                    <div v-if="scope.row.labels != null && Object.keys(scope.row.labels).length > 3"><el-button size="small"
+                            type="primary" link @click="showLabels(scope.$index)">{{
                                 maxitem[scope.$index] == 3 ?
                                 '展开' : '收起'
                             }}</el-button></div>
@@ -96,7 +97,9 @@
                     </div>
                 </template>
             </el-table-column>
-            <el-table-column label="节点" prop="node" width="110" />
+            <el-table-column label="节点" prop="node" width="110">
+                <template #default="scope">{{ scope.row.node ? scope.row.node : '---' }}</template>
+            </el-table-column>
             <el-table-column label="重启次数" prop="restart" width="70" />
             <el-table-column label="请求CPU" prop="cpu" width="70" />
             <el-table-column label="请求内存" prop="memory" width="70" />
@@ -120,7 +123,7 @@
                                 <el-dropdown-item icon="Refresh"
                                     @click="messageboxshell(scope.row.namespace, scope.row.name)">shell</el-dropdown-item>
                                 <el-dropdown-item icon="Delete"
-                                    @click="messageboxOperate(scope.row, 'delete')">删除</el-dropdown-item>
+                                    @click="messageboxOperate(scope.row, '删除')">删除</el-dropdown-item>
                             </el-dropdown-menu>
                         </template>
                     </el-dropdown>
@@ -217,6 +220,11 @@ export default {
                     this.maxitem.push(3)
                 }
             }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res);
             })
         },
@@ -264,6 +272,11 @@ export default {
                 this.detailnamespace = res.data.metadata.namespace
                 this.content = JSON.stringify(res.data, null, 2)
             }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res.data);
             })
         },
@@ -283,9 +296,14 @@ export default {
                     type: 'warning'
                 });
             }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res);
             })
-            this.Refresh()
+            this.reload()
         },
         handleUpdate(namespace) {
             let data = this.content
@@ -316,15 +334,15 @@ export default {
                         message: res.msg,
                         type: 'success'
                     });
+                this.reload()
             }).catch((res) => {
                 this.$message({
                     showClose: true,
-                    message: res.msg + res.reason,
+                    message: res.msg,
                     type: 'error'
                 });
                 console.log(res);
             })
-            this.Refresh()
         },
         messageboxlog(namespace, name) {
             this.$router.push({
@@ -335,7 +353,6 @@ export default {
                     pod_name: name
                 }
             })
-            console.log("跳转")
         },
         messageboxshell(namespace, name) {
             this.$router.push({
@@ -473,7 +490,7 @@ export default {
 .icon-pods {
     width: 1.5em;
     height: 1.5em;
-    padding-left: 5px;
+    padding-left: 3px;
     vertical-align: -0.65em;
     fill: currentColor;
     overflow: hidden;

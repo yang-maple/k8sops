@@ -21,12 +21,10 @@
     <el-row>
         <el-col :span="8">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" clearable @clear="getstorageClass()"
+                <el-input v-model="filter_name" placeholder="请输入搜索资源的名称" clearable @clear="getstorageClass()"
                     @keyup.enter="getstorageClass()">
                     <template #prepend>
-                        <el-button icon="Search" @click="getstorageClass()"><span style="font-size: 18px;">
-                                搜索
-                            </span></el-button>
+                        <el-button icon="Search" @click="getstorageClass()"></el-button>
                     </template>
                 </el-input>
             </div>
@@ -35,7 +33,7 @@
             <div class="header-grid-content" style="min-height: 32px;"></div>
         </el-col>
         <el-col :span="6">
-            <div class="header-grid-content" style="text-align: center;">
+            <div class="header-grid-content" style="text-align: right;">
                 <el-button type="info" @click="getstorageClass()" round>
                     <el-icon>
                         <Refresh />
@@ -45,8 +43,18 @@
         </el-col>
     </el-row>
     <div class="table-bg-purple">
-        <el-table :data="storageClassItem" :header-cell-style="{ background: '#e6e7e9' }" size="small">
+        <el-table :data="storageClassItem" :header-cell-style="{ background: '#e6e7e9' }" size="small" empty-text="抱歉，暂无数据">
             <el-table-column label="名称" prop="name" width="200">
+                <template #default="scope">
+                    <div style="display: flex; align-items: center">
+                        <svg class="icon-table-storage" aria-hidden="true">
+                            <use xlink:href="#icon-cunchuleixingpeizhi1"></use>
+                        </svg>
+                        <el-text style="margin-left:3px" size="small">{{
+                            scope.row.name
+                        }}</el-text>
+                    </div>
+                </template>
             </el-table-column>
             <el-table-column label="提供者" prop="provisioner" width="280" />
             <el-table-column label="参数">
@@ -128,7 +136,7 @@ export default {
             storageClassItem: [],
             dialogFormVisible: false,
             filter_name: '',
-            total: 1,
+            total: 0,
             page_size: [1, 10, 20, 50, 100],
             limit: 10,
             page: 1,
@@ -160,6 +168,11 @@ export default {
                 this.aceConfig.lang = "json"
                 this.content = JSON.stringify(res.data, null, 2)
             }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res.data);
             })
         },
@@ -191,14 +204,14 @@ export default {
                     message: res.msg,
                     type: 'success'
                 });
+                this.reload()
             }).catch((res) => {
                 this.$message({
                     showClose: true,
-                    message: res.reason,
+                    message: res.msg,
                     type: 'error'
                 });
             })
-            this.Refresh()
         },
         handleDelete(row) {
             this.$ajax({
@@ -215,9 +228,14 @@ export default {
                     type: 'warning'
                 });
             }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res);
             })
-            this.Refresh()
+            this.reload()
         },
         getstorageClass() {
             this.$ajax({
@@ -232,6 +250,11 @@ export default {
                 this.total = res.data.total
                 this.storageClassItem = res.data.item
             }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res);
             })
         },
@@ -270,11 +293,6 @@ export default {
             }
             this.jsonFormat()
         },
-        clearinput() {
-            event.preventDefault(),
-                this.filter_name = '',
-                this.getstorageClass()
-        }
     }
 }
 </script>
@@ -351,6 +369,14 @@ export default {
     width: 2.5em;
     height: 2.5em;
     vertical-align: -0.7em;
+    fill: currentColor;
+    overflow: hidden;
+}
+
+.icon-table-storage {
+    width: 1.5em;
+    height: 1.5em;
+    vertical-align: -0.5em;
     fill: currentColor;
     overflow: hidden;
 }

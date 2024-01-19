@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/wonderivan/logger"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sort"
 )
@@ -26,8 +27,9 @@ type eventInfo struct {
 }
 
 func (e *event) ListEvent(uuid int, types string, namespaces string) (info *EventResp, err error) {
-	events, err := K8s.Clientset[uuid].CoreV1().Events("").List(context.TODO(), metav1.ListOptions{})
+	events, err := K8s.Clientset[uuid].CoreV1().Events(namespaces).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
+		logger.Info("event list error" + err.Error())
 		return nil, err
 	}
 	//定义新的[]info 遍历event 循环写入info
@@ -37,7 +39,7 @@ func (e *event) ListEvent(uuid int, types string, namespaces string) (info *Even
 			item = append(item, eventInfo{
 				Namespace: event.Namespace,
 				LastTime:  event.LastTimestamp.Format("2006-01-02 15:04:05"),
-				Type:      string(event.Type),
+				Type:      event.Type,
 				Reason:    event.Reason,
 				Object:    event.InvolvedObject.Name,
 				Message:   event.Message,

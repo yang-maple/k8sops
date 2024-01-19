@@ -16,7 +16,7 @@ func (clt *cluster) AddCluster(clusterName, filename, clusterType, dir string, u
 	//判断集群是否存在
 	tx := db.GORM.Where("cluster_name = ?", clusterName).First(&cluster)
 	if tx.RowsAffected != 0 {
-		return errors.New("集群已存在")
+		return errors.New("cluster name already exists")
 	}
 	//组装新集群信息
 	newCluster := model.ClusterInfo{
@@ -40,7 +40,7 @@ func (clt *cluster) ListCluster(uuid int) (clusters *[]model.ClusterInfo, err er
 	var cluster []model.ClusterInfo
 	tx := db.GORM.Where("user_id = ?", uuid).Find(&cluster)
 	if tx.RowsAffected < 1 {
-		return nil, errors.New("用户未添加集群信息")
+		return nil, errors.New("the user did not add cluster information")
 	}
 	return &cluster, nil
 }
@@ -62,7 +62,7 @@ func (clt *cluster) DeleteCluster(name string, userid int) (err error) {
 	//定义模型
 	var cluster model.ClusterInfo
 	if db.GORM.Where("cluster_name =? AND user_id =?", name, userid).Delete(&cluster).RowsAffected == 0 {
-		return errors.New("集群不存在")
+		return errors.New("the cluster does not exist")
 	}
 	return nil
 }
@@ -72,7 +72,39 @@ func (clt *cluster) GetClusterDir(name string, userid int) (dir string, err erro
 	var cluster model.ClusterInfo
 	tx := db.GORM.Where("cluster_name =? AND user_id =?", name, userid).Find(&cluster)
 	if tx.RowsAffected == 0 {
-		return "", errors.New("集群不存在")
+		return "", errors.New("the cluster does not exist")
 	}
 	return cluster.Dir + "/" + cluster.ClusterName + "_" + cluster.Type + ".conf", nil
+}
+
+// GetClusterDetail 获取集群详情
+func (clt *cluster) GetClusterDetail(name string, userid int) (clusters *model.ClusterInfo, err error) {
+	var cluster model.ClusterInfo
+	tx := db.GORM.Where("cluster_name =? AND user_id =?", name, userid).Find(&cluster)
+	if tx.RowsAffected == 0 {
+		return nil, errors.New("the cluster does not exist")
+	}
+	return &cluster, nil
+}
+
+// UpdateCluster 更新集群信息
+func (clt *cluster) UpdateCluster(Id uint, NewName, NewType string) (dir, name string, err error) {
+	var cluster model.ClusterInfo
+	//判断集群名字是否存在
+	tx := db.GORM.Where("cluster_name =? AND id =?", NewName, Id).First(&cluster)
+	if tx.RowsAffected != 0 {
+		return "", "", errors.New("the cluster already exists")
+	}
+	//获取旧集群名称
+	name = cluster.Dir + "/" + cluster.ClusterName + "_" + cluster.Type + ".conf"
+	//获取旧集群路径
+	dir = cluster.Dir
+	// 更新集群字段
+	cluster.ClusterName = NewName
+	cluster.Type = NewType
+	tx = db.GORM.Save(&cluster)
+	if tx.Error != nil {
+		return "", "", tx.Error
+	}
+	return dir, name, nil
 }

@@ -3,9 +3,9 @@ package service
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/wonderivan/logger"
 	"kubeops/dao"
 	"kubeops/model"
+	"kubeops/utils"
 	"mime/multipart"
 	"os"
 	"path"
@@ -20,6 +20,7 @@ type clusterList struct {
 }
 
 type clusterInfo struct {
+	Id          uint   `json:"id"`
 	ClusterName string `json:"cluster_name"`
 	FileName    string `json:"file_name"`
 	Type        string `json:"type"`
@@ -33,7 +34,7 @@ func (clt *cluster) Create(dir, clusterName, clusterType string, uuid int, file 
 	if !model.DirExists(dir) {
 		err := os.Mkdir(dir, os.ModePerm)
 		if err != nil {
-			logger.Info("创建目录失败" + err.Error())
+			utils.Logger.Error("Failed to create a directory,reason:" + err.Error())
 			return err
 		}
 	}
@@ -45,14 +46,16 @@ func (clt *cluster) Create(dir, clusterName, clusterType string, uuid int, file 
 	dst := path.Join(dir, file.Filename)
 	err := c.SaveUploadedFile(file, dst)
 	if err != nil {
-		logger.Info("保存文件失败" + err.Error())
+		utils.Logger.Error("Failed to save file,reason:" + err.Error())
 		return err
 	}
 	//数据库存储
 	err = dao.Cluster.AddCluster(clusterName, oldFilename, clusterType, dir, uuid)
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		return err
 	}
+	utils.Logger.Info("The cluster " + clusterName + " was successfully added")
 	return nil
 }
 
@@ -61,6 +64,7 @@ func (clt *cluster) List(uuid int) (item *clusterList, err error) {
 	//获取用户集群列表
 	value, err := dao.Cluster.ListCluster(uuid)
 	if err != nil {
+		utils.Logger.Error("Failed to get the cluster,reason: " + err.Error())
 		return nil, err
 	}
 	clusters := make([]clusterInfo, 0, len(*value))
@@ -70,7 +74,7 @@ func (clt *cluster) List(uuid int) (item *clusterList, err error) {
 			FileName:    v.FileName,
 			Type:        v.Type,
 			Status:      v.Status,
-			CreateTime:  fmt.Sprintf("%v", v.CreatedAt),
+			CreateTime:  v.CreatedAt.Format("2006-01-02 15:04:05"),
 		}
 		clusters = append(clusters, cluster)
 	}
@@ -81,24 +85,45 @@ func (clt *cluster) List(uuid int) (item *clusterList, err error) {
 	}, nil
 }
 
+// GetClusterDetail 获取集群信息
+func (clt *cluster) GetClusterDetail(clusterName string, uuid int) (item *clusterInfo, err error) {
+	//获取集群信息
+	value, err := dao.Cluster.GetClusterDetail(clusterName, uuid)
+	if err != nil {
+		utils.Logger.Error("Failed to get the cluster detail,reason: " + err.Error())
+		return nil, err
+	}
+	//返回集群信息
+	return &clusterInfo{
+		Id:          value.Id,
+		ClusterName: value.ClusterName,
+		Type:        value.Type,
+	}, err
+}
+
 // Change 更换集群信息
 func (clt *cluster) Change(clusterName string, uuid int) error {
 	//找到dir - 初始化 - 更改
 	// 查询dir
 	dir, err := dao.Cluster.GetClusterDir(clusterName, uuid)
 	if err != nil {
+		utils.Logger.Error("Failed to change the cluster,reason: " + err.Error())
 		return err
 	}
 	//更新k8s client set
-	err = K8s.Init(dir, uuid)
+	K8s.ConfigDir[uuid] = &dir
+	err = K8s.Init(uuid)
 	if err != nil {
+		utils.Logger.Error("Failed to initialize the cluster,reason: " + err.Error())
 		return err
 	}
 	//更改sql 中集群的状态
 	err = dao.Cluster.ChangeCluster(clusterName, uuid)
 	if err != nil {
+		utils.Logger.Error("Failed to change the cluster status,reason: " + err.Error())
 		return err
 	}
+	utils.Logger.Info("The cluster " + clusterName + " was successfully changed")
 	return nil
 }
 
@@ -108,6 +133,7 @@ func (clt *cluster) Delete(name string, userid int) error {
 	//获取集群路径
 	dir, err := dao.Cluster.GetClusterDir(name, userid)
 	if err != nil {
+		utils.Logger.Error("Failed to delete the cluster ,reason: " + err.Error())
 		return err
 	}
 	if dir != "" {
@@ -115,12 +141,36 @@ func (clt *cluster) Delete(name string, userid int) error {
 		fmt.Println(dir)
 		err = os.RemoveAll(dir)
 		if err != nil {
+			utils.Logger.Error("Failed to delete the file ,reason: " + err.Error())
 			return err
 		}
 	}
 	err = dao.Cluster.DeleteCluster(name, userid)
 	if err != nil {
+		utils.Logger.Error("Failed to delete the file ,reason: " + err.Error())
 		return err
 	}
+	utils.Logger.Info("The cluster " + name + " was successfully deleted")
+	return nil
+}
+
+// UpdateCluster 更新集群信息
+func (clt *cluster) UpdateCluster(Id uint, cluster, clusterType string, uuid int) error {
+	//更改数据库文件名称
+	dir, oldFileName, err := dao.Cluster.UpdateCluster(Id, cluster, clusterType)
+	if err != nil {
+		utils.Logger.Error("Failed to update the data cluster information ,reason: " + err.Error())
+		return err
+	}
+	newFileName := dir + "/" + cluster + "_" + clusterType + ".conf"
+	//更改存储文件名称
+	err = os.Rename(oldFileName, newFileName)
+	if err != nil {
+		utils.Logger.Error("Failed to update the data cluster name ,reason: " + err.Error())
+		return err
+	}
+	//更改配置文件路径
+	K8s.ConfigDir[uuid] = &newFileName
+	utils.Logger.Info("The cluster " + cluster + " was successfully updated")
 	return nil
 }

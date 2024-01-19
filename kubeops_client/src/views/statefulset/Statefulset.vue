@@ -5,7 +5,7 @@
                 <span>
                     <div>
                         <svg class="icon-sts" aria-hidden="true">
-                            <use xlink:href="#icon-deployment-copy"></use>
+                            <use xlink:href="#icon-statefulset"></use>
                         </svg>
                         <span
                             style="font-size: 24px; color: #242e42;text-shadow: 0 4px 8px rgba(36,46,66,.1);font-weight: 600;">有状态副本集</span>
@@ -21,17 +21,16 @@
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
-                <el-select v-model="namespace" filterable placeholder="Select" @visible-change="getnsselect()"
+                <el-select v-model="namespace" filterable placeholder="命名空间（默认ALL）" @visible-change="getnsselect()"
                     @change="getStatefulset()" clearable>
                     <el-option v-for="item in nslist" :key="item.namespace" :label="item.label" :value="item.namespace"
                         style="width:100%" />
                 </el-select>
-
             </div>
         </el-col>
         <el-col :span="16">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" clearable @keyup.enter="getStatefulset()"
+                <el-input v-model="filter_name" placeholder="请输入搜索资源的名称" clearable @keyup.enter="getStatefulset()"
                     @clear="getStatefulset()">
                     <template #prepend>
                         <el-button icon="Search" @click="getStatefulset()" />
@@ -40,8 +39,8 @@
             </div>
         </el-col>
         <el-col :span="4">
-            <div class="header-grid-content" style="text-align: center;">
-                <el-button type="info" @click="Refresh()" round>
+            <div class="header-grid-content" style="text-align: right;">
+                <el-button type="info" @click="getStatefulset()" round>
                     <el-icon>
                         <Refresh />
                     </el-icon>
@@ -50,12 +49,16 @@
         </el-col>
     </el-row>
     <div class="table-bg-purple">
-        <el-table :data="statefulItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small">
+        <el-table :data="statefulItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small"
+            empty-text="抱歉，暂无数据">
             <el-table-column label="名称" width="200">
                 <template #default="scope">
-                    <div style="display: flex; align-items: center">
-                        <span>{{ scope.row.name }}</span>
-                    </div>
+                    <svg class="icon-table-sts" aria-hidden="true">
+                        <use xlink:href="#icon-statefulset"></use>
+                    </svg>
+                    <el-text style="margin-left:3px" size="small">{{
+                        scope.row.name
+                    }}</el-text>
                 </template>
             </el-table-column>
             <el-table-column label="命名空间" prop="namespaces" width="150" />
@@ -67,9 +70,9 @@
                                 {{ k }}:{{ v }}</el-tag>
                         </div>
                     </div>
-                    <div v-if="scope.row.labels == null" align="center">---</div>
-                    <div v-if="scope.row.labels != null"><el-button size="small" type="primary" link
-                            @click="showLabels(scope.$index)">{{
+                    <div v-if="scope.row.labels == null">---</div>
+                    <div v-if="scope.row.labels != null && Object.keys(scope.row.labels).length > 3"><el-button size="small"
+                            type="primary" link @click="showLabels(scope.$index)">{{
                                 maxitem[scope.$index] == 3 ?
                                 '展开' : '收起'
                             }}</el-button></div>
@@ -112,7 +115,7 @@
                                     副本
                                 </el-dropdown-item>
                                 <el-dropdown-item icon="Delete"
-                                    @click="messageboxOperate(scope.row, 'delete')">删除</el-dropdown-item>
+                                    @click="messageboxOperate(scope.row, '删除')">删除</el-dropdown-item>
                             </el-dropdown-menu>
                         </template>
                     </el-dropdown>
@@ -244,7 +247,11 @@ export default {
                 for (let i = 0; i < res.data.item.length; i++) {
                     this.maxitem.push(3)
                 }
-            }).catch(function (res) {
+            }).catch((res) => {
+                this.$message({
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res);
             })
         },
@@ -290,7 +297,12 @@ export default {
                 this.aceConfig.lang = "json"
                 this.detailnamespace = res.data.metadata.namespace
                 this.content = JSON.stringify(res.data, null, 2)
-            }).catch(function (res) {
+            }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res.data);
             })
         },
@@ -311,7 +323,7 @@ export default {
             }).catch((res) => {
                 this.$message({
                     showClose: true,
-                    message: res.msg + res.reason,
+                    message: res.msg,
                     type: 'error'
                 });
                 console.log(res);
@@ -333,7 +345,12 @@ export default {
                     message: res.msg,
                     type: 'warning'
                 });
-            }).catch(function (res) {
+            }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res);
             })
             this.Refresh()
@@ -367,11 +384,10 @@ export default {
                         message: res.msg,
                         type: 'success'
                     });
-                console.log(res)
             }).catch((res) => {
                 this.$message({
                     showClose: true,
-                    message: res.msg + res.reason,
+                    message: res.msg,
                     type: 'error'
                 });
                 console.log(res);
@@ -387,7 +403,6 @@ export default {
                 inputErrorMessage: '副本的数量范围 0-99'
             }).then(({ value }) => {
                 this.handleReplica(row.namespaces, row.name, parseInt(value))
-                console.log(value)
             }).catch(() => {
                 this.$message({
                     type: 'info',
@@ -408,54 +423,6 @@ export default {
                     message: '已取消删除'
                 });
             });
-        },
-        submitForm(formName) {
-            this.$refs[formName].validate((valid) => {
-                if (valid) {
-                    this.dialogcreatens = false
-                    console.log(this.ruleForm)
-                    this.createDeployment()
-                } else {
-                    return false;
-                }
-            });
-        },
-        resetForm(formName) {
-            this.$refs[formName].resetFields();
-        },
-        addContainer() {
-            this.ruleForm.container.push({
-                container_name: '',
-                image: '',
-                cpu: '0',
-                memory: '0',
-                container_port: [
-                    {
-                        port_name: '',
-                        container_port: 0,
-                        protocol: '',
-                    }
-                ]
-            })
-        },
-        addContainerPort(index) {
-            this.ruleForm.container[index].container_port.push({
-                port_name: '',
-                container_port: 0,
-                protocol: '',
-            })
-        },
-        removeContainer(item) {
-            var index = this.ruleForm.container.indexOf(item)
-            if (index !== -1) {
-                this.ruleForm.container.splice(index, 1)
-            }
-        },
-        removeContainerPort(portindex, portitem) {
-            var index = this.ruleForm.container[portindex].container_port.indexOf(portitem)
-            if (index !== -1) {
-                this.ruleForm.container[portindex].container_port.splice(index, 1)
-            }
         },
         yamlFormat() {
             if (this.aceConfig.lang == "yaml") {
@@ -560,6 +527,14 @@ export default {
     width: 2.5em;
     height: 2.5em;
     vertical-align: -0.7em;
+    fill: currentColor;
+    overflow: hidden;
+}
+
+.icon-table-sts {
+    width: 1.5em;
+    height: 1.5em;
+    vertical-align: -0.5em;
     fill: currentColor;
     overflow: hidden;
 }

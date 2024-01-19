@@ -2,7 +2,6 @@ package controller
 
 import (
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/wonderivan/logger"
 	appsv1 "k8s.io/api/apps/v1"
@@ -26,10 +25,10 @@ func (d *deployment) GetDeploylist(c *gin.Context) {
 		Limit      int    `form:"limit"`
 		Page       int    `form:"page"`
 	})
-	err := c.Bind(&params)
+	err := c.ShouldBind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  "绑定参数失败",
 			"data": nil,
 		})
@@ -38,7 +37,7 @@ func (d *deployment) GetDeploylist(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	data, err := service.Deployment.GetDeploymentList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  "获取podList失败",
 			"data": nil,
 		})
@@ -59,7 +58,7 @@ func (d *deployment) ModifyDeployReplicas(c *gin.Context) {
 		Replicas   int    `json:"replicas"`
 	})
 
-	err := c.Bind(&params)
+	err := c.ShouldBind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
 		return
@@ -69,7 +68,7 @@ func (d *deployment) ModifyDeployReplicas(c *gin.Context) {
 	err = service.Deployment.ModifyDeployReplicas(params.Namespace, params.DeployName, replicas, uuid)
 	if err != nil {
 
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": errors.New("更新副本数失败" + err.Error()),
 		})
 		return
@@ -87,7 +86,7 @@ func (d *deployment) RestartDeploy(c *gin.Context) {
 		Namespace  string `json:"namespace"`
 	})
 
-	err := c.Bind(&params)
+	err := c.ShouldBind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
 		return
@@ -95,7 +94,7 @@ func (d *deployment) RestartDeploy(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Deployment.RestartDeploy(params.Namespace, params.DeployName, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": errors.New("重启失败" + err.Error()),
 		})
 	} else {
@@ -112,19 +111,19 @@ func (d *deployment) GetDeployDetail(c *gin.Context) {
 		Namespace  string `form:"namespace"`
 	})
 
-	err := c.Bind(&params)
+	err := c.ShouldBind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"err": errors.New("绑定参数失败" + err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": errors.New("绑定参数失败" + err.Error()),
 		})
 		return
 	}
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	deploy, err := service.Deployment.GetDeployDetail(params.Namespace, params.DeployName, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"err": errors.New("获取deploy 失败" + err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": errors.New("获取deploy 失败" + err.Error()),
 		})
 		return
 	} else {
@@ -140,21 +139,19 @@ func (d *deployment) CreateDeploy(c *gin.Context) {
 	params := new(struct {
 		Data *service.DeploymentCreate `json:"data"`
 	})
-	fmt.Println("接受参数")
 	err := c.ShouldBindJSON(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"err": errors.New("绑定参数失败" + err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": errors.New("绑定参数失败" + err.Error()),
 		})
 		return
 	}
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Deployment.CreateDeploy(params.Data, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":    "创建失败",
-			"reason": errors.New(err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "创建失败:" + err.Error(),
 		})
 		return
 	}
@@ -170,20 +167,19 @@ func (d *deployment) DelDeploy(c *gin.Context) {
 		DeployName string `form:"deploy_name"`
 		Namespace  string `form:"namespace"`
 	})
-	err := c.Bind(&params)
+	err := c.ShouldBind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"err": errors.New("绑定参数失败" + err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": errors.New("绑定参数失败" + err.Error()),
 		})
 		return
 	}
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Deployment.DelDeploy(params.Namespace, params.DeployName, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":    "删除失败",
-			"reason": errors.New(err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "删除失败:" + err.Error(),
 		})
 		return
 	} else {
@@ -205,7 +201,7 @@ func (d *deployment) UpdateDeploy(c *gin.Context) {
 	err := c.ShouldBindJSON(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"err": errors.New("绑定参数失败" + err.Error()),
 		})
 		return
@@ -213,7 +209,7 @@ func (d *deployment) UpdateDeploy(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Deployment.UpdateDeploy(params.Namespace, params.Data, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":    "更新失败",
 			"reason": errors.New(err.Error()),
 		})
@@ -230,7 +226,7 @@ func (d *deployment) GetDeployPer(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	dps, err := service.Deployment.GetDeployPer(uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"err": errors.New("获取deploy 失败" + err.Error()),
 		})
 		return
@@ -249,7 +245,7 @@ func (d *deployment) RolloutDeploy(c *gin.Context) {
 		Namespace  string `form:"namespace"`
 	})
 
-	err := c.Bind(&params)
+	err := c.ShouldBind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
 		return
@@ -257,7 +253,7 @@ func (d *deployment) RolloutDeploy(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Deployment.RolloutDeploy(params.Namespace, params.DeployName, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": errors.New("回滚失败" + err.Error()),
 		})
 	} else {

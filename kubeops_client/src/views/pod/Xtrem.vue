@@ -54,6 +54,7 @@ export default {
             pod_name: '',
             container_name: '',
             namespace: '',
+            token: '',
         }
     },
     created() {
@@ -114,16 +115,13 @@ export default {
             if (term._initialized) return
             // 初始化
             term._initialized = true
-            this.socket = new WebSocket(`ws://127.0.0.1:8081/ws?namespace=${this.namespace}&pod_name=${this.pod_name}&container_name=${this.container_name}`);
+            this.socket = new WebSocket(`ws://127.0.0.1:8081/ws?token=${this.token}&namespace=${this.namespace}&pod_name=${this.pod_name}&container_name=${this.container_name}`);
             // 换行并输入起始符
             term.prompt = _ => {
                 if (this.jsdata.data != undefined) {
                     term.write(`\r\n${this.jsdata.data}\x1b[0m`)
                 }
             }
-            term.prompt()
-            term.writeln("Welcome to \x1b[1;32m墨天轮\x1b[0m.")
-            term.writeln('This is Web Terminal of Modb; Good Good Study, Day Day Up.')
             term.prompt()
             term.focus();
 
@@ -202,6 +200,7 @@ export default {
             // 取到路由带过来的参数,将数据放在当前组件的数据内
             this.namespace = this.$route.query.namespace
             this.pod_name = this.$route.query.pod_name
+            this.token = localStorage.getItem("user_token")
             this.$ajax({
                 method: 'get',
                 url: '/pod/container/list',

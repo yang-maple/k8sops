@@ -23,7 +23,7 @@
     <el-row>
         <el-col :span="8">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" clearable @clear="getNamespaces()"
+                <el-input v-model="filter_name" placeholder="请输入搜索资源的名称" clearable @clear="getNamespaces()"
                     @keyup.enter="getNamespaces()">
                     <template #prepend>
                         <el-button icon="Search" @click="getNamespaces()"></el-button>
@@ -35,7 +35,7 @@
             <div class="header-grid-content" style="min-height: 32px;"></div>
         </el-col>
         <el-col :span="6">
-            <div class="header-grid-content" style="text-align: center;">
+            <div class="header-grid-content" style="text-align: right;">
                 <el-button type="info" @click="getNamespaces()" round>
                     <el-icon>
                         <Refresh />
@@ -48,11 +48,14 @@
         </el-col>
     </el-row>
     <div class="table-bg-purple">
-        <el-table :data="namespacesItem" :header-cell-style="{ background: '#e6e7e9' }" size="small">
+        <el-table :data="namespacesItem" :header-cell-style="{ background: '#e6e7e9' }" size="small" empty-text="抱歉，暂无数据">
             <el-table-column label="名称" width="200">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
-                        <el-text style="margin-left: 10px" size="small">{{
+                        <svg class="table-icon-ns" aria-hidden="true">
+                            <use xlink:href="#icon-namespace1"></use>
+                        </svg>
+                        <el-text style="margin-left:3px" size="small">{{
                             scope.row.name
                         }}</el-text>
                     </div>
@@ -67,8 +70,8 @@
                         </div>
                     </div>
                     <div v-if="scope.row.labels == null" align="center">---</div>
-                    <div v-if="scope.row.labels != null"><el-button size="small" type="primary" link
-                            @click="showLabels(scope.$index)">{{
+                    <div v-if="scope.row.labels != null && Object.keys(scope.row.labels).length > 3"><el-button size="small"
+                            type="primary" link @click="showLabels(scope.$index)">{{
                                 maxitem[scope.$index] == 3 ?
                                 '展开' : '收起'
                             }}</el-button></div>
@@ -189,7 +192,7 @@ export default {
                 newnamespaces: '',
             },
             filter_name: '',
-            total: 1,
+            total: 0,
             page_size: [1, 10, 20, 50, 100],
             limit: 10,
             page: 1,
@@ -258,7 +261,7 @@ export default {
                     type: 'error'
                 });
             })
-            this.Refresh()
+            this.reload()
         },
         handleDelete(row) {
             this.$ajax({
@@ -277,7 +280,7 @@ export default {
             }).catch((res) => {
                 console.log(res);
             })
-            this.Refresh()
+            this.reload()
         },
         messageboxOperate(row, name) {
             this.$confirm(`是否${name}实例${row.name}`, '提示', {
@@ -326,7 +329,7 @@ export default {
             }).catch((res) => {
                 console.log(res);
             })
-            this.Refresh()
+            this.reload()
         },
         Refresh() {
             setTimeout(() => {
@@ -455,6 +458,14 @@ export default {
     width: 2.5em;
     height: 2.5em;
     vertical-align: -0.7em;
+    fill: currentColor;
+    overflow: hidden;
+}
+
+.table-icon-ns {
+    width: 1.5em;
+    height: 1.5em;
+    vertical-align: -0.5em;
     fill: currentColor;
     overflow: hidden;
 }

@@ -26,7 +26,7 @@ func (cm *configmap) GetConfigmapList(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  "绑定参数失败",
 			"data": nil,
 		})
@@ -34,8 +34,8 @@ func (cm *configmap) GetConfigmapList(c *gin.Context) {
 	}
 	data, err := service.Configmaps.GetCmList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":  "获取Configmap失败",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg":  "获取Configmap失败" + err.Error(),
 			"data": nil,
 		})
 		return
@@ -56,7 +56,7 @@ func (cm *configmap) GetConfigmapDetail(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  "绑定参数失败",
 			"data": nil,
 		})
@@ -65,8 +65,8 @@ func (cm *configmap) GetConfigmapDetail(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	detail, err := service.Configmaps.GetCmDetail(params.Namespace, params.ConfigmapName, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":  "获取Configmap 详情失败",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg":  "获取Configmap 详情失败" + err.Error(),
 			"data": nil,
 		})
 		return
@@ -86,7 +86,7 @@ func (cm *configmap) DelConfigmap(c *gin.Context) {
 	})
 	err := c.Bind(&params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  "绑定参数失败",
 			"data": nil,
 		})
@@ -95,8 +95,8 @@ func (cm *configmap) DelConfigmap(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Configmaps.DelCm(params.Namespace, params.ConfigmapName, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":  "删除 Configmap 失败",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg":  "删除 Configmap 失败" + err.Error(),
 			"data": nil,
 		})
 		return
@@ -115,7 +115,7 @@ func (cm *configmap) CreateConfigmap(c *gin.Context) {
 	err := c.ShouldBindJSON(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  "绑定参数失败",
 			"data": nil,
 		})
@@ -124,8 +124,8 @@ func (cm *configmap) CreateConfigmap(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Configmaps.CreateCm(params.Data, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":  "创建 Configmap 失败",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg":  "创建 Configmap 失败" + err.Error(),
 			"data": nil,
 		})
 		return
@@ -145,7 +145,7 @@ func (cm *configmap) UpdateConfigmap(c *gin.Context) {
 	err := c.ShouldBindJSON(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": "绑定参数失败",
 		})
 		return
@@ -153,8 +153,8 @@ func (cm *configmap) UpdateConfigmap(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Configmaps.UpdateCm(params.Namespace, params.Data, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": "更新 Configmap 失败",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "更新 Configmap 失败" + err.Error(),
 		})
 		return
 	}

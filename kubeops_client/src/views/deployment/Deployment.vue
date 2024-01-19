@@ -21,7 +21,7 @@
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
-                <el-select v-model="namespace" filterable placeholder="Namespace" @visible-change="getnsselect()"
+                <el-select v-model="namespace" filterable placeholder="命名空间（默认ALL）" @visible-change="getnsselect()"
                     @change="getDeployment()" clearable>
                     <el-option-group v-for="group in nslist" :key="group.label" :label="group.label">
                         <el-option v-for="item in group.options" :key="item.namespace" :label="item.label"
@@ -32,7 +32,7 @@
         </el-col>
         <el-col :span="16">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" clearable @clear="getDeployment()"
+                <el-input v-model="filter_name" placeholder="请输入搜索资源的名称" clearable @clear="getDeployment()"
                     @keyup.enter="getDeployment()">
                     <template #prepend>
                         <el-button icon="Search" @click="getDeployment()"></el-button>
@@ -41,8 +41,8 @@
             </div>
         </el-col>
         <el-col :span="4">
-            <div class="header-grid-content" style="text-align: center;">
-                <el-button type="info" @click="Refresh()" round>
+            <div class="header-grid-content" style="text-align: right;">
+                <el-button type="info" @click="getDeployment()" round>
                     <el-icon>
                         <Refresh />
                     </el-icon>
@@ -54,12 +54,16 @@
         </el-col>
     </el-row>
     <div class="table-bg-purple">
-        <el-table :data="deploymentItem" :header-cell-style="{ background: '#e6e7e9' }" size="small">
+        <el-table :data="deploymentItem" :header-cell-style="{ background: '#e6e7e9' }" size="small" empty-text="抱歉，暂无数据">
             <el-table-column label="名称" width="200">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
-
-                        <span>{{ scope.row.name }}</span>
+                        <svg class="icon-table-deploy" aria-hidden="true">
+                            <use xlink:href="#icon-deployment-copy"></use>
+                        </svg>
+                        <el-text style="margin-left:3px" size="small">{{
+                            scope.row.name
+                        }}</el-text>
                     </div>
                 </template>
             </el-table-column>
@@ -72,9 +76,9 @@
                                 {{ k }}:{{ v }}</el-tag>
                         </div>
                     </div>
-                    <div v-if="scope.row.labels == null" align="center">---</div>
-                    <div v-if="scope.row.labels != null"><el-button size="small" type="primary" link
-                            @click="showLabels(scope.$index)">{{
+                    <div v-if="scope.row.labels == null">---</div>
+                    <div v-if="scope.row.labels != null && Object.keys(scope.row.labels).length > 3"><el-button size="small"
+                            type="primary" link @click="showLabels(scope.$index)">{{
                                 maxitem[scope.$index] == 3 ?
                                 '展开' : '收起'
                             }}</el-button></div>
@@ -117,9 +121,9 @@
                                     副本
                                 </el-dropdown-item>
                                 <el-dropdown-item icon="Refresh"
-                                    @click="messageboxOperate(scope.row, 'restart')">重启</el-dropdown-item>
+                                    @click="messageboxOperate(scope.row, '重启')">重启</el-dropdown-item>
                                 <el-dropdown-item icon="Delete"
-                                    @click="messageboxOperate(scope.row, 'delete')">删除</el-dropdown-item>
+                                    @click="messageboxOperate(scope.row, '删除')">删除</el-dropdown-item>
                             </el-dropdown-menu>
                         </template>
                     </el-dropdown>
@@ -165,7 +169,7 @@
                 <el-input v-model="ruleForm.name"></el-input>
             </el-form-item>
             <el-form-item label="命名空间" prop="namespace">
-                <el-select v-model="ruleForm.namespace" placeholder="请选择活动区域" @visible-change="getnsselect()">
+                <el-select v-model="ruleForm.namespace" placeholder="请选择命名空间" @visible-change="getnsselect()">
                     <el-option-group v-for="group in  nslist " :key="group.label">
                         <el-option v-for=" item  in  group.options " :key="item.namespace" :value="item.namespace"
                             v-show="item.label != 'ALL'" />
@@ -173,7 +177,7 @@
                 </el-select>
             </el-form-item>
             <el-form-item label="标签">
-                <el-input v-model="ruleForm.labels"></el-input>
+                <el-input v-model="ruleForm.labels" placeholder="`请输入如下格式 {'a':'b'}`"></el-input>
             </el-form-item>
             <el-form-item label="副本">
                 <el-input-number v-model="ruleForm.replicas" :min="1" :max="99" />
@@ -185,10 +189,10 @@
                 <el-input v-model="ruleForm.container.image"></el-input>
             </el-form-item>
             <el-form-item label="Cpu限制">
-                <el-input v-model="ruleForm.container.cpu"></el-input>
+                <el-input v-model="ruleForm.container.cpu" placeholder="单位为 m"></el-input>
             </el-form-item>
             <el-form-item label="Memory限制">
-                <el-input v-model="ruleForm.container.memory"></el-input>
+                <el-input v-model="ruleForm.container.memory" placeholder="单位为 Mi"></el-input>
             </el-form-item>
 
             <el-form-item label="端口名称">
@@ -225,7 +229,6 @@
 import { VAceEditor } from 'vue3-ace-editor';
 import '../../ace.config.js';
 import yaml from 'js-yaml';
-import { SelectProps } from 'element-plus/es/components/select-v2/src/defaults';
 export default {
     inject: ['reload'],
     components: {
@@ -258,17 +261,17 @@ export default {
                 name: '',
                 namespace: '',
                 replicas: 0,
-                labels: {},
+                labels: null,
                 container:
                 {
                     container_name: '',
                     image: '',
-                    cpu: '0',
-                    memory: '0',
+                    cpu: null,
+                    memory: null,
                     container_port:
                     {
                         port_name: '',
-                        container_port: 0,
+                        container_port: null,
                         protocol: '',
                     }
                 }
@@ -276,7 +279,7 @@ export default {
             rules: {
                 name: [
                     { required: true, message: '请输入资源名称', trigger: 'blur' },
-                    { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+                    { min: 3, max: 15, message: '长度在 3 到 15 个字符', trigger: 'blur' }
                 ],
                 namespace: [
                     { required: true, message: '请选择命名空间', trigger: 'change' }
@@ -325,9 +328,13 @@ export default {
                     message: res.msg,
                     type: 'success'
                 });
+                this.dialogcreatens = false
                 this.Refresh()
             }).catch((res) => {
-                console.log(res);
+                this.$message({
+                    message: res.msg,
+                    type: 'error'
+                });
             })
         },
         Refresh() {
@@ -357,7 +364,6 @@ export default {
                     res.data.item.forEach(v => {
                         this.nslist[1].options.push({ 'namespace': v.name, 'label': v.name })
                     })
-                    console.log(this.nslist)
                 }).catch((res) => {
                     console.log(res.data)
                 })
@@ -403,16 +409,14 @@ export default {
                     message: res.msg,
                     type: 'success'
                 });
-                this.Refresh()
             }).catch((res) => {
                 this.$message({
                     showClose: true,
-                    message: res.msg + res.reason,
+                    message: res.msg,
                     type: 'error'
                 });
-                console.log(res);
             })
-
+            this.Refresh()
         },
         handleRestart(namespace, name) {
             this.$ajax.post(
@@ -427,16 +431,15 @@ export default {
                     message: res.msg,
                     type: 'success'
                 });
-                this.Refresh()
             }).catch((res) => {
                 this.$message({
                     showClose: true,
-                    message: res.msg + res.reason,
+                    message: res.msg,
                     type: 'error'
                 });
                 console.log(res);
             })
-
+            this.Refresh()
 
         },
         handleDelete(namespace, name) {
@@ -454,10 +457,16 @@ export default {
                     message: res.msg,
                     type: 'warning'
                 });
-                this.Refresh()
+
             }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res);
             })
+            this.Refresh()
         },
         handleUpdate(namespace) {
             let data = this.content
@@ -489,11 +498,10 @@ export default {
                     type: 'success'
                 });
                 this.Refresh()
-                console.log(res)
             }).catch((res) => {
                 this.$message({
                     showClose: true,
-                    message: res.msg + res.reason,
+                    message: res.msg,
                     type: 'error'
                 });
                 console.log(res);
@@ -522,9 +530,9 @@ export default {
                 cancelButtonText: '取消',
                 type: 'warning'
             }).then(() => {
-                if (name == "restart") {
+                if (name == "重启") {
                     this.handleRestart(row.namespaces, row.name)
-                } else if (name == "delete") {
+                } else if (name == "删除") {
                     this.handleDelete(row.namespaces, row.name)
                 }
 
@@ -538,9 +546,7 @@ export default {
         submitForm(formName) {
             this.$refs[formName].validate((valid) => {
                 if (valid) {
-                    this.dialogcreatens = false
                     this.ruleForm.labels = JSON.parse(this.ruleForm.labels);
-                    console.log(this.ruleForm)
                     this.createDeployment()
                 } else {
                     return false;
@@ -668,6 +674,14 @@ export default {
     width: 2.5em;
     height: 2.5em;
     vertical-align: -0.7em;
+    fill: currentColor;
+    overflow: hidden;
+}
+
+.icon-table-deploy {
+    width: 1.5em;
+    height: 1.5em;
+    vertical-align: -0.5em;
     fill: currentColor;
     overflow: hidden;
 }

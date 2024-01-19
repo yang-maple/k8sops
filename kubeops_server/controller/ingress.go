@@ -25,7 +25,7 @@ func (i *ingress) GetIngressList(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  "绑定参数失败",
 			"data": nil,
 		})
@@ -34,8 +34,8 @@ func (i *ingress) GetIngressList(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	data, err := service.Ingress.GetIngList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":  "获取Ingress失败",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg":  "获取Ingress失败" + err.Error(),
 			"data": nil,
 		})
 		return
@@ -56,7 +56,7 @@ func (i *ingress) GetIngressDetail(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  "绑定参数失败",
 			"data": nil,
 		})
@@ -65,8 +65,8 @@ func (i *ingress) GetIngressDetail(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	detail, err := service.Ingress.GetIngDetail(params.Namespace, params.IngressName, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":  "获取Services 详情失败",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg":  "获取Services 详情失败" + err.Error(),
 			"data": nil,
 		})
 		return
@@ -86,7 +86,7 @@ func (i *ingress) DelIngress(c *gin.Context) {
 	})
 	err := c.Bind(&params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"msg":  "绑定参数失败",
 			"data": nil,
 		})
@@ -95,8 +95,8 @@ func (i *ingress) DelIngress(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Ingress.DelIng(params.Namespace, params.IngressName, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":  "删除 Services 失败",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg":  "删除 Services 失败" + err.Error(),
 			"data": nil,
 		})
 		return
@@ -124,8 +124,8 @@ func (i *ingress) CreateIngress(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Ingress.CreateIng(createIngress.Data, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":  "创建 Services 失败",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg":  "创建 Services 失败" + err.Error(),
 			"data": nil,
 		})
 		return
@@ -146,17 +146,16 @@ func (i *ingress) UpdateIngress(c *gin.Context) {
 	err := c.ShouldBindJSON(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"err": errors.New("绑定参数失败" + err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": errors.New("绑定参数失败" + err.Error()),
 		})
 		return
 	}
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.Ingress.UpdateIng(params.Namespace, params.Data, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":    "更新失败",
-			"reason": err.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "更新失败" + err.Error(),
 		})
 		return
 	}

@@ -89,16 +89,16 @@ func (d *daemonSet) DelDaemon(c *gin.Context) {
 	err := c.Bind(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"err": errors.New("绑定参数失败" + err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": errors.New("绑定参数失败" + err.Error()),
 		})
 		return
 	}
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	err = service.DaemonSet.DelDs(params.Namespace, params.DaemonName, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"err": errors.New("删除失败" + err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": errors.New("删除失败" + err.Error()),
 		})
 		return
 	} else {
@@ -120,8 +120,8 @@ func (d *daemonSet) UpdateDaemon(c *gin.Context) {
 	err := c.ShouldBindJSON(&params)
 	if err != nil {
 		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"err": errors.New("绑定参数失败" + err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": errors.New("绑定参数失败" + err.Error()),
 		})
 		return
 	}
@@ -129,9 +129,8 @@ func (d *daemonSet) UpdateDaemon(c *gin.Context) {
 	err = service.DaemonSet.UpdateDs(params.Namespace, params.Data, uuid)
 	if err != nil {
 		logger.Info("更新失败" + err.Error())
-		c.JSON(http.StatusOK, gin.H{
-			"msg": "更新失败",
-			"err": errors.New(err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "更新失败" + err.Error(),
 		})
 		return
 	}

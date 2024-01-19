@@ -6,6 +6,34 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "1973724",
+      "name": "添加文件",
+      "font_class": "wenjiantianjia",
+      "unicode": "e615",
+      "unicode_decimal": 58901
+    },
+    {
+      "icon_id": "3092320",
+      "name": "添加文件",
+      "font_class": "tianjiawenjian",
+      "unicode": "e790",
+      "unicode_decimal": 59280
+    },
+    {
+      "icon_id": "6176555",
+      "name": "存储卷",
+      "font_class": "cunchujuan",
+      "unicode": "e61e",
+      "unicode_decimal": 58910
+    },
+    {
+      "icon_id": "10110191",
+      "name": "存储卷",
+      "font_class": "cunchujuan1",
+      "unicode": "e61f",
+      "unicode_decimal": 58911
+    },
+    {
       "icon_id": "17420036",
       "name": "命名空间",
       "font_class": "mingmingkongjian",

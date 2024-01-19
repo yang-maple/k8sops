@@ -6,6 +6,7 @@ import (
 	"github.com/wonderivan/logger"
 	"kubeops/model"
 	"kubeops/service"
+	"net/http"
 	"os"
 	"path"
 	"strconv"
@@ -37,7 +38,7 @@ func (u *upload) uploadYamlFile(c *gin.Context) {
 			if !model.DirExists(dir) {
 				err := os.Mkdir(dir, os.ModePerm)
 				if err != nil {
-					c.JSON(400, gin.H{
+					c.JSON(http.StatusBadRequest, gin.H{
 						"code": 400,
 						"msg":  "上传失败",
 					})
@@ -48,54 +49,28 @@ func (u *upload) uploadYamlFile(c *gin.Context) {
 			err := c.SaveUploadedFile(file, dst)
 			if err != nil {
 				logger.Info(err.Error())
-				c.JSON(400, gin.H{
+				c.JSON(http.StatusBadRequest, gin.H{
 					"code": 400,
-					"msg":  "上传失败",
+					"msg":  "上传失败" + err.Error(),
 				})
 				return
 			}
 			uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 			msg, err := service.Upload.UploadFile(dst, uuid)
 			if err != nil {
-				c.JSON(400, gin.H{
+				c.JSON(http.StatusBadRequest, gin.H{
 					"code": 400,
 					"msg":  err.Error(),
 				})
 				return
 			}
-			c.JSON(200, gin.H{
+			c.JSON(http.StatusOK, gin.H{
 				"code": 200,
 				"msg":  msg,
 			})
 			return
 		}
-		//dir := yamlurl + time.Now().Format("2006-01-02")
-		////判断目录是不是存在,如果存在则不创建
-		//if !dirExists(dir) {
-		//	err := os.Mkdir(dir, os.ModePerm)
-		//	if err != nil {
-		//		c.JSON(400, gin.H{
-		//			"code": 400,
-		//			"msg":  "上传失败",
-		//		})
-		//		return
-		//	}
-		//}
-		//dst := path.Join(dir, file.Filename)
-		//err := c.SaveUploadedFile(file, dst)
-		//if err != nil {
-		//	logger.Info(err.Error())
-		//	c.JSON(400, gin.H{
-		//		"code": 400,
-		//		"msg":  "上传失败",
-		//	})
-		//	return
-		//}
-		//c.JSON(200, gin.H{
-		//	"code": 200,
-		//	"msg":  "上传成功",
-		//})
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"code": 400,
 			"msg":  "上传文件格式不正确",
 		})
@@ -116,7 +91,7 @@ func (u *upload) createYaml(c *gin.Context) {
 	yamlStr, err := yaml.JSONToYAML([]byte(params.YamlContent))
 	if err != nil {
 		logger.Info("yaml 格式无效")
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"code": 400,
 			"msg":  "yaml 格式无效",
 		})
@@ -126,13 +101,13 @@ func (u *upload) createYaml(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	msg, err := service.Upload.CreateYaml(yamlStr, uuid)
 	if err != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"code": 400,
 			"msg":  err.Error(),
 		})
 		return
 	}
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"code": 200,
 		"msg":  msg,
 	})

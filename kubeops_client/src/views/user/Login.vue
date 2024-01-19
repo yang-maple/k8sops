@@ -169,12 +169,9 @@ export default {
                         this.$auth.setUserAuth(res.username, res.token, res.uid)
                         this.$auth.setUserCluster(res.cluster_name)
                         this.$router.push("/home")
-
                     }).catch((res) => {
-                        loading.close()
                         this.notify("error", "登录失败", res.msg)
                         this.GetCaptcha();
-                        console.log(res);
                     })
                 } else {
                     return false;
@@ -205,7 +202,7 @@ export default {
     width: 100%;
     background-size: cover;
     background-repeat: no-repeat;
-    background-image: url('@/assets/00001.jpg');
+    background-image: url('@/assets/img/00001.jpg');
     opacity: 0.9;
     position: fixed;
     pointer-events: none;

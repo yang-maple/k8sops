@@ -5,7 +5,7 @@
                 <span>
                     <div>
                         <svg class="icon-configmap" aria-hidden="true">
-                            <use xlink:href="#icon-ConfigMappeizhiwenjian-copy"></use>
+                            <use xlink:href="#icon-configmap"></use>
                         </svg>
                         <span
                             style="font-size: 24px; color: #242e42;text-shadow: 0 4px 8px rgba(36,46,66,.1);font-weight: 600;">配置字典</span>
@@ -20,7 +20,7 @@
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
-                <el-select v-model="namespace" placeholder="Select" @visible-change="getnsselect()"
+                <el-select v-model="namespace" placeholder="命名空间（默认ALL）" @visible-change="getnsselect()"
                     @change="getConfigmap()">
                     <el-option-group v-for="group in nslist" :key="group.label" :label="group.label">
                         <el-option v-for="item in group.options" :key="item.namespace" :label="item.label"
@@ -31,7 +31,7 @@
         </el-col>
         <el-col :span="16">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" clearable @clear="getConfigmap()"
+                <el-input v-model="filter_name" placeholder="请输入搜索资源的名称" clearable @clear="getConfigmap()"
                     @keyup.enter="getConfigmap()">
                     <template #prepend>
                         <el-button icon="Search" @click="getConfigmap()" />
@@ -40,8 +40,8 @@
             </div>
         </el-col>
         <el-col :span="4">
-            <div class="header-grid-content" style="text-align: center;">
-                <el-button type="info" @click="Refresh()" round>
+            <div class="header-grid-content" style="text-align: right;">
+                <el-button type="info" @click="getConfigmap()" round>
                     <el-icon>
                         <Refresh />
                     </el-icon>
@@ -53,14 +53,17 @@
         </el-col>
     </el-row>
     <div class="table-bg-purple">
-        <el-table :data="configmapItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small">
+        <el-table :data="configmapItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small"
+            empty-text="抱歉，暂无数据">
             <el-table-column label="名称" width="200">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
-                        <el-icon>
-                            <Document />
-                        </el-icon>
-                        <span style="margin-left: 10px">{{ scope.row.name }}</span>
+                        <svg class="icon-table-cm" aria-hidden="true">
+                            <use xlink:href="#icon-configmap"></use>
+                        </svg>
+                        <el-text style="margin-left:3px" size="small">{{
+                            scope.row.name
+                        }}</el-text>
                     </div>
                 </template>
             </el-table-column>
@@ -74,8 +77,8 @@
                         </div>
                     </div>
                     <div v-if="scope.row.labels == null">---</div>
-                    <div v-if="scope.row.labels != null"><el-button size="small" type="primary" link
-                            @click="showLabels(scope.$index)">{{
+                    <div v-if="scope.row.labels != null && Object.keys(scope.row.labels).length > 3"><el-button size="small"
+                            type="primary" link @click="showLabels(scope.$index)">{{
                                 maxitem[scope.$index] == 3 ?
                                 '展开' : '收起'
                             }}</el-button></div>
@@ -117,7 +120,7 @@
                                 <el-dropdown-item icon="Edit"
                                     @click="dialogFormVisible = true, handleEdit(scope.row.namespace, scope.row.name)">编辑</el-dropdown-item>
                                 <el-dropdown-item icon="Delete"
-                                    @click="messageboxOperate(scope.row, 'delete')">删除</el-dropdown-item>
+                                    @click="messageboxOperate(scope.row, '删除')">删除</el-dropdown-item>
                             </el-dropdown-menu>
                         </template>
                     </el-dropdown>
@@ -279,6 +282,11 @@ export default {
                     this.maxitem.push(3)
                 }
             }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res);
             })
         },
@@ -300,7 +308,7 @@ export default {
                     type: 'error'
                 });
             })
-            this.Refresh()
+            this.reload()
         },
         Refresh() {
             setTimeout(() => {
@@ -359,6 +367,11 @@ export default {
                 this.detailnamespace = res.data.metadata.namespace
                 this.content = JSON.stringify(res.data, null, 2)
             }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res.data);
             })
         },
@@ -384,7 +397,7 @@ export default {
                     type: 'error'
                 });
             })
-            this.Refresh()
+            this.reload()
         },
         handleUpdate(namespace) {
             let data = this.content
@@ -415,6 +428,7 @@ export default {
                     message: res.msg,
                     type: 'success'
                 });
+                this.reload()
             }).catch((res) => {
                 this.$message({
                     showClose: true,
@@ -422,7 +436,6 @@ export default {
                     type: 'error'
                 });
             })
-            this.Refresh()
         },
         messageboxOperate(row, name) {
             this.$confirm(`是否${name}实例${row.name}`, '提示', {
@@ -441,7 +454,6 @@ export default {
         submitForm(formName) {
             this.$refs[formName].validate((valid) => {
                 if (valid) {
-                    console.log(this.ruleForm)
                     if (this.ruleForm.labels != null) {
                         this.ruleForm.labels = JSON.parse(this.ruleForm.labels)
                     }
@@ -569,9 +581,19 @@ export default {
 }
 
 .icon-configmap {
-    width: 2.2em;
-    height: 2.2em;
+    width: 2.5em;
+    height: 2.5em;
+    color: #8a8a8a;
     vertical-align: -0.7em;
+    fill: currentColor;
+    overflow: hidden;
+}
+
+.icon-table-cm {
+    width: 1.5em;
+    height: 1.5em;
+    color: #8a8a8a;
+    vertical-align: -0.5em;
     fill: currentColor;
     overflow: hidden;
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/wonderivan/logger"
 	yamlv3 "gopkg.in/yaml.v3"
+	"io"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -41,6 +42,7 @@ func (u *upload) UploadFile(dst string, uuid int) (msg string, err error) {
 	//传入文件内容，创建资源
 	msg, err = Upload.CreateYaml(filebytes, uuid)
 	if err != nil {
+		logger.Info("创建资源失败" + err.Error())
 		return "", err
 	}
 	//执行完成删除文件
@@ -63,10 +65,15 @@ func (u *upload) CreateYaml(fileBytes []byte, uuid int) (msg string, err error) 
 	//默认值
 	nameSpace := "default"
 	// 创建客户端连接
-	conf, err := clientcmd.BuildConfigFromFlags("", "./config/config")
+	conf, err := clientcmd.BuildConfigFromFlags("", *K8s.ConfigDir[uuid])
+	if err != nil {
+		logger.Info("创建ConfigClient失败" + err.Error())
+		return "", err
+	}
 	dd, err := dynamic.NewForConfig(conf)
 	if err != nil {
 		logger.Info("创建DynamicClient客户端失败" + err.Error())
+		return "", err
 	}
 	//缓存100 读取数据
 	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(fileBytes), 100)
@@ -74,7 +81,10 @@ func (u *upload) CreateYaml(fileBytes []byte, uuid int) (msg string, err error) 
 		//读取yaml文件 读取完成时返回资源对象
 		var rawObj runtime.RawExtension
 		if err = decoder.Decode(&rawObj); err != nil {
-			return fmt.Sprintf("%s/%s created in %s", resource.kind, resource.name, resource.namespace), nil
+			if err == io.EOF {
+				return fmt.Sprintf("%s/%s created in %s", resource.kind, resource.name, resource.namespace), nil
+			}
+			return "", err
 		}
 		// 资源转化
 		obj, gvk, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(rawObj.Raw, nil, nil)
@@ -115,6 +125,6 @@ func (u *upload) CreateYaml(fileBytes []byte, uuid int) (msg string, err error) 
 		resource.kind = obj2.GetKind()
 		resource.name = obj2.GetName()
 		resource.namespace = obj2.GetNamespace()
-		logger.Info("%s/%s created", obj2.GetKind(), obj2.GetName())
+		logger.Info("%s/%s is created", obj2.GetKind(), obj2.GetName())
 	}
 }

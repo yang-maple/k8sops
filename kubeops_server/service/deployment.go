@@ -23,18 +23,18 @@ type deployment struct {
 // Deployment 定义一个 deployment 类型的全局变量 Deployment
 var Deployment deployment
 
-// appsv1.deployment --> Datacell
-func (d *deployment) tocells(deployments []appsv1.Deployment) []DataCell {
+// apps1.deployment --> Data cell
+func (d *deployment) toCells(deployments []appsv1.Deployment) []DataCell {
 	cells := make([]DataCell, len(deployments))
-	//数据转换，将pods类型转化为datacells 类型
+	//数据转换，将pods类型转化为data cells 类型
 	for i := range deployments {
 		cells[i] = deploymentCell(deployments[i])
 	}
 	return cells
 }
 
-// 转换成 appsv1.deploymentcell 类型
-func (d *deployment) fromcells(cells []DataCell) []appsv1.Deployment {
+// Data cell转换成 apps1.deployment 类型
+func (d *deployment) fromCells(cells []DataCell) []appsv1.Deployment {
 	deployments := make([]appsv1.Deployment, len(cells))
 	for i := range cells {
 		deployments[i] = appsv1.Deployment(cells[i].(deploymentCell))
@@ -45,10 +45,10 @@ func (d *deployment) fromcells(cells []DataCell) []appsv1.Deployment {
 // DeployResp 定义获取清单的列表
 type DeployResp struct {
 	Total int          `json:"total"`
-	Item  []deployinfo `json:"item"`
+	Item  []deployInfo `json:"item"`
 }
 
-type deployinfo struct {
+type deployInfo struct {
 	Name       string            `json:"name"`
 	Namespaces string            `json:"namespaces"`
 	Image      []string          `json:"image"`
@@ -74,17 +74,17 @@ type container struct {
 	Image         string        `json:"image"`
 	Cpu           string        `json:"cpu"`
 	Memory        string        `json:"memory"`
-	Containerport containerport `json:"container_port"`
+	Containerport containerPort `json:"container_port"`
 }
 
-type containerport struct {
+type containerPort struct {
 	PortName      string          `json:"port_name"`
 	ContainerPort int32           `json:"container_port"`
 	Protocol      corev1.Protocol `json:"protocol"`
 }
 
-// Deploydp 定义返回的数据类型
-type Deploydp struct {
+// DeployDp  定义返回的数据类型
+type DeployDp struct {
 	Name  string `json:"name"`
 	Total int    `json:"total"`
 }
@@ -98,13 +98,14 @@ type CountDeploy struct {
 // GetDeploymentList 获取deployment 列表
 func (d *deployment) GetDeploymentList(DeployName, Namespace string, Limit, Page int, uuid int) (DP *DeployResp, err error) {
 	//获取deployment 的所有清单列表
-	deploylist, err := K8s.Clientset[uuid].AppsV1().Deployments(Namespace).List(context.TODO(), metav1.ListOptions{})
+	deployList, err := K8s.Clientset[uuid].AppsV1().Deployments(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("获取deploylist 失败" + err.Error())
+		logger.Info("deployList 失败" + err.Error())
+		return nil, err
 	}
 	//组装数据
-	selectdata := &dataselector{
-		GenericDataList: d.tocells(deploylist.Items),
+	selectData := &dataselector{
+		GenericDataList: d.toCells(deployList.Items),
 		DataSelect: &DataSelectQuery{
 			Filter: &FilterQuery{DeployName},
 			Paginate: &PaginateQuery{
@@ -114,19 +115,19 @@ func (d *deployment) GetDeploymentList(DeployName, Namespace string, Limit, Page
 		},
 	}
 	//先过滤 后排序
-	filtered := selectdata.Filter()
+	filtered := selectData.Filter()
 	total := len(filtered.GenericDataList)
 	//分页
-	datapage := filtered.Sort().Pagination()
-	deploys := d.fromcells(datapage.GenericDataList)
-	item := make([]deployinfo, 0, len(deploys))
+	dataPage := filtered.Sort().Pagination()
+	deploys := d.fromCells(dataPage.GenericDataList)
+	item := make([]deployInfo, 0, len(deploys))
 	for _, v := range deploys {
 		images := make([]string, 0, len(v.Spec.Template.Spec.Containers))
 		for _, im := range v.Spec.Template.Spec.Containers {
 			images = append(images, im.Image)
 		}
 		pods, status := model.GetStatus(v.Status.Replicas, v.Status.ReadyReplicas)
-		item = append(item, deployinfo{
+		item = append(item, deployInfo{
 			Name:       v.Name,
 			Namespaces: v.Namespace,
 			Image:      images,
@@ -222,7 +223,7 @@ func (d *deployment) CreateDeploy(data *DeploymentCreate, uuid int) (err error) 
 	// 判断是否打开健康检测
 	if data.HealthCheck {
 		deploy.Spec.Template.Spec.Containers[0].LivenessProbe = &corev1.Probe{
-			//设置第一个容器的readinessprobe
+			//设置第一个容器的readiness probe
 			// 若存在多个容器 使用for 进行定义
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
@@ -283,23 +284,23 @@ func (d *deployment) UpdateDeploy(Namespace string, deploy *appsv1.Deployment, u
 }
 
 // GetDeployPer 获取 每个namespace 下的deployment 实例
-func (d *deployment) GetDeployPer(uuid int) (dps []Deploydp, err error) {
+func (d *deployment) GetDeployPer(uuid int) (dps []DeployDp, err error) {
 
-	namespacelist, err := K8s.Clientset[uuid].CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+	namespaceList, err := K8s.Clientset[uuid].CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		logger.Info("获取namespace 列表失败" + err.Error())
 		return nil, errors.New("获取namespace 列表失败")
 	}
 
-	for _, v := range namespacelist.Items {
-		deploylist, err := K8s.Clientset[uuid].AppsV1().Deployments(v.Name).List(context.TODO(), metav1.ListOptions{})
+	for _, v := range namespaceList.Items {
+		deployList, err := K8s.Clientset[uuid].AppsV1().Deployments(v.Name).List(context.TODO(), metav1.ListOptions{})
 		if err != nil {
 			logger.Info("获取deployment 列表失败" + err.Error())
 			return nil, errors.New("获取namespace 列表失败")
 		}
-		np := &Deploydp{
+		np := &DeployDp{
 			Name:  v.Name,
-			Total: len(deploylist.Items),
+			Total: len(deployList.Items),
 		}
 		dps = append(dps, *np)
 	}
@@ -315,9 +316,9 @@ func (d *deployment) RolloutDeploy(Namespace, DeployName string, uuid int) (err 
 		return errors.New("获取实例失败" + err.Error())
 	}
 	//获取当前版本号
-	revison := deploy.Annotations["deployment.kubernetes.io/revision"]
+	revision := deploy.Annotations["deployment.kubernetes.io/revision"]
 	//回滚至上一个版本
-	version, _ := strconv.Atoi(revison)
+	version, _ := strconv.Atoi(revision)
 	patchData := fmt.Sprintf(`{"metadata":{"annotations":{"deployment.kubernetes.io/revision":"%d"}}}`, version)
 	_, err = K8s.Clientset[uuid].AppsV1().Deployments(Namespace).Patch(context.TODO(), DeployName, types.StrategicMergePatchType, []byte(patchData), metav1.PatchOptions{})
 	if err != nil {

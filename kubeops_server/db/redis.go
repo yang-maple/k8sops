@@ -22,6 +22,7 @@ func InitRedis() {
 	})
 	pong, err := Rdb.Ping(ctx).Result()
 	if err != nil {
+		logger.Error("初始化redis失败: " + err.Error())
 		panic(err)
 	}
 	logger.Info("redis 初始化成功", pong)

@@ -99,7 +99,7 @@ func (s *statefulSet) GetStatefulList(StsName, Namespace string, Limit, Page int
 	return &StsResp{
 		Total: total,
 		Item:  item,
-	}, err
+	}, nil
 
 }
 

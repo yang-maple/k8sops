@@ -20,7 +20,7 @@
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
-                <el-select v-model="namespace" filterable placeholder="Select" @visible-change="getnsselect()"
+                <el-select v-model="namespace" filterable placeholder="命名空间（默认ALL）" @visible-change="getnsselect()"
                     @change="getIngress()" clearable>
                     <el-option v-for="item in nslist" :key="item.namespace" :label="item.label" :value="item.namespace"
                         style="width:100%" />
@@ -29,7 +29,7 @@
         </el-col>
         <el-col :span="16">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" clearable @clear="getIngress()"
+                <el-input v-model="filter_name" placeholder="请输入搜索资源的名称" clearable @clear="getIngress()"
                     @keyup.enter="getIngress()">
                     <template #prepend>
                         <el-button icon="Search" @click="getIngress()" />
@@ -38,8 +38,8 @@
             </div>
         </el-col>
         <el-col :span="4">
-            <div class="header-grid-content" style="text-align: center;">
-                <el-button type="info" @click="Refresh()" round>
+            <div class="header-grid-content" style="text-align: right;">
+                <el-button type="info" @click="getIngress()" round>
                     <el-icon>
                         <Refresh />
                     </el-icon>
@@ -51,26 +51,29 @@
         </el-col>
     </el-row>
     <div class="table-bg-purple">
-        <el-table :data="ingressItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small">
+        <el-table :data="ingressItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small"
+            empty-text="抱歉，暂无数据">
             <el-table-column label="名称" width="300">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
-                        <el-icon>
-                            <timer />
-                        </el-icon>
-                        <span style="margin-left: 10px">{{ scope.row.name }}</span>
+                        <svg class="icon-table-ing" aria-hidden="true">
+                            <use xlink:href="#icon-ingress"></use>
+                        </svg>
+                        <el-text style="margin-left:3px" size="small">{{
+                            scope.row.name
+                        }}</el-text>
                     </div>
                 </template>
             </el-table-column>
             <el-table-column label="命名空间" prop="namespace" width="100" />
             <el-table-column label="端点" width="200">
                 <template #default="scope">
-                    <div v-for="(v, k) in scope.row.endpoint " :key="k">{{ v.ip }}<br></div>
+                    <div v-for="(v, k) in scope.row.endpoint " :key="k">{{ v.ip ? v.ip : '---' }}<br></div>
                 </template>
             </el-table-column>
             <el-table-column label="路由">
                 <template #default="scope">
-                    <div v-for="(v, k) in scope.row.host " :key="k">{{ v }}<br></div>
+                    <div v-for="(v, k) in scope.row.host " :key="k">{{ v ? v : '---' }}<br></div>
                 </template>
             </el-table-column>
             <el-table-column label="创建时间" prop="age" width="140" />
@@ -87,7 +90,7 @@
                                 <el-dropdown-item icon="Edit"
                                     @click="dialogFormVisible = true, handleEdit(scope.row.namespace, scope.row.name)">编辑</el-dropdown-item>
                                 <el-dropdown-item icon="Delete"
-                                    @click="messageboxOperate(scope.row, 'delete')">删除</el-dropdown-item>
+                                    @click="messageboxOperate(scope.row, '删除')">删除</el-dropdown-item>
                             </el-dropdown-menu>
                         </template>
                     </el-dropdown>
@@ -138,7 +141,7 @@
                 </el-select>
             </el-form-item>
             <el-form-item label="标签" prop="labels">
-                <el-input v-model="ruleForm.labels"></el-input>
+                <el-input v-model="ruleForm.labels" placeholder="`请输入如下格式 {'a':'b'}`"></el-input>
             </el-form-item>
             <el-form-item label="Class" prop="Class">
                 <el-select v-model="ruleForm.ingress_class_name" placeholder="请选择Class">
@@ -233,7 +236,7 @@ export default {
             rules: {
                 name: [
                     { required: true, message: '请输入资源名称', trigger: 'change' },
-                    { min: 3, max: 10, message: '长度在 3 到 10 个字符', trigger: 'change' }
+                    { min: 3, max: 10, message: '长度在 3 到 15 个字符', trigger: 'change' }
                 ],
                 namespace: [
                     { required: true, message: '请选择命名空间', trigger: 'change' }
@@ -265,7 +268,12 @@ export default {
                 this.total = res.data.total
                 this.ingressItem = res.data.item
 
-            }).catch(function (res) {
+            }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res);
             })
         },
@@ -277,17 +285,19 @@ export default {
                 },
             ).then((res) => {
                 this.$message({
+                    showClose: true,
                     message: res.msg,
                     type: 'success'
                 });
 
             }).catch((res) => {
                 this.$message({
+                    showClose: true,
                     message: res.msg,
                     type: 'error'
                 });
             })
-            this.Refresh()
+            this.reload()
         },
         Refresh() {
             setTimeout(() => {
@@ -333,6 +343,11 @@ export default {
                 this.detailnamespace = res.data.metadata.namespace
                 this.content = JSON.stringify(res.data, null, 2)
             }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res.data);
             })
         },
@@ -354,11 +369,11 @@ export default {
             }).catch((res) => {
                 this.$message({
                     showClose: true,
-                    message: res.reason,
+                    message: res.msg,
                     type: 'error'
                 });
             })
-            this.Refresh()
+            this.reload()
         },
         handleUpdate(namespace) {
             let data = this.content
@@ -389,14 +404,14 @@ export default {
                     message: res.msg,
                     type: 'success'
                 });
+                this.reload()
             }).catch((res) => {
                 this.$message({
                     showClose: true,
-                    message: res.reason,
+                    message: res.msg,
                     type: 'error'
                 });
             })
-            this.Refresh()
         },
         messageboxOperate(row, name) {
             this.$confirm(`是否${name}实例${row.name}`, '提示', {
@@ -419,7 +434,6 @@ export default {
                     if (this.ruleForm.labels != null) {
                         this.ruleForm.labels = JSON.parse(this.ruleForm.labels)
                     }
-                    console.log(this.ruleForm)
                     this.createIngress()
                 } else {
                     return false;
@@ -428,19 +442,6 @@ export default {
         },
         resetForm(formName) {
             this.$refs[formName].resetFields();
-        },
-        addRules() {
-            this.ruleForm.rules.push({
-                host: null,
-                http_ingress_rule_values: [
-                    {
-                        path: null,
-                        service_name: null,
-                        service_port: null
-                    }
-                ]
-            })
-            this.isremove = true
         },
         yamlFormat() {
             if (this.aceConfig.lang == "yaml") {
@@ -547,6 +548,14 @@ export default {
     width: 2.5em;
     height: 2.5em;
     vertical-align: -0.8em;
+    fill: currentColor;
+    overflow: hidden;
+}
+
+.icon-table-ing {
+    width: 1.5em;
+    height: 1.5em;
+    vertical-align: -0.5em;
     fill: currentColor;
     overflow: hidden;
 }

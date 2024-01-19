@@ -20,7 +20,8 @@
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
-                <el-select v-model="namespace" placeholder="Select" @visible-change="getnsselect()" @change="getSecret()">
+                <el-select v-model="namespace" placeholder="命名空间（默认ALL）" @visible-change="getnsselect()"
+                    @change="getSecret()">
                     <el-option-group v-for="group in nslist" :key="group.label" :label="group.label">
                         <el-option v-for="item in group.options" :key="item.namespace" :label="item.label"
                             :value="item.namespace" />
@@ -30,7 +31,7 @@
         </el-col>
         <el-col :span="16">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" clearable @keyup.enter="getSecret()"
+                <el-input v-model="filter_name" placeholder="请输入搜索资源的名称" clearable @keyup.enter="getSecret()"
                     @clear="getSecret()">
                     <template #prepend>
                         <el-button icon="Search" @click="getSecret()" />
@@ -39,8 +40,8 @@
             </div>
         </el-col>
         <el-col :span="4">
-            <div class="header-grid-content" style="text-align: center;">
-                <el-button type="info" @click="Refresh()" round>
+            <div class="header-grid-content" style="text-align: right;">
+                <el-button type="info" @click="getSecret()" round>
                     <el-icon>
                         <Refresh />
                     </el-icon>
@@ -52,14 +53,17 @@
         </el-col>
     </el-row>
     <div class="table-bg-purple">
-        <el-table :data="secretItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small">
+        <el-table :data="secretItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small"
+            empty-text="抱歉，暂无数据">
             <el-table-column label="名称" width="300">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
-                        <el-icon>
-                            <Key />
-                        </el-icon>
-                        <span style="margin-left: 10px">{{ scope.row.name }}</span>
+                        <svg class="icon-table-secret" aria-hidden="true">
+                            <use xlink:href="#icon-a-nav_secretkey-copy"></use>
+                        </svg>
+                        <el-text style="margin-left:3px" size="small">{{
+                            scope.row.name
+                        }}</el-text>
                     </div>
                 </template>
             </el-table-column>
@@ -73,11 +77,13 @@
                         </div>
                     </div>
                     <div v-if="scope.row.labels == null">---</div>
-                    <div v-if="scope.row.labels != null"><el-button size="small" type="primary" link
-                            @click="showLabels(scope.$index)">{{
-                                maxitem[scope.$index] == 3 ?
-                                '展开' : '收起'
-                            }}</el-button></div>
+                    <div
+                        v-if="scope.row.labels != null && Object.keys(scope.row.labels).length > 3 && Object.keys(scope.row.labels).length > 3">
+                        <el-button size="small" type="primary" link @click="showLabels(scope.$index)">{{
+                            maxitem[scope.$index] == 3 ?
+                            '展开' : '收起'
+                        }}</el-button>
+                    </div>
                 </template>
             </el-table-column>
             <el-table-column label="类型" prop="type" />
@@ -275,6 +281,10 @@ export default {
                     this.maxitem.push(3)
                 }
             }).catch((res) => {
+                this.$message({
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res);
             })
         },
@@ -290,13 +300,13 @@ export default {
                     message: res.msg,
                     type: 'success'
                 });
+                this.reload()
             }).catch((res) => {
                 this.$message({
                     message: res.msg,
                     type: 'error'
                 });
             })
-            this.Refresh()
         },
         Refresh() {
             setTimeout(() => {
@@ -354,6 +364,11 @@ export default {
                 this.detailnamespace = res.data.metadata.namespace
                 this.content = JSON.stringify(res.data, null, 2)
             }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res.data);
             })
         },
@@ -380,7 +395,7 @@ export default {
                     type: 'error'
                 });
             })
-            this.Refresh()
+            this.reload()
         },
         handleUpdate(namespace) {
             let data = this.content
@@ -411,6 +426,7 @@ export default {
                         message: res.msg,
                         type: 'success'
                     });
+                this.reload()
             }).catch((res) => {
                 this.$message({
                     showClose: true,
@@ -418,7 +434,6 @@ export default {
                     type: 'error'
                 });
             })
-            this.Refresh()
         },
         messageboxOperate(row, name) {
             this.$confirm(`是否${name}实例${row.name}`, '提示', {
@@ -566,6 +581,14 @@ export default {
     width: 2.5em;
     height: 2.5em;
     vertical-align: -0.7em;
+    fill: currentColor;
+    overflow: hidden;
+}
+
+.icon-table-secret {
+    width: 1.5em;
+    height: 1.5em;
+    vertical-align: -0.5em;
     fill: currentColor;
     overflow: hidden;
 }

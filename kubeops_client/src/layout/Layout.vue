@@ -82,31 +82,34 @@
                             </div>
                         </el-col>
                         <!--通过yaml 创建资源-->
-                        <el-col :span="12">
+                        <el-col :span="10">
                             <div style="text-align: right;">
-                                <el-button type="info" @click="dialogyaml = true">
+                                <el-button type="info" @click="checkcluster()">
                                     YAML创建资源
                                 </el-button>
                             </div>
                         </el-col>
                         <!--用户信息-->
-                        <el-col :span="3">
-                            <el-dropdown>
-                                <div class="header-username" @mouseover="isOver = true" @mouseleave="isOver = false">
-                                    <el-image class="avator-image" :src="avator" />
-                                    <span style="font-size: 20px;">{{ username }}</span>
-                                    <el-icon size="16" style="padding-left: 5px; padding-bottom: 5px;">
-                                        <component :is="isOver?'ArrowDown':'ArrowLeft'" />
-                                    </el-icon>
-                                </div>
-                                <!-- 下拉框内容 -->
-                                <template #dropdown>
-                                    <el-dropdown-menu>
-                                        <el-dropdown-item>修改密码</el-dropdown-item>
-                                        <el-dropdown-item @click="logout">退出</el-dropdown-item>
-                                    </el-dropdown-menu>
-                                </template>
-                            </el-dropdown>
+                        <el-col :span="5">
+                            <div style="text-align: right;">
+                                <el-dropdown>
+                                    <div class="header-username" @mouseover="isOver = true" @mouseleave="isOver = false"
+                                        style="text-align: right;">
+                                        <el-image class="avator-image" :src="avator" />
+                                        <span style="font-size: 20px;">{{ username }}</span>
+                                        <el-icon size="16" style="padding-left: 5px; padding-bottom: 5px;">
+                                            <component :is="isOver?'ArrowDown':'ArrowLeft'" />
+                                        </el-icon>
+                                    </div>
+                                    <!-- 下拉框内容 -->
+                                    <template #dropdown>
+                                        <el-dropdown-menu>
+                                            <el-dropdown-item @click="dialogpassword = true">修改密码</el-dropdown-item>
+                                            <el-dropdown-item @click="logout">退出</el-dropdown-item>
+                                        </el-dropdown-menu>
+                                    </template>
+                                </el-dropdown>
+                            </div>
                         </el-col>
                     </el-row>
                 </el-header>
@@ -114,7 +117,11 @@
                 <el-main>
                     <div v-if="cluster != null && this.$route.path != '/clusterinfo'"><router-view></router-view></div>
                     <div v-if="this.$route.path == '/clusterinfo'"><router-view></router-view></div>
-                    <div v-if="cluster == null"><el-empty description="还没有添加任何集群哦~"></el-empty></div>
+                    <div v-if="cluster == null && this.$route.path != '/clusterinfo'"><el-empty description="还没有添加任何集群哦~"
+                            :image="empty" :image-size="400">
+                            <el-button type="primary" link @click="addCluster">去添加集群</el-button>
+                        </el-empty>
+                    </div>
                 </el-main>
             </el-container>
         </el-container>
@@ -144,6 +151,23 @@
                 </el-button>
             </span>
         </template>
+    </el-dialog>
+    <el-dialog v-model="dialogpassword" title="重置密码" center style="width: 400px;">
+        <el-form :model="passwordForm" status-icon :rules="rules" ref="passwordForm" label-width="100px">
+            <el-form-item label="旧密码" prop="oldpasswd">
+                <el-input v-model="passwordForm.oldpasswd"></el-input>
+            </el-form-item>
+            <el-form-item label="新密码" prop="newpasswd">
+                <el-input type="password" v-model="passwordForm.newpasswd" autocomplete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="确认新密码" prop="checknewpasswd">
+                <el-input type="password" v-model="passwordForm.checknewpasswd" autocomplete="off"></el-input>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="primary" @click="submitForm('passwordForm')">提交</el-button>
+                <el-button @click="resetForm('passwordForm')">重置</el-button>
+            </el-form-item>
+        </el-form>
     </el-dialog>
 </template>
 
@@ -180,14 +204,25 @@ export default {
         }
     },
     data() {
+        var checkpass = (rule, value, callback) => {
+            if (value === '') {
+                callback(new Error('请再次输入密码'));
+            } else if (value !== this.passwordForm.newpasswd) {
+                callback(new Error('两次输入密码不一致!'));
+            } else {
+                callback();
+            }
+        };
         return {
             logo: require('@/assets/img/logo.png'),
             avator: require('@/assets/img/user.png'),
+            empty: require('@/assets/img/empty.png'),
             asideWidth: "220px",
             isCollapse: false,
             isOver: false,
             routers: [],
             dialogyaml: false,
+            dialogpassword: false,
             aceConfig: {
                 lang: 'yaml',
                 theme: "cloud9_day",
@@ -198,6 +233,23 @@ export default {
             content: '',
             file_list: [],
             activeName: 'yaml',
+            passwordForm: {
+                oldpasswd: '',
+                newpasswd: '',
+                checknewpasswd: '',
+            },
+            rules: {
+                oldpasswd: [
+                    { required: true, message: '请输入旧密码', trigger: 'blur' }
+                ],
+                newpasswd: [
+                    { required: true, message: '请输入新密码', trigger: 'blur' },
+                    { min: 6, max: 12, message: '长度在 6 到 12 个字符', trigger: 'blur' }
+                ],
+                checknewpasswd: [
+                    { required: true, validator: checkpass, trigger: 'blur' }
+                ]
+            }
         }
     },
     methods: {
@@ -277,6 +329,61 @@ export default {
             this.$auth.delUserAuth()
             this.$router.push('/login')
         },
+        addCluster() {
+            this.$router.push('/clusterinfo')
+        },
+        checkcluster() {
+            let clusters = localStorage.getItem('user_cluster')
+            if (clusters == "") {
+                this.dialogyaml = false;
+                this.$message({
+                    message: "请先添加集群",
+                    type: 'error'
+                });
+            } else {
+                this.dialogyaml = true;
+
+            }
+
+        },
+        submitForm(formName) {
+            console.log(typeof this.passwordForm.oldpasswd)
+            this.$refs[formName].validate((valid) => {
+                if (valid) {
+                    console.log(valid);
+                    this.$ajax.post(
+                        '/user/resetPassword',
+                        {
+                            id: parseInt(localStorage.getItem('user_id')),
+                            old_passwd: this.passwordForm.oldpasswd,
+                            new_passwd: this.passwordForm.newpasswd,
+                        },
+                    ).then((res) => {
+                        this.$message({
+                            message: res.msg,
+                            type: 'success'
+                        });
+                        this.dialogpassword = false
+                        console.log(res)
+                    }).catch((res) => {
+                        this.$message({
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    })
+                } else {
+                    this.$message({
+                        message: "请填写完整的数据",
+                        type: 'error'
+                    });
+                    return false;
+                }
+            });
+        },
+        resetForm(formName) {
+            this.$refs[formName].resetFields();
+        }
+
     },
     beforeMount() {
         this.routers = useRouter().options.routes

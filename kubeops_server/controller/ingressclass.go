@@ -34,15 +34,15 @@ func (ic *ingressClass) GetIngressClassList(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	data, err := service.IngressClass.GetIngressClass(params.FilterName, params.Limit, params.Page, uuid)
 	if err != nil {
-		c.JSON(200, gin.H{
-			"code": 200,
-			"msg":  err.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code": 400,
+			"msg":  "list 获取失败 " + err.Error(),
 			"data": nil,
 		})
 		return
 	}
 
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"code": 200,
 		"msg":  "获取成功",
 		"data": data,
@@ -59,7 +59,7 @@ func (ic *ingressClass) GetIngressClassDetail(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": 400,
-			"msg":  err.Error(),
+			"msg":  "detail 获取失败" + err.Error(),
 		})
 		return
 	}
@@ -80,7 +80,7 @@ func (ic *ingressClass) DelIngressClass(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": 400,
-			"msg":  err.Error(),
+			"msg":  "删除失败" + err.Error(),
 		})
 		return
 	}

@@ -5,7 +5,7 @@
                 <span>
                     <div>
                         <svg class="icon-dst" aria-hidden="true">
-                            <use xlink:href="#icon-deployment-copy"></use>
+                            <use xlink:href="#icon-DaemonSet"></use>
                         </svg>
                         <span
                             style="font-size: 24px; color: #242e42;text-shadow: 0 4px 8px rgba(36,46,66,.1);font-weight: 600;">守护进程集</span>
@@ -23,7 +23,7 @@
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
-                <el-select v-model="namespace" filterable placeholder="Select" @visible-change="getnsselect()"
+                <el-select v-model="namespace" filterable placeholder="命名空间（默认ALL）" @visible-change="getnsselect()"
                     @change="getDaemonset()" clearable>
                     <el-option v-for="item in nslist" :key="item.namespace" :label="item.label" :value="item.namespace"
                         style="width:100%" />
@@ -32,7 +32,7 @@
         </el-col>
         <el-col :span="16">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="Please input" clearable @clear="getDaemonset()"
+                <el-input v-model="filter_name" placeholder="请输入搜索资源的名称" clearable @clear="getDaemonset()"
                     @keyup.enter="getDaemonset()">
                     <template #prepend>
                         <el-button icon="Search" @click="getDaemonset()" />
@@ -41,8 +41,8 @@
             </div>
         </el-col>
         <el-col :span="4">
-            <div class="header-grid-content" style="text-align: center;">
-                <el-button type="info" @click="Refresh()" round>
+            <div class="header-grid-content" style="text-align: right;">
+                <el-button type="info" @click="getDaemonset()" round>
                     <el-icon>
                         <Refresh />
                     </el-icon>
@@ -51,12 +51,18 @@
         </el-col>
     </el-row>
     <div class="table-bg-purple">
-        <el-table :data="daemonsetItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small">
+        <el-table :data="daemonsetItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small"
+            empty-text="抱歉，暂无数据">
             <el-table-column label="名称" width="200">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
 
-                        <span>{{ scope.row.name }}</span>
+                        <svg class="icon-table-dst" aria-hidden="true">
+                            <use xlink:href="#icon-DaemonSet"></use>
+                        </svg>
+                        <el-text style="margin-left:3px" size="small">{{
+                            scope.row.name
+                        }}</el-text>
                     </div>
                 </template>
             </el-table-column>
@@ -69,9 +75,9 @@
                                 {{ k }}:{{ v }}</el-tag>
                         </div>
                     </div>
-                    <div v-if="scope.row.labels == null" align="center">---</div>
-                    <div v-if="scope.row.labels != null"><el-button size="small" type="primary" link
-                            @click="showLabels(scope.$index)">{{
+                    <div v-if="scope.row.labels == null">---</div>
+                    <div v-if="scope.row.labels != null && Object.keys(scope.row.labels).length > 3"><el-button size="small"
+                            type="primary" link @click="showLabels(scope.$index)">{{
                                 maxitem[scope.$index] == 3 ?
                                 '展开' : '收起'
                             }}</el-button></div>
@@ -112,7 +118,7 @@
                                     @click="dialogFormVisible = true, handleEdit(scope.row.namespaces, scope.row.name)">编辑</el-dropdown-item>
 
                                 <el-dropdown-item icon="Delete"
-                                    @click="messageboxOperate(scope.row, 'delete')">删除</el-dropdown-item>
+                                    @click="messageboxOperate(scope.row, '删除')">删除</el-dropdown-item>
                             </el-dropdown-menu>
                         </template>
                     </el-dropdown>
@@ -150,89 +156,6 @@
             </span>
         </template>
     </el-dialog>
-    <!-- <el-dialog v-model="dialogcreatens" title="创建资源" center>
-                <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="100px" class="demo-ruleForm"
-                    status-icon>
-                    <el-form-item label="名称" prop="name">
-                        <el-input v-model="ruleForm.name"></el-input>
-                    </el-form-item>
-                    <el-form-item label="命名空间" prop="namespace">
-                        <el-select v-model="ruleForm.namespace" placeholder="请选择活动区域" @visible-change="getnsselect()">
-                            <el-option v-for="item in nslist" :key="item.namespace" :label="item.label"
-                                :value="item.namespace" style="width:100%" v-show="item.label != 'All'" />
-                        </el-select>
-                    </el-form-item>
-                    <el-form-item label="副本">
-                        <el-input-number v-model="ruleForm.replicas" :min="1" :max="99" style="width: 200px;" />
-                    </el-form-item>
-                    <el-form-item v-for="(container, index) in ruleForm.container" :label="'容器' + index"
-                        :key="container.key">
-                        <el-form-item v-show="index == 0">
-                        </el-form-item>
-                        <el-form-item label="容器名称" prop="container_name">
-                            <el-input v-model="container.container_name" style="width: 300px;"></el-input>
-                            <el-tooltip placement="right"><template #content> 删除容器 </template>
-                                <el-button @click.prevent="removeContainer(container)" type="danger" icon="Minus"
-                                    size="small" circle />
-                            </el-tooltip>
-                        </el-form-item>
-                        <el-form-item label="镜像" prop="image">
-                            <el-input v-model="container.image" style="width: 300px;"></el-input>
-                        </el-form-item>
-                        <el-form-item label="Cpu限制">
-                            <el-input v-model="container.cpu" style="width: 300px;"></el-input>
-                        </el-form-item>
-                        <el-form-item label="Memory限制">
-                            <el-input v-model="container.memory" style="width: 300px;"></el-input>
-                        </el-form-item>
-                        <el-form-item :label="'端口' + portindex"
-                            v-for="(containerport, portindex) in ruleForm.container[index].container_port"
-                            :key="containerport.key">
-                            <el-form-item label="端口名称">
-                                <el-input v-model="containerport.port_name" style="width: 80%;"></el-input>
-                                <el-tooltip placement="right"><template #content> 删除端口 </template>
-                                    <el-button @click.prevent="removeContainerPort(index, containerport)" type="danger"
-                                        icon="Minus" size="small" circle></el-button>
-                                </el-tooltip>
-                            </el-form-item>
-                            <el-form-item label="端口">
-                                <el-input type="number" v-model.number="containerport.container_port"
-                                    style="width: 90%;"></el-input>
-                            </el-form-item>
-                            <el-form-item label="协议" prop="resource">
-                                <el-radio-group v-model="containerport.protocol">
-                                    <el-radio label="TCP"></el-radio>
-                                    <el-radio label="UDP"></el-radio>
-                                </el-radio-group>
-                            </el-form-item>
-                        </el-form-item>
-                        <el-form-item>
-                            <el-tooltip placement="right"><template #content> 新增端口 </template>
-                                <el-button @click="addContainerPort(index)" type="success" circle icon="Plus" size="small"
-                                    style="margin-left: 50px;" />
-                            </el-tooltip>
-                        </el-form-item>
-                    </el-form-item>
-                    <el-form-item>
-                        <el-tooltip placement="right"><template #content> 新增容器 </template>
-                            <el-button @click="addContainer" type="success" circle icon="Plus" size="small"></el-button>
-                        </el-tooltip>
-                    </el-form-item>
-                    <el-form-item label="健康检查" prop="delivery">
-                        <el-switch v-model="ruleForm.health_check"></el-switch>
-                    </el-form-item>
-                    <el-form-item label="路径" v-show="ruleForm.health_check == true">
-                        <el-input v-model="ruleForm.health_path"></el-input>
-                    </el-form-item>
-                    <el-form-item>
-                        <el-button type="primary" @click="submitForm('ruleForm')">立即创建</el-button>
-                        <el-button @click="resetForm('ruleForm')">立即重置</el-button>
-                        <el-button type="danger" @click="dialogcreatens = false">
-                            取消
-                        </el-button>
-                    </el-form-item>
-                </el-form>
-            </el-dialog> -->
 </template>
 
 <script scoped>
@@ -327,7 +250,12 @@ export default {
                 for (let i = 0; i < res.data.item.length; i++) {
                     this.maxitem.push(3)
                 }
-            }).catch(function (res) {
+            }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res);
             })
         },
@@ -348,6 +276,11 @@ export default {
                         this.nslist.push({ 'namespace': v.name, 'label': v.name })
                     })
                 }).catch((res) => {
+                    this.$message({
+                        showClose: true,
+                        message: res.msg,
+                        type: 'error'
+                    });
                     console.log(res.data)
                 })
             }
@@ -374,7 +307,12 @@ export default {
                 this.aceConfig.lang = "json"
                 this.detailnamespace = res.data.metadata.namespace
                 this.content = JSON.stringify(res.data, null, 2)
-            }).catch(function (res) {
+            }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res.data);
             })
         },
@@ -393,10 +331,16 @@ export default {
                     message: res.msg,
                     type: 'warning'
                 });
-                this.Refresh()
-            }).catch(function (res) {
+            }).catch((res) => {
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'error'
+                });
                 console.log(res);
             })
+            this.reload()
+
         },
         handleUpdate(namespace) {
             let data = this.content
@@ -427,15 +371,15 @@ export default {
                         message: res.msg,
                         type: 'success'
                     });
-                this.Refresh()
             }).catch((res) => {
                 this.$message({
                     showClose: true,
-                    message: res.msg + res.reason,
+                    message: res.msg,
                     type: 'error'
                 });
                 console.log(res);
             })
+            this.reload()
         },
         messageboxOperate(row, name) {
             this.$confirm(`是否${name}实例${row.name}`, '提示', {
@@ -450,20 +394,6 @@ export default {
                     message: '已取消删除'
                 });
             });
-        },
-        submitForm(formName) {
-            this.$refs[formName].validate((valid) => {
-                if (valid) {
-                    this.dialogcreatens = false
-                    console.log(this.ruleForm)
-                    this.createDeployment()
-                } else {
-                    return false;
-                }
-            });
-        },
-        resetForm(formName) {
-            this.$refs[formName].resetFields();
         },
         yamlFormat() {
             if (this.aceConfig.lang == "yaml") {
@@ -566,6 +496,14 @@ export default {
     width: 2.5em;
     height: 2.5em;
     vertical-align: -0.7em;
+    fill: currentColor;
+    overflow: hidden;
+}
+
+.icon-table-dst {
+    width: 1.5em;
+    height: 1.5em;
+    vertical-align: -0.5em;
     fill: currentColor;
     overflow: hidden;
 }
