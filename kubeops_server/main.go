@@ -36,20 +36,21 @@ func main() {
 
 // 初始化各种服务
 func initServer() *gin.Engine {
-	//初始化db
-	db.Init()
-	//初始化redis
-	db.InitRedis()
 	//初始化gin服务
 	r := gin.Default()
 	//启动中间件
 	r.Use(middle.CrosHandler()) //跨域中间件
 	r.Use(middle.JwtAuth())     //jwt 验证中间件
 	//启动日志服务
-	utils.InitLog()
+	r.Use(utils.LoggerToFile())
+	//初始化db
+	db.Init()
+	//初始化redis
+	db.InitRedis()
+	//初始化邮箱
+	utils.InitEmail()
 	//初始化路由
 	controller.Router.InitApiRouter(r)
-
 	//返回 gin.Engine
 	return r
 }

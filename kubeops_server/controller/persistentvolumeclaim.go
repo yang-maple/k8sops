@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wonderivan/logger"
 	corev1 "k8s.io/api/core/v1"
 	"kubeops/service"
 	"net/http"
@@ -21,25 +20,18 @@ func (p *persistentVolumeClaim) GetPersistentVolumeClaimList(c *gin.Context) {
 		Limit      int    `form:"limit"`
 		Page       int    `form:"page"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "绑定参数失败",
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	data, err := service.Claim.GetPVClaimList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "获取PersistentVolumeClaim失败" + err.Error(),
+			"msg": "获取持久卷声明列表失败",
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":  "获取数据成功",
+		"msg":  "获取持久卷声明列表成功",
 		"data": data,
 	})
 }
@@ -50,25 +42,17 @@ func (p *persistentVolumeClaim) GetPersistentVolumeClaimDetail(c *gin.Context) {
 		PersistentVolumeClaimName string `form:"persistent_volume_claim_name"`
 		Namespace                 string `form:"namespace"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "绑定参数失败",
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	detail, err := service.Claim.GetPVClaimDetail(params.Namespace, params.PersistentVolumeClaimName, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "获取PersistentVolumeClaim 详情失败" + err.Error(),
+			"msg": "持久卷声明 " + params.PersistentVolumeClaimName + " 获取数据失败",
 		})
 		return
 	}
-
 	c.JSON(http.StatusOK, gin.H{
-		"msg":  "获取数据成功",
+		"msg":  "持久卷声明 " + params.PersistentVolumeClaimName + " 获取数据成功",
 		"data": detail,
 	})
 }
@@ -78,25 +62,18 @@ func (p *persistentVolumeClaim) CreatePersistentVolumeClaim(c *gin.Context) {
 	createPvc := new(struct {
 		Data *service.CreateClaim `json:"data"`
 	})
-	err := c.ShouldBindJSON(&createPvc)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "绑定参数失败",
-		})
-		return
-	}
+	_ = c.ShouldBindJSON(&createPvc)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.Claim.CreatePVClaim(createPvc.Data, uuid)
+	err := service.Claim.CreatePVClaim(createPvc.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "创建PersistentVolumeClaim失败" + err.Error(),
+			"msg": "持久卷声明 " + createPvc.Data.Name + " 创建失败：" + err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "创建PersistentVolumeClaim成功",
+		"msg": "持久卷声明 " + createPvc.Data.Name + " 创建成功",
 	})
 }
 
@@ -106,25 +83,18 @@ func (p *persistentVolumeClaim) DelPersistentVolumeClaim(c *gin.Context) {
 		PersistentVolumeClaimName string `form:"persistent_volume_claim_name"`
 		Namespace                 string `form:"namespace"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "绑定参数失败",
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.Claim.DelPVClaim(params.Namespace, params.PersistentVolumeClaimName, uuid)
+	err := service.Claim.DelPVClaim(params.Namespace, params.PersistentVolumeClaimName, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "删除 PersistentVolumeClaim 失败" + err.Error(),
+			"msg": "持久卷声明 " + params.PersistentVolumeClaimName + " 删除失败" + err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "删除 PersistentVolumeClaim 成功",
+		"msg": "持久卷声明 " + params.PersistentVolumeClaimName + " 删除成功",
 	})
 }
 
@@ -134,24 +104,17 @@ func (p *persistentVolumeClaim) UpdatePersistentVolumeClaim(c *gin.Context) {
 		Data      *corev1.PersistentVolumeClaim `json:"data"`
 		Namespace string                        `json:"namespace"`
 	})
-	err := c.ShouldBindJSON(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "绑定参数失败",
-		})
-		return
-	}
+	_ = c.ShouldBindJSON(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.Claim.UpdatePVClaim(params.Namespace, params.Data, uuid)
+	err := service.Claim.UpdatePVClaim(params.Namespace, params.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "更新 PersistentVolumeClaim 失败" + err.Error(),
+			"msg": "持久卷声明 " + params.Data.Name + " 更新失败：" + err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "更新 PersistentVolumeClaim 成功",
+		"msg": "持久卷声明 " + params.Data.Name + " 更新成功",
 	})
 }

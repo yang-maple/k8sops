@@ -3,13 +3,12 @@ package service
 import (
 	"bytes"
 	"context"
-	"errors"
-	"github.com/wonderivan/logger"
 	"io"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubeops/config"
 	"kubeops/model"
+	"kubeops/utils"
 )
 
 var Pod pod
@@ -70,7 +69,7 @@ func (p *pod) GetPods(FilterName, NameSpaces string, Limit, Page int, uuid int) 
 	//获取post-list
 	postList, err := K8s.Clientset[uuid].CoreV1().Pods(NameSpaces).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("获取post-list 失败" + err.Error())
+		utils.Logger.Error("Failed to Get the Pods list,reason: " + err.Error())
 		return nil, err
 	}
 	//实例化data select对象
@@ -116,11 +115,12 @@ func (p *pod) GetPods(FilterName, NameSpaces string, Limit, Page int, uuid int) 
 func (p *pod) GetPodDetail(Name, Namespace string, uuid int) (pod *corev1.Pod, err error) {
 	podDetail, err := K8s.Clientset[uuid].CoreV1().Pods(Namespace).Get(context.TODO(), Name, metav1.GetOptions{})
 	if err != nil {
-		logger.Info("获取pod 详情失败" + err.Error())
+		utils.Logger.Error("Failed to Get the Pods " + Name + " detail,reason: " + err.Error())
 		return nil, err
 	}
 	podDetail.Kind = "Pod"
 	podDetail.APIVersion = "v1"
+	utils.Logger.Info("Get Pods " + Name + "success")
 	return podDetail, nil
 }
 
@@ -128,9 +128,10 @@ func (p *pod) GetPodDetail(Name, Namespace string, uuid int) (pod *corev1.Pod, e
 func (p *pod) DelPod(Name, Namespace string, uuid int) error {
 	err := K8s.Clientset[uuid].CoreV1().Pods(Namespace).Delete(context.TODO(), Name, metav1.DeleteOptions{})
 	if err != nil {
-		logger.Info("删除失败" + err.Error())
-		return errors.New("删除失败" + err.Error())
+		utils.Logger.Error("Failed to Delete Pods " + Name + ",reason:" + err.Error())
+		return err
 	}
+	utils.Logger.Info("Delete Pods " + Name + "success")
 	return nil
 }
 
@@ -138,9 +139,10 @@ func (p *pod) DelPod(Name, Namespace string, uuid int) error {
 func (p *pod) UpdatePod(pod *corev1.Pod, Namespaces string, uuid int) error {
 	_, err := K8s.Clientset[uuid].CoreV1().Pods(Namespaces).Update(context.TODO(), pod, metav1.UpdateOptions{})
 	if err != nil {
-		logger.Info("更新失败" + err.Error())
-		return errors.New("更新失败" + err.Error())
+		utils.Logger.Error("Failed to Update Pods " + pod.Name + ",reason:" + err.Error())
+		return err
 	}
+	utils.Logger.Info("Update Pods " + pod.Name + "success")
 	return nil
 }
 
@@ -148,8 +150,8 @@ func (p *pod) UpdatePod(pod *corev1.Pod, Namespaces string, uuid int) error {
 func (p *pod) GetContainer(podName, Namespaces string, uuid int) (containers []string, err error) {
 	pod, err := p.GetPodDetail(podName, Namespaces, uuid)
 	if err != nil {
-		logger.Info("获取pod 失败" + err.Error())
-		return nil, errors.New("获取pod 失败")
+		utils.Logger.Error("Failed to Get the Pods " + podName + " container list,reason: " + err.Error())
+		return nil, err
 	}
 	for _, container := range pod.Spec.Containers {
 		containers = append(containers, container.Name)
@@ -173,8 +175,8 @@ func (p *pod) GetContainerLog(podName, containerName, namespaces string, uuid in
 	//发起stream连接，到底response.body
 	podLog, err := request.Stream(context.TODO())
 	if err != nil {
-		logger.Info("获取pod-log 失败" + err.Error())
-		return "", errors.New("获取pod-log 失败")
+		utils.Logger.Error("Failed to Get the Pods " + podName + " container " + containerName + " logs,reason: " + err.Error())
+		return "", err
 	}
 	//延时关闭
 	defer func(podLog io.ReadCloser) {
@@ -187,9 +189,10 @@ func (p *pod) GetContainerLog(podName, containerName, namespaces string, uuid in
 	buf := new(bytes.Buffer)
 	_, err = io.Copy(buf, podLog)
 	if err != nil {
-		logger.Info("写入缓冲失败 失败" + err.Error())
-		return "", errors.New("写入缓冲失败 失败")
+		utils.Logger.Error("Write buffer failed,reason: " + err.Error())
+		return "", err
 	}
+	utils.Logger.Info("Get " + containerName + " logs of " + podName + " success")
 	return buf.String(), nil
 }
 
@@ -198,8 +201,8 @@ func (p *pod) CountPod(uuid int) (total map[string]int, err error) {
 	podCountPerNamespace := make(map[string]int)
 	list, err := K8s.Clientset[uuid].CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("获取pod 失败" + err.Error())
-		return nil, errors.New("获取pod 失败")
+		utils.Logger.Error("Failed to count the number of pods in each namespace,reason: " + err.Error())
+		return nil, err
 	}
 	for _, v := range list.Items {
 		podCountPerNamespace[v.Namespace]++
@@ -210,8 +213,8 @@ func (p *pod) CountPod(uuid int) (total map[string]int, err error) {
 func (p *pod) PodCount(namespace string, uuid int) (*CountPodReady, error) {
 	podList, err := K8s.Clientset[uuid].CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("获取pod 失败" + err.Error())
-		return nil, errors.New("获取pod 失败")
+		utils.Logger.Error("Failed to collect pod status,reason: " + err.Error())
+		return nil, err
 	}
 	count := 0
 
@@ -246,8 +249,13 @@ func GetPodStatus(status corev1.PodStatus) string {
 			return v.LastTerminationState.Waiting.Reason
 		}
 	}
+	//如果以上状态没匹配，则返回错误原因
+	if status.Phase == "Failed" {
+		return status.Reason
+	}
 	//if status.Phase == "Pending" {
 	//	return "Pending"
 	//}
+	//若无错误，则返回pending
 	return "Pending"
 }

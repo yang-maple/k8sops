@@ -88,13 +88,15 @@ func (clt *cluster) GetClusterDetail(name string, userid int) (clusters *model.C
 }
 
 // UpdateCluster 更新集群信息
-func (clt *cluster) UpdateCluster(Id uint, NewName, NewType string) (dir, name string, err error) {
+func (clt *cluster) UpdateCluster(Id uint, NewName, NewType string, uuid int) (dir, name string, err error) {
 	var cluster model.ClusterInfo
-	//判断集群名字是否存在
-	tx := db.GORM.Where("cluster_name =? AND id =?", NewName, Id).First(&cluster)
+	//先根据UID 找到用户集群信息，然后判断新集群名字是否存在 如果存在则返回错误，如果不存在则更新集群信息
+	tx := db.GORM.Where("cluster_name =? AND user_id =?", NewName, uuid).First(&cluster)
 	if tx.RowsAffected != 0 {
 		return "", "", errors.New("the cluster already exists")
 	}
+	//根据ID 找到集群信息
+	tx = db.GORM.Where("id = ?", Id).First(&cluster)
 	//获取旧集群名称
 	name = cluster.Dir + "/" + cluster.ClusterName + "_" + cluster.Type + ".conf"
 	//获取旧集群路径

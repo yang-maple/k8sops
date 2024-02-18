@@ -23,10 +23,12 @@
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
-                <el-select v-model="namespace" filterable placeholder="命名空间（默认ALL）" @visible-change="getnsselect()"
+                <el-select v-model="namespace" filterable placeholder="全部空间" @visible-change="getnsselect()"
                     @change="getDaemonset()" clearable>
-                    <el-option v-for="item in nslist" :key="item.namespace" :label="item.label" :value="item.namespace"
-                        style="width:100%" />
+                    <el-option-group v-for="group in nslist" :key="group.label" :label="group.label">
+                        <el-option v-for="item in group.options" :key="item.namespace" :label="item.label"
+                            :value="item.namespace" />
+                    </el-option-group>
                 </el-select>
             </div>
         </el-col>
@@ -267,18 +269,30 @@ export default {
         },
         getnsselect() {
             if (this.nslist == "") {
-                this.nslist.push({ 'namespace': '', 'label': "All" })
+                this.nslist.push({
+                    label: '',
+                    options: [
+                        {
+                            namespace: '',
+                            label: '全部空间',
+                        },
+                    ],
+                })
                 this.$ajax({
                     method: 'get',
                     url: '/namespaces/list',
                 }).then((res) => {
+                    this.nslist.push({
+                        label: '',
+                        options: [],
+                    })
                     res.data.item.forEach(v => {
-                        this.nslist.push({ 'namespace': v.name, 'label': v.name })
+                        this.nslist[1].options.push({ 'namespace': v.name, 'label': v.name })
                     })
                 }).catch((res) => {
                     this.$message({
                         showClose: true,
-                        message: res.msg,
+                        message: "获取名称空间失败",
                         type: 'error'
                     });
                     console.log(res.data)

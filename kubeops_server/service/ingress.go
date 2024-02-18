@@ -2,10 +2,9 @@ package service
 
 import (
 	"context"
-	"errors"
-	"github.com/wonderivan/logger"
 	networkv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubeops/utils"
 )
 
 type ingress struct{}
@@ -38,9 +37,10 @@ type Rule struct {
 	HTTPIngressRuleValues []HTTPRule `json:"http_ingress_rule_values"`
 }
 type HTTPRule struct {
-	Path        string `json:"path"`
-	ServiceName string `json:"service_name"`
-	ServicePort int32  `json:"service_port"`
+	Path        string              `json:"path"`
+	PathType    *networkv1.PathType `json:"path_type"`
+	ServiceName string              `json:"service_name"`
+	ServicePort int32               `json:"service_port"`
 }
 
 func (i *ingress) toCells(ing []networkv1.Ingress) []DataCell {
@@ -64,7 +64,7 @@ func (i *ingress) GetIngList(ingName, Namespace string, Limit, Page int, uuid in
 	//获取deployment 的所有清单列表
 	ingList, err := K8s.Clientset[uuid].NetworkingV1().Ingresses(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("获取 ingress 失败" + err.Error())
+		utils.Logger.Error("Failed to Get the Ingresses list,reason: " + err.Error())
 		return nil, err
 	}
 
@@ -112,17 +112,17 @@ func (i *ingress) GetIngDetail(Namespace, ingName string, uuid int) (detail *net
 	//获取deploy
 	detail, err = K8s.Clientset[uuid].NetworkingV1().Ingresses(Namespace).Get(context.TODO(), ingName, metav1.GetOptions{})
 	if err != nil {
-		logger.Info("获取ingress 详情失败" + err.Error())
-		return nil, errors.New("获取ingress 详情失败" + err.Error())
+		utils.Logger.Error("Failed to Get the Ingresses " + ingName + " detail,reason: " + err.Error())
+		return nil, err
 	}
 	detail.Kind = "Ingress"
 	detail.APIVersion = "networking.k8s.io/v1"
+	utils.Logger.Info("Get Ingresses " + ingName + "success")
 	return detail, nil
 }
 
 // CreateIng 创建 ingress 资源
 func (i *ingress) CreateIng(data *CreateIngress, uuid int) (err error) {
-	pathType := networkv1.PathTypeImplementationSpecific
 	createIng := &networkv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   data.Name,
@@ -142,7 +142,7 @@ func (i *ingress) CreateIng(data *CreateIngress, uuid int) (err error) {
 			specRolesHttpPath := &networkv1.HTTPIngressRuleValue{Paths: []networkv1.HTTPIngressPath{
 				{
 					Path:     data.Rules[i].HTTPIngressRuleValues[j].Path,
-					PathType: &pathType,
+					PathType: data.Rules[i].HTTPIngressRuleValues[j].PathType,
 					Backend: networkv1.IngressBackend{
 						Service: &networkv1.IngressServiceBackend{
 							Name: data.Rules[i].HTTPIngressRuleValues[j].ServiceName,
@@ -160,9 +160,10 @@ func (i *ingress) CreateIng(data *CreateIngress, uuid int) (err error) {
 	}
 	_, err = K8s.Clientset[uuid].NetworkingV1().Ingresses(data.Namespace).Create(context.TODO(), createIng, metav1.CreateOptions{})
 	if err != nil {
-		logger.Info("创建 service 失败" + err.Error())
-		return errors.New("创建 service 失败" + err.Error())
+		utils.Logger.Error("Failed to Create Ingresses " + data.Name + ",reason:" + err.Error())
+		return err
 	}
+	utils.Logger.Info("Create Ingresses " + data.Name + "success")
 	return nil
 
 }
@@ -171,9 +172,10 @@ func (i *ingress) CreateIng(data *CreateIngress, uuid int) (err error) {
 func (i *ingress) DelIng(Namespace, ingName string, uuid int) (err error) {
 	err = K8s.Clientset[uuid].NetworkingV1().Ingresses(Namespace).Delete(context.TODO(), ingName, metav1.DeleteOptions{})
 	if err != nil {
-		logger.Info("删除ingress失败" + err.Error())
-		return errors.New("删除ingress失败" + err.Error())
+		utils.Logger.Error("Failed to Delete Ingresses " + ingName + ",reason:" + err.Error())
+		return err
 	}
+	utils.Logger.Info("Delete Ingresses " + ingName + "success")
 	return nil
 }
 
@@ -181,8 +183,9 @@ func (i *ingress) DelIng(Namespace, ingName string, uuid int) (err error) {
 func (i *ingress) UpdateIng(Namespace string, ing *networkv1.Ingress, uuid int) (err error) {
 	_, err = K8s.Clientset[uuid].NetworkingV1().Ingresses(Namespace).Update(context.TODO(), ing, metav1.UpdateOptions{})
 	if err != nil {
-		logger.Info("ingress 更新失败" + err.Error())
-		return errors.New("ingress 更新失败" + err.Error())
+		utils.Logger.Error("Failed to Update Ingresses " + ing.Name + ",reason:" + err.Error())
+		return err
 	}
+	utils.Logger.Info("Update Ingresses " + ing.Name + "success")
 	return nil
 }

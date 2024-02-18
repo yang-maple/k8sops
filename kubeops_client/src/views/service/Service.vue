@@ -21,9 +21,11 @@
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
-                <el-select v-model="namespace" placeholder="命名空间（默认ALL）" @visible-change="getnsselect()"
-                    @change="getSevices()" clearable>
-                    <el-option v-for="item in nslist" :key="item.namespace" :label="item.label" :value="item.namespace" />
+                <el-select v-model="namespace" placeholder="命名空间（默认ALL）" @change="getSevices()" clearable>
+                    <el-option-group v-for="group in nslist" :key="group.label" :label="group.label">
+                        <el-option v-for="item in group.options" :key="item.namespace" :label="item.label"
+                            :value="item.namespace" />
+                    </el-option-group>
                 </el-select>
             </div>
         </el-col>
@@ -54,7 +56,6 @@
         <el-table :data="serviceItem" :header-cell-style="{ background: '#e6e7e9' }" size="small" empty-text="抱歉，暂无数据">
             <el-table-column label="名称" prop="name" width="200">
                 <template #default="scope">
-
                     <div style="display: flex; align-items: center">
                         <svg class="icon-table-svc" aria-hidden="true">
                             <use xlink:href="#icon-ingress2"></use>
@@ -156,43 +157,41 @@
     </div>
 
     <el-dialog v-model="dialogcreatens" title="创建资源" center>
-        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="25%" status-icon>
-            <el-form-item label="名称" prop="name">
+        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="25%">
+            <el-form-item label="服务名称" prop="name">
                 <el-input v-model="ruleForm.name"></el-input>
             </el-form-item>
             <el-form-item label="命名空间" prop="namespace">
-                <el-select v-model="ruleForm.namespace" placeholder="请选择命名空间" @visible-change="getnsselect()">
-                    <el-option v-for="item in nslist" :key="item.namespace" :label="item.label" :value="item.namespace"
-                        v-show="item.label != 'All'" />
+                <el-select v-model="ruleForm.namespace" placeholder="请选择命名空间">
+                    <el-option v-for="item in nslist[1].options" :key="item.namespace" :label="item.label"
+                        :value="item.namespace" />
                 </el-select>
             </el-form-item>
-            <el-form-item label="标签" prop="labels">
+            <el-form-item label="容器标签" prop="labels">
                 <el-input v-model="ruleForm.labels" placeholder="`请输入如下格式 {'a':'b'}`"></el-input>
             </el-form-item>
-            <el-form-item label="类型" prop="type">
+            <el-form-item label="服务类型" prop="type">
                 <el-select v-model="ruleForm.type" placeholder="请选择服务类型">
                     <el-option v-for="item in typelist" :key="item.value" :label="item.label" :value="item.value" />
                 </el-select>
             </el-form-item>
-
-
-            <el-form-item label="容器名称" prop="port_name">
+            <el-form-item label="端口名称" prop="service_ports.port_name">
                 <el-input v-model="ruleForm.service_ports.port_name"></el-input>
             </el-form-item>
-            <el-form-item label="服务端口" prop="ports">
+            <el-form-item label="容器端口" prop="service_ports.port">
                 <el-input v-model.number="ruleForm.service_ports.port"></el-input>
             </el-form-item>
-            <el-form-item label="协议" prop="resource">
+            <el-form-item label="访问协议" prop="service_ports.protocol">
                 <el-radio-group v-model="ruleForm.service_ports.protocol">
                     <el-radio label="TCP"></el-radio>
                     <el-radio label="UDP"></el-radio>
                 </el-radio-group>
             </el-form-item>
-            <el-form-item label="暴露端口">
-                <el-input type="number" v-model.number="ruleForm.service_ports.target_port"></el-input>
+            <el-form-item label="暴露端口" prop="service_ports.target_port">
+                <el-input v-model.number="ruleForm.service_ports.target_port"></el-input>
             </el-form-item>
-            <el-form-item label="访问端口" v-show="ruleForm.type == 'NodePort' || ruleForm.type == 'LoadBalancer'">
-                <el-input type="number" v-model.number="ruleForm.service_ports.node_port"></el-input>
+            <el-form-item label="访问端口" prop="service_ports.node_port" v-show="ruleForm.type == 'NodePort'">
+                <el-input v-model.number="ruleForm.service_ports.node_port"></el-input>
             </el-form-item>
             <el-form-item>
                 <el-button type="primary" @click="submitForm('ruleForm')">立即创建</el-button>
@@ -273,17 +272,31 @@ export default {
                 namespace: [
                     { required: true, message: '请选择命名空间', trigger: 'change' }
                 ],
+                labels: [
+                    { required: true, message: '请输入绑定容器的标签', trigger: 'blur' },
+                ],
                 resource: [
                     { message: '请选择一种协议', trigger: 'change' }
                 ],
                 type: [
                     { required: true, message: '请选择一种服务类型', trigger: 'change' }
                 ],
+                'service_ports.port': [
+                    { required: true, message: '请输入容器端口', trigger: 'blur' },
+                    { type: 'number', message: '必须为数字值', trigger: 'blur' }
+                ],
+                'service_ports.target_port': [
+                    { type: 'number', message: '必须为数字值', trigger: 'blur' }
+                ],
+                'service_ports.node_port': [
+                    { type: 'number', min: 30000, max: 32767, message: '必须为数字值，范围为 30000-32767', trigger: 'blur' }
+                ]
             }
         }
     },
     created() {
         this.getSevices()
+        this.getnsselect()
     },
     methods: {
         getSevices() {
@@ -317,6 +330,7 @@ export default {
                     message: res.msg,
                     type: 'success'
                 });
+                this.dialogcreatens = false
             }).catch((res) => {
                 this.$message({
                     message: res.msg,
@@ -332,15 +346,32 @@ export default {
         },
         getnsselect() {
             if (this.nslist == "") {
-                this.nslist.push({ 'namespace': '', 'label': "All" })
+                this.nslist.push({
+                    label: '',
+                    options: [
+                        {
+                            namespace: '',
+                            label: '全部空间',
+                        },
+                    ],
+                })
                 this.$ajax({
                     method: 'get',
                     url: '/namespaces/list',
                 }).then((res) => {
+                    this.nslist.push({
+                        label: '',
+                        options: [],
+                    })
                     res.data.item.forEach(v => {
-                        this.nslist.push({ 'namespace': v.name, 'label': v.name })
+                        this.nslist[1].options.push({ 'namespace': v.name, 'label': v.name })
                     })
                 }).catch((res) => {
+                    this.$message({
+                        showClose: true,
+                        message: "获取名称空间失败",
+                        type: 'error'
+                    });
                     console.log(res.data)
                 })
             }
@@ -450,13 +481,18 @@ export default {
         submitForm(formName) {
             this.$refs[formName].validate((valid) => {
                 if (valid) {
-                    if (this.ruleForm.labels != null) {
+                    try {
                         this.ruleForm.labels = JSON.parse(this.ruleForm.labels)
+                        this.createService()
+                    } catch (error) {
+                        this.$message({
+                            showClose: true,
+                            message: '请填写正确格式，例如: {"a":"b"}',
+                            type: 'error'
+                        });
                     }
-                    this.dialogcreatens = false
-                    console.log(this.ruleForm)
-                    this.createService()
                 } else {
+                    console.log('error submit!!');
                     return false;
                 }
             });
@@ -579,13 +615,7 @@ export default {
     width: 400px;
 }
 
-.el-dialog {
-    .el-select {
-        .el-input {
-            width: 180px;
-        }
-    }
-}
+
 
 .icon-svc {
     width: 2.5em;

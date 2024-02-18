@@ -1,9 +1,7 @@
 package controller
 
 import (
-	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/wonderivan/logger"
 	networkv1 "k8s.io/api/networking/v1"
 	"kubeops/service"
 	"net/http"
@@ -22,27 +20,19 @@ func (i *ingress) GetIngressList(c *gin.Context) {
 		Limit      int    `form:"limit"`
 		Page       int    `form:"page"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	data, err := service.Ingress.GetIngList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "获取Ingress失败" + err.Error(),
+			"msg":  "获取应用路由列表失败",
 			"data": nil,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":  "获取数据成功",
+		"msg":  "获取应用路由列表成功",
 		"data": data,
 	})
 }
@@ -53,27 +43,19 @@ func (i *ingress) GetIngressDetail(c *gin.Context) {
 		IngressName string `form:"ingress_name"`
 		Namespace   string `form:"namespace"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	detail, err := service.Ingress.GetIngDetail(params.Namespace, params.IngressName, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "获取Services 详情失败" + err.Error(),
+			"msg":  "应用路由 " + params.IngressName + " 获取数据失败",
 			"data": nil,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":  "获取数据成功",
+		"msg":  "应用路由 " + params.IngressName + " 获取数据成功",
 		"data": detail,
 	})
 }
@@ -84,26 +66,19 @@ func (i *ingress) DelIngress(c *gin.Context) {
 		IngressName string `form:"ingress_name"`
 		Namespace   string `form:"namespace"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.Ingress.DelIng(params.Namespace, params.IngressName, uuid)
+	err := service.Ingress.DelIng(params.Namespace, params.IngressName, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "删除 Services 失败" + err.Error(),
+			"msg":  "应用路由 " + params.IngressName + " 删除失败" + err.Error(),
 			"data": nil,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "删除 Services 成功",
+		"msg": "应用路由 " + params.IngressName + " 删除成功",
 	})
 }
 
@@ -112,27 +87,19 @@ func (i *ingress) CreateIngress(c *gin.Context) {
 	createIngress := new(struct {
 		Data *service.CreateIngress `json:"data"`
 	})
-	err := c.ShouldBindJSON(&createIngress)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBindJSON(&createIngress)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.Ingress.CreateIng(createIngress.Data, uuid)
+	err := service.Ingress.CreateIng(createIngress.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "创建 Services 失败" + err.Error(),
+			"msg":  "应用路由 " + createIngress.Data.Name + " 创建失败:" + err.Error(),
 			"data": nil,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "创建 Services 成功",
+		"msg": "应用路由 " + createIngress.Data.Name + " 创建成功",
 	})
 }
 
@@ -143,24 +110,17 @@ func (i *ingress) UpdateIngress(c *gin.Context) {
 		Namespace string             `json:"namespace"`
 		Data      *networkv1.Ingress `json:"data"`
 	})
-	err := c.ShouldBindJSON(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": errors.New("绑定参数失败" + err.Error()),
-		})
-		return
-	}
+	_ = c.ShouldBindJSON(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.Ingress.UpdateIng(params.Namespace, params.Data, uuid)
+	err := service.Ingress.UpdateIng(params.Namespace, params.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "更新失败" + err.Error(),
+			"msg": "应用路由 " + params.Data.Name + " 更新失败" + err.Error(),
 		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "更新成功",
+		"msg": "应用路由 " + params.Data.Name + " 更新成功",
 	})
 
 }

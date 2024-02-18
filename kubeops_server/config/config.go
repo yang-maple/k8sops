@@ -32,4 +32,8 @@ const (
 	/*redis 配置*/
 	RedisHost     = "10.1.131.32:6379"
 	RedisPassword = "admin123"
+
+	/*日志配置*/
+	Log_FILE_PATH = "./static/logs/"
+	LOG_FILE_NAME = "gin_kubeOps.log"
 )

@@ -4,9 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-
 	"github.com/gorilla/websocket"
-	"github.com/wonderivan/logger"
 	v1 "k8s.io/api/core/v1"
 
 	"k8s.io/client-go/kubernetes/scheme"
@@ -24,7 +22,7 @@ var Terminal terminal
 func (t *terminal) WsHandler(w http.ResponseWriter, r *http.Request) {
 	//解析参数
 	if err := r.ParseForm(); err != nil {
-		logger.Error("parse failed" + err.Error())
+		utils.Logger.Error("parse failed" + err.Error())
 		return
 	}
 	namespace := r.Form.Get("namespace")
@@ -34,24 +32,24 @@ func (t *terminal) WsHandler(w http.ResponseWriter, r *http.Request) {
 	//验证token
 	clamis, err := utils.JWTToken.ParseToken(token, utils.UserSecret)
 	if err != nil {
-		logger.Error("token验证失败" + err.Error())
+		utils.Logger.Error("Token verification failed" + err.Error())
 		_, _ = w.Write([]byte("token验证失败" + err.Error()))
 		return
 	}
 	//加载k8s配置
 	conf, err := clientcmd.BuildConfigFromFlags("", *K8s.ConfigDir[clamis.Id])
 	if err != nil {
-		logger.Error("加载k8s 配置失败" + err.Error())
+		utils.Logger.Error("Failed to load k8s configuration" + err.Error())
 		return
 	}
-	logger.Info("kubectl exec pod %s -c %s -n %s\n", podName, containerName, namespace)
+	utils.Logger.Info("kubectl exec pod %s -c %s -n %s\n", podName, containerName, namespace)
 	pty, err := t.NewTerminalSession(w, r, nil)
 	if err != nil {
-		logger.Info("new Terminal session failed" + err.Error())
+		utils.Logger.Error("new Terminal session failed" + err.Error())
 		return
 	}
 	defer func() {
-		logger.Info("defer close TerminalSession")
+		utils.Logger.Info("defer close TerminalSession")
 		pty.Close()
 	}()
 	req := K8s.Clientset[clamis.Id].CoreV1().RESTClient().Post().Resource("pods").
@@ -66,12 +64,12 @@ func (t *terminal) WsHandler(w http.ResponseWriter, r *http.Request) {
 			Container: containerName,
 			Command:   []string{"/bin/bash"},
 		}, scheme.ParameterCodec)
-	logger.Info("exec post request url:", req)
+	utils.Logger.Info("exec post request url:", req)
 
 	//update SPDY
 	executor, err := remotecommand.NewSPDYExecutor(conf, "POST", req.URL())
 	if err != nil {
-		logger.Error("connect SPDY failed" + err.Error())
+		utils.Logger.Error("connect SPDY failed" + err.Error())
 		return
 	}
 
@@ -84,7 +82,7 @@ func (t *terminal) WsHandler(w http.ResponseWriter, r *http.Request) {
 		TerminalSizeQueue: pty,
 	})
 	if err != nil {
-		logger.Info("exec cmd failed" + err.Error())
+		utils.Logger.Info("exec cmd failed" + err.Error())
 		//return err to web
 		_, _ = pty.Write([]byte(("exec cmd failed") + err.Error()))
 		// close
@@ -144,14 +142,14 @@ func (t *TerminalSession) Read(p []byte) (int, error) {
 	// 从conn 中获取message 信息
 	_, message, err := t.wsConn.ReadMessage()
 	if err != nil {
-		logger.Info("read message failed" + err.Error())
+		utils.Logger.Error("read message failed" + err.Error())
 		return 0, errors.New("read message failed" + err.Error())
 	}
 	//反序列化 转化成字符串
 	var msg terminalMessage
 	err = json.Unmarshal(message, &msg)
 	if err != nil {
-		logger.Info("json Unmarshal message failed" + err.Error())
+		utils.Logger.Error("json Unmarshal message failed" + err.Error())
 		return 0, errors.New("json Unmarshal message failed" + err.Error())
 	}
 	//逻辑判断
@@ -168,7 +166,7 @@ func (t *TerminalSession) Read(p []byte) (int, error) {
 	case "ping":
 		return 0, nil
 	default:
-		logger.Info("unknown message Operation" + msg.Operation)
+		utils.Logger.Info("unknown message Operation" + msg.Operation)
 		return 0, errors.New("unknown message Operation" + err.Error())
 	}
 }
@@ -183,11 +181,11 @@ func (t *TerminalSession) Write(p []byte) (int, error) {
 	},
 	)
 	if err != nil {
-		logger.Info("write parse message error" + err.Error())
+		utils.Logger.Error("write parse message error" + err.Error())
 		return 0, errors.New("write parse message error" + err.Error())
 	}
 	if err := t.wsConn.WriteMessage(websocket.TextMessage, msg); err != nil {
-		logger.Info("write parse message error" + err.Error())
+		utils.Logger.Error("write parse message error" + err.Error())
 		return 0, errors.New("write message error" + err.Error())
 	}
 	return len(p), nil

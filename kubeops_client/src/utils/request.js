@@ -95,6 +95,8 @@ httpClient.interceptors.response.use(
         // }
     },
     err => {
+        endLoading()
+        alert("请求超时")
         return Promise.reject(err)
     }
 )

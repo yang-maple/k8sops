@@ -36,7 +36,6 @@ const routes = [
         path: '/cluster',
         component: layout,
         name: '集群资源',
-        icon: "Menu",
         meta: { title: '集群资源', requireAuth: true },
         children: [
             {
@@ -53,7 +52,6 @@ const routes = [
                     {
                         path: '/node/node_detail',
                         name: '节点详情',
-                        icon: 'LocationInformation',
                         component: () => import('@/views/nodes/Nodedetail.vue'),
                         meta: { title: '节点详情', requireAuth: true },
                     }
@@ -140,7 +138,7 @@ const routes = [
         ]
     },
     {
-        path: '/sever',
+        path: '/services',
         component: layout,
         name: '网络资源',
         meta: { title: '网络资源', requireAuth: true },
@@ -166,13 +164,12 @@ const routes = [
             },
             {
                 path: '/ingress',
-                icon: 'LocationInformation',
                 component: () => import('@/views/service/Ingress.vue'),
                 name: '应用路由',
                 meta: { title: '应用路由', requireAuth: true },
-            }, {
+            },
+            {
                 path: '/storageclass',
-                icon: 'LocationInformation',
                 component: () => import('@/views/service/Class.vue'),
                 name: '应用路由类',
                 meta: { title: '应用路由类', requireAuth: true },
@@ -182,57 +179,52 @@ const routes = [
     {
         path: '/configure',
         component: layout,
-        name: '配置与存储',
-        icon: "Menu",
+        name: '配置文件',
         meta: { title: '配置与存储', requireAuth: true },
         children: [
             {
-                path: '/configure/persistenvolumeclaim',
-                icon: '#icon-yidongyunkongzhitaiicon06',
-                component: () => import('@/views/storage/Persistenvolumeclaim.vue'),
-                name: '持久卷声明',
-                meta: { title: '持久卷声明', requireAuth: true },
-            },
-            {
-                path: '/persistentvolume',
-                icon: 'LocationInformation',
-                component: () => import('@/layout/index.vue'),
-                name: '持久卷',
-                meta: { title: '持久卷', requireAuth: true },
-                children: [
-                    {
-                        path: '/persistentvolume',
-                        component: () => import('@/views/PersistentVolume/PersistentVolume.vue'),
-                    },
-                    {
-                        path: '/persistentvolume/persistentvolume_detail',
-                        name: '持久卷详情',
-                        icon: 'LocationInformation',
-                        component: () => import('@/views/PersistentVolume/PersistentVolumedetail.vue'),
-                        meta: { title: '持久卷详情', requireAuth: true },
-                    }
-                ]
-            },
-            {
-                path: '/configure/storageclass',
-                icon: 'LocationInformation',
-                component: () => import('@/views/storage/Class.vue'),
-                name: '存储类',
-                meta: { title: '存储类', requireAuth: true },
-            },
-            {
                 path: '/configure/configmap',
-                icon: 'LocationInformation',
-                component: () => import('@/views/storage/Configmap.vue'),
+                icon: '#icon-yidongyunkongzhitaiicon06',
+                component: () => import('@/views/configure/Configmap.vue'),
                 name: '配置字典',
                 meta: { title: '配置字典', requireAuth: true },
             },
             {
                 path: '/configure/secret',
                 icon: 'LocationInformation',
-                component: () => import('@/views/storage/Secret.vue'),
+                component: () => import('@/views/configure/Secret.vue'),
                 name: '保密字典',
                 meta: { title: '保密字典', requireAuth: true },
+            },
+        ]
+    },
+    {
+        path: '/storage',
+        component: layout,
+        name: '存储资源',
+        icon: "Menu",
+        meta: { title: '存储资源', requireAuth: true },
+        children: [
+            {
+                path: '/storage/persistentvolumeclaim',
+                icon: '#icon-yidongyunkongzhitaiicon06',
+                component: () => import('@/views/storage/PersistenVolumeClaim.vue'),
+                name: '持久卷声明',
+                meta: { title: '持久卷声明', requireAuth: true },
+            },
+            {
+                path: '/storage/persistentvolume',
+                icon: 'LocationInformation',
+                component: () => import('@/views/storage/PersistentVolume.vue'),
+                name: '持久卷',
+                meta: { title: '持久卷', requireAuth: true },
+            },
+            {
+                path: '/storage/storageclass',
+                icon: 'LocationInformation',
+                component: () => import('@/views/storage/Class.vue'),
+                name: '存储类',
+                meta: { title: '存储类', requireAuth: true },
             },
         ]
     },

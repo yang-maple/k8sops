@@ -3,7 +3,7 @@
         <div class="login__particles"></div>
         <div class="loginPart">
             <h2>注册</h2>
-            <el-form ref="user" :rules="rules" :model="user" status-icon label-width="100px" class="demo-ruleForm"
+            <el-form ref="user" :rules="rules" :model="user" label-width="100px" class="demo-ruleForm"
                 style="transform:translate(-30px);">
                 <el-form-item label="账号：" prop="username">
                     <el-input v-model="user.username" placeholder="请输入账号" maxlength="20" clearable />

@@ -20,8 +20,7 @@
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
-                <el-select v-model="namespace" placeholder="命名空间（默认ALL）" @visible-change="getnsselect()"
-                    @change="getPersistentVolumeClaims()">
+                <el-select v-model="namespace" placeholder="命名空间（默认ALL）" @change="getPersistentVolumeClaims()">
                     <el-option-group v-for="group in nslist" :key="group.label" :label="group.label">
                         <el-option v-for="item in group.options" :key="item.namespace" :label="item.label"
                             :value="item.namespace" />
@@ -131,32 +130,30 @@
         </el-row>
     </div>
     <el-dialog v-model="dialogcreatens" title="创建资源" center>
-        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="25%" status-icon>
-            <el-form-item label="名称" prop="name">
+        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="25%">
+            <el-form-item label="资源名称" prop="name">
                 <el-input v-model="ruleForm.name"></el-input>
             </el-form-item>
             <el-form-item label="命名空间" prop="namespace">
-                <el-select v-model="ruleForm.namespace" placeholder="Select" @visible-change="getnsselect()">
-                    <el-option-group v-for="group in  nslist " :key="group.label">
-                        <el-option v-for=" item  in  group.options " :key="item.namespace" :value="item.namespace"
-                            v-show="item.label != 'ALL'" />
-                    </el-option-group>
+                <el-select v-model="ruleForm.namespace" placeholder="请选择命名空间">
+                    <el-option v-for="item in nslist[1].options" :key="item.namespace" :label="item.label"
+                        :value="item.namespace" />
                 </el-select>
             </el-form-item>
-            <el-form-item label="标签" prop="labels">
-                <el-input v-model="ruleForm.labels"></el-input>
+            <el-form-item label="资源标签" prop="labels">
+                <el-input v-model="ruleForm.labels" placeholder="`请输入如下格式 {'a':'b'}`"></el-input>
             </el-form-item>
-            <el-form-item label="访问模式">
-                <el-checkbox-group v-model="ruleForm.access_modes">
+            <el-form-item label="访问模式" prop="access_modes">
+                <el-checkbox-group v-model="ruleForm.access_modes" style="width: 80%;">
                     <el-checkbox label="ReadWriteOnce" name="access_modes" />
                     <el-checkbox label="ReadOnlyMany" name="access_modes" />
                     <el-checkbox label="ReadWriteMany" name="access_modes" />
                     <el-checkbox label="ReadWriteOncePod" name="access_modes" />
                 </el-checkbox-group>
             </el-form-item>
-            <el-form-item label="存储容量">
+            <el-form-item label="存储容量" prop="storage">
                 <div>
-                    <el-input v-model="ruleForm.storage" placeholder="Please input" style="width: fit-content;">
+                    <el-input v-model="ruleForm.storage" placeholder=" " class="input-with-select">
                         <template #append>
                             <el-select v-model="storage_type">
                                 <el-option label="Gi" value="Gi" />
@@ -167,7 +164,7 @@
                 </div>
             </el-form-item>
             <el-form-item label="存储类型">
-                <el-select v-model="ruleForm.storage_classname" placeholder="请选择存储类型">
+                <el-select allow-create filterable v-model="ruleForm.storage_classname" placeholder="请选择存储类型">
                     <el-option v-for="item in storageclasslist" :key="item.value" :label="item.label" :value="item.value" />
                 </el-select>
             </el-form-item>
@@ -252,10 +249,15 @@ export default {
             rules: {
                 name: [
                     { required: true, message: '请输入资源名称', trigger: 'blur' },
-                    { min: 3, max: 10, message: '长度在 3 到 10 个字符', trigger: 'blur' }
                 ],
                 namespace: [
                     { required: true, message: '请选择命名空间', trigger: 'change' }
+                ],
+                access_modes: [
+                    { required: true, message: '请选择访问模式', trigger: 'change' }
+                ],
+                storage: [
+                    { required: true, message: '请输入存储容量', trigger: 'change' }
                 ],
                 resource: [
                     { message: '请选择一种协议', trigger: 'change' }
@@ -266,6 +268,7 @@ export default {
     },
     created() {
         this.getPersistentVolumeClaims()
+        this.getnsselect()
     },
     methods: {
         getPersistentVolumeClaims() {
@@ -290,6 +293,9 @@ export default {
             })
         },
         createPersistentVolumeClaims() {
+            let label = this.ruleForm.labels
+            let storage = this.ruleForm.storage
+            this.ruleForm.storage = String(this.ruleForm.storage) + this.storage_type
             this.$ajax.post(
                 '/pvc/create',
                 {
@@ -303,6 +309,8 @@ export default {
                 });
                 this.reload()
             }).catch((res) => {
+                this.ruleForm.labels = JSON.stringify(label)
+                this.ruleForm.storage = storage
                 this.$message({
                     message: res.msg,
                     type: 'error'
@@ -322,7 +330,7 @@ export default {
                     options: [
                         {
                             namespace: '',
-                            label: 'ALL',
+                            label: '全部空间',
                         },
                     ],
                 })
@@ -337,8 +345,12 @@ export default {
                     res.data.item.forEach(v => {
                         this.nslist[1].options.push({ 'namespace': v.name, 'label': v.name })
                     })
-                    console.log(this.nslist)
                 }).catch((res) => {
+                    this.$message({
+                        showClose: true,
+                        message: "获取名称空间失败",
+                        type: 'error'
+                    });
                     console.log(res.data)
                 })
             }
@@ -450,8 +462,7 @@ export default {
         submitForm(formName) {
             this.$refs[formName].validate((valid) => {
                 if (valid) {
-                    console.log(this.ruleForm)
-                    if (this.ruleForm.labels != null) {
+                    if (this.ruleForm.labels != null && this.ruleForm.labels != "") {
                         this.ruleForm.labels = JSON.parse(this.ruleForm.labels)
                     }
                     this.createPersistentVolumeClaims()
@@ -548,11 +559,9 @@ export default {
     padding: 0px;
 }
 
-.el-dialog {
-    .el-select {
-        .el-input {
-            width: 180px;
-        }
+.input-with-select {
+    .el-input {
+        width: 115px !important;
     }
 }
 

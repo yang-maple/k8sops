@@ -1,10 +1,9 @@
 package service
 
 import (
-	"errors"
-	"github.com/wonderivan/logger"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	"kubeops/utils"
 )
 
 type k8s struct {
@@ -25,15 +24,15 @@ var K8s = &k8s{
 func (k *k8s) Init(uuid int) error {
 	conf, err := clientcmd.BuildConfigFromFlags("", *K8s.ConfigDir[uuid])
 	if err != nil {
-		logger.Info("获取 配置文件失败" + err.Error())
-		return errors.New("获取 配置文件失败" + err.Error())
+		utils.Logger.Error("Failed to get configuration file,reason: " + err.Error())
+		return err
 	}
 	clientset, err := kubernetes.NewForConfig(conf)
 	if err != nil {
-		logger.Info("创建 client set 失败" + err.Error())
-		return errors.New("创建 client set 失败" + err.Error())
+		utils.Logger.Error("Failed to create client set,reason: " + err.Error())
+		return err
 	}
-	logger.Info("k8s 初始化成功")
+	utils.Logger.Info("k8s initialization succeeded")
 	k.Clientset[uuid] = clientset
 	return nil
 }

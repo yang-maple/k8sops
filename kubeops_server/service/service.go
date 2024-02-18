@@ -2,12 +2,11 @@ package service
 
 import (
 	"context"
-	"errors"
-	"github.com/wonderivan/logger"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"kubeops/model"
+	"kubeops/utils"
 )
 
 type service struct{}
@@ -72,7 +71,7 @@ func (s *service) GetSvcList(svcName, Namespace string, Limit, Page int, uuid in
 	//获取deployment 的所有清单列表
 	svcList, err := K8s.Clientset[uuid].CoreV1().Services(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("获取 svc list 失败" + err.Error())
+		utils.Logger.Error("Failed to Get the Services list,reason: " + err.Error())
 		return nil, err
 	}
 	//组装数据
@@ -121,11 +120,12 @@ func (s *service) GetSvcDetail(Namespace, svcName string, uuid int) (*svcDetail,
 	//获取deploy
 	detail, err := K8s.Clientset[uuid].CoreV1().Services(Namespace).Get(context.TODO(), svcName, metav1.GetOptions{})
 	if err != nil {
-		logger.Info("获取services 详情失败" + err.Error())
-		return nil, errors.New("获取services 详情失败" + err.Error())
+		utils.Logger.Error("Failed to Get the Services " + svcName + " detail,reason: " + err.Error())
+		return nil, err
 	}
 	detail.Kind = "Service"
 	detail.APIVersion = "v1"
+	utils.Logger.Info("Get Services " + svcName + "success")
 	return &svcDetail{
 		Detail: detail,
 		Age:    model.GetAge(detail.CreationTimestamp.Unix()),
@@ -163,9 +163,10 @@ func (s *service) CreateSvc(data *CreateService, uuid int) (err error) {
 
 	_, err = K8s.Clientset[uuid].CoreV1().Services(data.Namespace).Create(context.TODO(), createSvc, metav1.CreateOptions{})
 	if err != nil {
-		logger.Info("创建 service 失败" + err.Error())
-		return errors.New("创建 service 失败" + err.Error())
+		utils.Logger.Error("Failed to Create the Services " + data.Name + " ,reason: " + err.Error())
+		return err
 	}
+	utils.Logger.Info("Create Services " + data.Name + " success")
 	return nil
 
 }
@@ -174,9 +175,10 @@ func (s *service) CreateSvc(data *CreateService, uuid int) (err error) {
 func (s *service) DelSvc(Namespace, svcName string, uuid int) (err error) {
 	err = K8s.Clientset[uuid].CoreV1().Services(Namespace).Delete(context.TODO(), svcName, metav1.DeleteOptions{})
 	if err != nil {
-		logger.Info("删除service失败" + err.Error())
-		return errors.New("删除service失败" + err.Error())
+		utils.Logger.Error("Failed to Delete the Services " + svcName + " ,reason: " + err.Error())
+		return err
 	}
+	utils.Logger.Info("Delete Services " + svcName + " success")
 	return nil
 }
 
@@ -184,8 +186,9 @@ func (s *service) DelSvc(Namespace, svcName string, uuid int) (err error) {
 func (s *service) UpdateSvc(Namespace string, svc *corev1.Service, uuid int) (err error) {
 	_, err = K8s.Clientset[uuid].CoreV1().Services(Namespace).Update(context.TODO(), svc, metav1.UpdateOptions{})
 	if err != nil {
-		logger.Info("service 更新失败" + err.Error())
-		return errors.New("service 更新失败" + err.Error())
+		utils.Logger.Error("Failed to Update the Services " + svc.Name + " ,reason: " + err.Error())
+		return err
 	}
+	utils.Logger.Info("Update Services " + svc.Name + " success")
 	return nil
 }

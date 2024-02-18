@@ -3,7 +3,7 @@
         <div class="login__particles"></div>
         <div class="loginPart">
             <h2>找回密码</h2>
-            <el-form ref="user" :rules="rules" :model="user" status-icon label-width="100px" class="demo-ruleForm"
+            <el-form ref="user" :rules="rules" :model="user" label-width="100px" class="demo-ruleForm"
                 style="transform:translate(-30px);">
                 <el-form-item label="电子邮箱：" prop="email">
                     <el-input v-model="user.email" placeholder="请输入注册账号的邮箱地址" clearable />

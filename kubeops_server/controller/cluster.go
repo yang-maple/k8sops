@@ -34,14 +34,14 @@ func (clt *cluster) Create(c *gin.Context) {
 	if err != nil {
 		c.JSON(400, gin.H{
 			"code": 400,
-			"msg":  "集群创建失败" + err.Error(),
+			"msg":  "集群 " + params.ClusterName + " 创建失败:" + err.Error(),
 		})
 		return
 	}
 	//创建集群
 	c.JSON(200, gin.H{
 		"code": 200,
-		"msg":  "集群" + params.ClusterName + "创建成功",
+		"msg":  "集群 " + params.ClusterName + " 创建成功",
 	})
 }
 
@@ -92,13 +92,13 @@ func (clt *cluster) Change(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": http.StatusBadRequest,
-			"msg":  "应用失败" + err.Error(),
+			"msg":  "切换集群 " + param.ClusterName + " 失败" + err.Error(),
 		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": http.StatusOK,
-		"msg":  "已切换集群  " + param.ClusterName,
+		"msg":  "已切换集群 " + param.ClusterName,
 	})
 }
 
@@ -108,19 +108,19 @@ func (clt *cluster) Delete(c *gin.Context) {
 	param := new(struct {
 		ClusterName string `form:"cluster_name"`
 	})
-	_ = c.Bind(&param)
+	_ = c.ShouldBind(&param)
 	err := service.Cluster.Delete(param.ClusterName, userid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": http.StatusBadRequest,
-			"msg":  "删除失败" + err.Error(),
+			"msg":  "集群 " + param.ClusterName + " 删除失败" + err.Error(),
 		})
 		return
 	}
 	//删除成功返回
 	c.JSON(http.StatusOK, gin.H{
 		"code": http.StatusOK,
-		"msg":  "集群" + param.ClusterName + "删除成功",
+		"msg":  "集群 " + param.ClusterName + " 删除成功",
 	})
 }
 
@@ -139,13 +139,13 @@ func (clt *cluster) Update(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": 400,
-			"msg":  "集群更新失败" + err.Error(),
+			"msg":  "集群 " + params.ClusterName + " 更新失败" + err.Error(),
 		})
 		return
 	}
 	//更新成功返回
 	c.JSON(http.StatusOK, gin.H{
 		"code": 200,
-		"msg":  "集群" + params.ClusterName + "更新成功",
+		"msg":  "集群 " + params.ClusterName + " 更新成功",
 	})
 }

@@ -139,54 +139,66 @@
         </template>
     </el-dialog>
     <el-dialog v-model="dialogcreatens" title="创建 PersistentVolume 资源" center>
-        <el-form :model="form" label-width="25%">
-            <el-form-item label="名称">
+        <el-form :model="form" :rules="rules" ref="form" label-width="25%">
+            <el-form-item label="资源名称" prop="name">
                 <el-input v-model="form.name" autocomplete="off" />
             </el-form-item>
-            <el-form-item label="标签">
+            <el-form-item label="资源标签" prop="labels">
                 <el-input v-model="form.labels" placeholder="`请输入如下格式 {'a':'b'}`"></el-input>
             </el-form-item>
-            <el-form-item label="容量">
-                <el-input v-model="form.storage" style="width: fit-content;">
+            <el-form-item label="资源容量" prop="storage">
+                <el-input v-model.number="form.storage" class="input-with-select">
                     <template #append>
-                        <el-select v-model="storage_type" placeholder="Select">
+                        <el-select v-model="storage_type" placeholder="Select" style="width: 115px">
                             <el-option label="Gi" value="Gi" />
                             <el-option label="Mi" value="Mi" />
-                            <el-option label="Tel" value="3" />
                         </el-select>
                     </template>
                 </el-input>
             </el-form-item>
-            <el-form-item label="访问模式">
-                <el-checkbox-group v-model="form.access_mode">
+            <el-form-item label="卷模式" prop="volume_mode">
+                <el-radio-group v-model="form.volume_mode">
+                    <el-radio label="Filesystem" />
+                    <el-radio label="Block" />
+                </el-radio-group>
+            </el-form-item>
+            <el-form-item label="访问模式" prop="access_mode">
+                <el-checkbox-group v-model="form.access_mode" style="width: 80%;">
                     <el-checkbox label="ReadWriteOnce" name="access_mode" />
                     <el-checkbox label="ReadOnlyMany" name="access_mode" />
                     <el-checkbox label="ReadWriteMany" name="access_mode" />
                     <el-checkbox label="ReadWriteOncePod" name="access_mode" />
                 </el-checkbox-group>
             </el-form-item>
-            <el-form-item label="卷模式">
-                <el-radio-group v-model="form.volume_mode">
-                    <el-radio label="Filesystem" />
-                    <el-radio label="Block" />
+            <el-form-item label="回收策略" prop="recycle_mode">
+                <el-radio-group v-model="form.recycle_mode">
+                    <el-radio label="Retain" />
+                    <el-radio label="Recycle" />
+                    <el-radio label="Delete" />
                 </el-radio-group>
             </el-form-item>
-            <el-form-item label="类型">
-                <el-select v-model="form.type" placeholder="type">
+            <el-form-item label="存储类型" prop="class_name">
+                <el-select allow-create filterable v-model="form.class_name" placeholder=" ">
+                    <el-option v-for="item in classtypelist" :key="item.value" :label="item.label" :value="item.value" />
+                </el-select>
+            </el-form-item>
+            <el-form-item label="资源类型" prop="type">
+                <el-select v-model="form.type" placeholder=" ">
                     <el-option label="NFS" value="NFS" @click="changeshow()" />
                     <el-option label="HostPATH" value="HostPATH" @click="changedisshow()" />
                 </el-select>
             </el-form-item>
-            <el-form-item label="服务地址" v-model="showEl" v-if="showEl == true">
+            <el-form-item label="服务地址" v-model="showEl" v-if="showEl == true" :prop="showEl ? 'server' : 'nocheck'">
                 <el-input v-model="form.server" autocomplete="off" />
             </el-form-item>
-            <el-form-item label="路径">
+            <el-form-item label="路径" prop="path">
                 <el-input v-model="form.path" autocomplete="off" />
             </el-form-item>
         </el-form>
         <template #footer>
             <span class="dialog-footer">
-                <el-button type="primary" @click="dialogcreatens = false, createPersistentVolume()">确认创建</el-button>
+                <el-button type="primary" @click="submitForm('form')">确认创建</el-button>
+                <el-button @click="resetForm('form')">立即重置</el-button>
                 <el-button type="danger" @click="dialogcreatens = false">
                     取消
                 </el-button>
@@ -215,12 +227,14 @@ export default {
             form: {
                 name: '',
                 labels: null,
-                storage: '',
+                storage: null,
                 type: '',
                 path: '',
                 server: '',
                 access_mode: [],
                 volume_mode: '',
+                recycle_mode: '',
+                class_name: '',
             },
             formLabelWidth: '140px',
             total: 0,
@@ -236,7 +250,42 @@ export default {
                     showPrintMargin: false,
                 }
             },
-            activeName: 'json'
+            activeName: 'json',
+            classtypelist: [
+                {
+                    value: 'standard',
+                    label: 'standard'
+                },
+                {
+                    value: 'nfs-client',
+                    label: 'nfs-client'
+                }
+            ],
+            rules: {
+                name: [
+                    { required: true, message: '请输入资源名称', trigger: 'blur' }
+                ],
+                storage: [
+                    { required: true, message: '请输入资源容量', trigger: 'blur' },
+                    { type: 'number', message: '请输入数字', trigger: 'blur' }
+                ],
+                type: [
+                    { required: true, message: '请选择资源类型', trigger: 'blur' }
+                ],
+                volume_mode: [
+                    { required: true, message: '请选择一种卷模式', trigger: 'blur' }
+                ],
+                access_mode: [
+                    { required: true, message: '至少选择一种访问模式', trigger: 'blur' }
+                ],
+                server: [
+                    { required: true, message: '请输入服务地址', trigger: 'blur' }
+                ],
+                path: [
+                    { required: true, message: '请输入路径', trigger: 'blur' }
+                ],
+                nocheck: [],
+            },
         }
     },
     created() {
@@ -324,11 +373,9 @@ export default {
             })
         },
         createPersistentVolume() {
-            if (this.form.labels != null) {
-                this.form.labels = JSON.parse(this.form.labels)
-            }
-            this.form.storage = this.form.storage + this.storage_type
-            console.log(this.form)
+            let label = this.form.labels
+            let storage = this.form.storage
+            this.form.storage = String(this.form.storage) + this.storage_type
             this.$ajax.post(
                 '/pv/create',
                 {
@@ -339,9 +386,11 @@ export default {
                     message: res.msg,
                     type: 'success'
                 });
-                console.log(res)
+                this.dialogcreatens = false
                 this.reload()
             }).catch((res) => {
+                this.form.labels = JSON.stringify(label)
+                this.form.storage = storage
                 this.$message({
                     showClose: true,
                     message: res.msg,
@@ -349,7 +398,6 @@ export default {
                 });
                 console.log(res);
             })
-
 
         },
         handleUpdate() {
@@ -440,7 +488,30 @@ export default {
                 return
             }
             this.jsonFormat()
-        }
+        },
+        submitForm(formName) {
+            this.$refs[formName].validate((valid) => {
+                if (valid) {
+                    try {
+                        if (this.form.labels != null && this.form.labels != "") {
+                            this.form.labels = JSON.parse(this.form.labels)
+                        }
+                        this.createPersistentVolume()
+                    } catch (error) {
+                        this.$message({
+                            showClose: true,
+                            message: '请填写正确格式，例如: {"a":"b"}',
+                            type: 'error'
+                        });
+                    }
+                } else {
+                    return false;
+                }
+            });
+        },
+        resetForm(formName) {
+            this.$refs[formName].resetFields();
+        },
     }
 }
 </script>
@@ -516,11 +587,9 @@ export default {
     padding: 0px;
 }
 
-.el-dialog {
-    .el-select {
-        .el-input {
-            width: 180px;
-        }
+.input-with-select {
+    .el-input {
+        width: 115px !important;
     }
 }
 

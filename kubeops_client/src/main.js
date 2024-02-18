@@ -20,12 +20,10 @@ import * as ElIcons from '@element-plus/icons-vue'
 import '@/assets/aliicon/iconfont.js'
 
 //导入particles
-import Particles from 'particles.vue3'
 import 'default-passive-events'
 
 const app = createApp(App)
 app.use(router)
-app.use(Particles)
 
 app.mount('#app')
 

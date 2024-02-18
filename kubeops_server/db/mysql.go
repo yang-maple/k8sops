@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/wonderivan/logger"
 	"kubeops/config"
 	"kubeops/model"
+	"kubeops/utils"
 )
 
 var (
@@ -31,7 +31,7 @@ func Init() {
 	if err != nil {
 		panic("数据库连接失败" + err.Error())
 	}
-	logger.Info("数据库初始化成功")
+	utils.Logger.Info("mysql initialization succeeded")
 	GORM.LogMode(config.LogMode)
 
 	//打开连接池

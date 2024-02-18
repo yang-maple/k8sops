@@ -3,8 +3,8 @@ package db
 import (
 	"context"
 	"github.com/go-redis/redis/v8"
-	"github.com/wonderivan/logger"
 	"kubeops/config"
+	"kubeops/utils"
 )
 
 var Rdb *redis.Client
@@ -22,8 +22,8 @@ func InitRedis() {
 	})
 	pong, err := Rdb.Ping(ctx).Result()
 	if err != nil {
-		logger.Error("初始化redis失败: " + err.Error())
+		utils.Logger.Error("Failed to initialize Redis", err.Error())
 		panic(err)
 	}
-	logger.Info("redis 初始化成功", pong)
+	utils.Logger.Info("redis initialization succeeded", pong)
 }

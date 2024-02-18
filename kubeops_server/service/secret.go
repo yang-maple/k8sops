@@ -2,10 +2,11 @@ package service
 
 import (
 	"context"
-	"errors"
-	"github.com/wonderivan/logger"
+	"encoding/base64"
+	"fmt"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubeops/utils"
 )
 
 type secret struct{}
@@ -24,12 +25,20 @@ type secretInfo struct {
 }
 
 type CreateSecret struct {
-	Name      string            `json:"name"`
-	Namespace string            `json:"namespace"`
-	Labels    map[string]string `json:"labels"`
-	Immutable bool              `json:"immutable"`
-	Type      string            `json:"type"`
-	Data      map[string]string `json:"data"`
+	Name           string            `json:"name"`
+	Namespace      string            `json:"namespace"`
+	Labels         map[string]string `json:"labels"`
+	Immutable      bool              `json:"immutable"`
+	Type           string            `json:"type"`
+	Data           map[string]string `json:"data"`
+	TlsCrt         string            `json:"tls_crt"`
+	TlsKey         string            `json:"tls_key"`
+	Username       string            `json:"username"`
+	Password       string            `json:"password"`
+	DockerUsername string            `json:"docker_username"`
+	DockerPassword string            `json:"docker_password"`
+	DockerEmail    string            `json:"docker_email"`
+	DockerRegistry string            `json:"docker_registry"`
 }
 
 var Secrets secret
@@ -55,7 +64,7 @@ func (s *secret) GetSecretList(secretName, Namespace string, Limit, Page int, uu
 	//获取deployment 的所有清单列表
 	secretList, err := K8s.Clientset[uuid].CoreV1().Secrets(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("获取 secret 失败" + err.Error())
+		utils.Logger.Error("Failed to Get the Secrets list,reason: " + err.Error())
 		return nil, err
 	}
 
@@ -98,33 +107,75 @@ func (s *secret) GetSecretDetail(Namespace, secretName string, uuid int) (detail
 	//获取deploy
 	detail, err = K8s.Clientset[uuid].CoreV1().Secrets(Namespace).Get(context.TODO(), secretName, metav1.GetOptions{})
 	if err != nil {
-		logger.Info("获取Secret 详情失败" + err.Error())
-		return nil, errors.New("获取Secret 详情失败" + err.Error())
+		utils.Logger.Error("Failed to Get the Secrets " + secretName + " detail,reason: " + err.Error())
+		return nil, err
 	}
 	detail.Kind = "Secret"
 	detail.APIVersion = "v1"
+	utils.Logger.Info("Get Secrets " + secretName + "success")
 	return detail, nil
 }
 
 // CreateSecret 创建
 func (s *secret) CreateSecret(data *CreateSecret, uuid int) (err error) {
+	var newsecret *corev1.Secret
+	fmt.Println(data.Type)
+	switch data.Type {
+	case "Opaque":
+		newsecret = &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      data.Name,
+				Namespace: data.Namespace,
+			},
+			Type:       corev1.SecretTypeOpaque,
+			StringData: data.Data,
+		}
+	case "kubernetes.io/dockerconfigjson":
+		authConfig := fmt.Sprintf(`{"auths":{"%s":{"username":"%s","password":"%s","email":"%s","auth":"%s"}}}`, data.DockerRegistry, data.DockerUsername, data.DockerPassword, data.DockerEmail, base64.StdEncoding.EncodeToString([]byte(data.DockerUsername+":"+data.DockerPassword)))
+		newsecret = &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      data.Name,
+				Namespace: data.Namespace,
+			},
+			Type: corev1.SecretTypeDockerConfigJson,
+			Data: map[string][]byte{
+				//存放字符串不是存放base64编码
+				".dockerconfigjson": []byte(authConfig),
+			},
+		}
+	case "kubernetes.io/tls":
+		newsecret = &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      data.Name,
+				Namespace: data.Namespace,
+			},
+			Type: corev1.SecretTypeTLS,
+			Data: map[string][]byte{
+				corev1.TLSCertKey:       []byte(data.TlsCrt),
+				corev1.TLSPrivateKeyKey: []byte(data.TlsKey),
+			},
+		}
+	case "kubernetes.io/basic-auth":
+		newsecret = &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      data.Name,
+				Namespace: data.Namespace,
+			},
+			Type: corev1.SecretTypeBasicAuth,
+			StringData: map[string]string{
+				"username": data.Username,
+				"password": data.Password,
+			},
+		}
 
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   data.Name,
-			Labels: data.Labels,
-		},
-		Immutable:  &data.Immutable,
-		Data:       nil,
-		StringData: data.Data,
-		Type:       corev1.SecretType(data.Type),
 	}
 
-	_, err = K8s.Clientset[uuid].CoreV1().Secrets(data.Namespace).Create(context.TODO(), secret, metav1.CreateOptions{})
+	_, err = K8s.Clientset[uuid].CoreV1().Secrets(data.Namespace).Create(context.TODO(), newsecret, metav1.CreateOptions{})
 	if err != nil {
-		logger.Info("创建 secret 失败" + err.Error())
-		return errors.New("创建 secret 失败" + err.Error())
+		utils.Logger.Error("Failed to Create the Secrets " + data.Name + " ,reason: " + err.Error())
+		return err
 	}
+	utils.Logger.Info("Create Secrets " + data.Name + "success")
 	return nil
 
 }
@@ -133,9 +184,10 @@ func (s *secret) CreateSecret(data *CreateSecret, uuid int) (err error) {
 func (s *secret) DelSecret(Namespace, secretName string, uuid int) (err error) {
 	err = K8s.Clientset[uuid].CoreV1().Secrets(Namespace).Delete(context.TODO(), secretName, metav1.DeleteOptions{})
 	if err != nil {
-		logger.Info("删除Secret失败" + err.Error())
-		return errors.New("删除Secret失败" + err.Error())
+		utils.Logger.Error("Failed to Delete the Secrets " + secretName + " ,reason: " + err.Error())
+		return err
 	}
+	utils.Logger.Info("Delete Secrets " + secretName + "success")
 	return nil
 }
 
@@ -143,8 +195,9 @@ func (s *secret) DelSecret(Namespace, secretName string, uuid int) (err error) {
 func (s *secret) UpdateSecret(Namespace string, Config *corev1.Secret, uuid int) (err error) {
 	_, err = K8s.Clientset[uuid].CoreV1().Secrets(Namespace).Update(context.TODO(), Config, metav1.UpdateOptions{})
 	if err != nil {
-		logger.Info("更新 secret 失败" + err.Error())
-		return errors.New("更新 secret 失败" + err.Error())
+		utils.Logger.Error("Failed to Update the Secrets " + Config.Name + " ,reason: " + err.Error())
+		return err
 	}
+	utils.Logger.Info("Update Secrets " + Config.Name + "success")
 	return nil
 }

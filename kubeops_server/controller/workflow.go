@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wonderivan/logger"
 	"kubeops/service"
 	"net/http"
 	"strconv"
@@ -21,15 +20,7 @@ func (w *workflow) GetWorkflowList(c *gin.Context) {
 		Limit      int    `form:"limit"`
 		Page       int    `form:"page"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.Bind(&params)
 	data, err := service.Workflow.GetWorkflowList(params.FilterName, params.Namespace, params.Limit, params.Page)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -50,15 +41,7 @@ func (w *workflow) GetWorkflowDetail(c *gin.Context) {
 	params := new(struct {
 		Id int `form:"id"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.Bind(&params)
 	data, err := service.Workflow.GetWorkflowDetail(params.Id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -77,17 +60,9 @@ func (w *workflow) DeleteWorkflow(c *gin.Context) {
 	params := new(struct {
 		Id int `form:"id"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.Bind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.Workflow.DeleteById(params.Id, uuid)
+	err := service.Workflow.DeleteById(params.Id, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": err.Error(),
@@ -99,20 +74,12 @@ func (w *workflow) DeleteWorkflow(c *gin.Context) {
 	})
 }
 
-// 创建 workflow
+// CreateWorkflow 创建 workflow
 func (w *workflow) CreateWorkflow(c *gin.Context) {
 	params := new(service.Workflowcreate)
-	err := c.ShouldBindJSON(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBindJSON(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.Workflow.CreateWorkflow(params, uuid)
+	err := service.Workflow.CreateWorkflow(params, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": err.Error(),

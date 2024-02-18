@@ -1,9 +1,7 @@
 package controller
 
 import (
-	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/wonderivan/logger"
 	appsv1 "k8s.io/api/apps/v1"
 	"kubeops/model"
 	"kubeops/service"
@@ -25,28 +23,19 @@ func (s *statefulSet) GetStatefulSetList(c *gin.Context) {
 		Limit      int    `form:"limit"`
 		Page       int    `form:"page"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	data, err := service.StatefulSet.GetStatefulList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
-		logger.Info("获取 StatefulSet 失败" + err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "获取StatefulSet失败",
+			"msg":  "获取有状态服务列表失败",
 			"data": nil,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":  "获取数据成功",
+		"msg":  "获取有状态服务列表成功",
 		"data": data,
 	})
 }
@@ -57,25 +46,17 @@ func (s *statefulSet) GetStatefulDetail(c *gin.Context) {
 		StatefulSetName string `form:"stateful_set_name"`
 		Namespace       string `form:"namespace"`
 	})
-
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": errors.New("绑定参数失败" + err.Error()),
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	Ds, err := service.StatefulSet.GetStatefulDetail(params.Namespace, params.StatefulSetName, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": errors.New("获取Stateful set 失败" + err.Error()),
+			"msg": "有状态服务 " + params.StatefulSetName + " 获取数据失败",
 		})
 		return
 	} else {
 		c.JSON(http.StatusOK, gin.H{
-			"msg":  "获取成功",
+			"msg":  "有状态服务 " + params.StatefulSetName + " 获取数据成功",
 			"data": Ds,
 		})
 	}
@@ -87,24 +68,17 @@ func (s *statefulSet) DelStatefulSet(c *gin.Context) {
 		StatefulSetName string `form:"stateful_set_name"`
 		Namespace       string `form:"namespace"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": errors.New("绑定参数失败" + err.Error()),
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.StatefulSet.DelStateful(params.Namespace, params.StatefulSetName, uuid)
+	err := service.StatefulSet.DelStateful(params.Namespace, params.StatefulSetName, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": errors.New("删除失败" + err.Error()),
+			"msg": "有状态服务 " + params.StatefulSetName + " 删除失败" + err.Error(),
 		})
 		return
 	} else {
 		c.JSON(http.StatusOK, gin.H{
-			"msg": "删除成功",
+			"msg": "有状态服务 " + params.StatefulSetName + " 删除成功",
 		})
 	}
 
@@ -117,25 +91,17 @@ func (s *statefulSet) UpDataStatefulSet(c *gin.Context) {
 		Data      *appsv1.StatefulSet `json:"data"`
 	})
 
-	err := c.ShouldBindJSON(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": errors.New("绑定参数失败" + err.Error()),
-		})
-		return
-	}
+	_ = c.ShouldBindJSON(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.StatefulSet.UpdateDelStateful(params.Namespace, params.Data, uuid)
+	err := service.StatefulSet.UpdateDelStateful(params.Namespace, params.Data, uuid)
 	if err != nil {
-		logger.Info("更新失败" + err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "更新失败" + err.Error(),
+			"msg": "有状态服务 " + params.Data.Name + " 更新失败：" + err.Error(),
 		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "更新成功",
+		"msg": "有状态服务 " + params.Data.Name + " 更新成功",
 	})
 
 }
@@ -147,23 +113,17 @@ func (s *statefulSet) ModifyStatefulReplicas(c *gin.Context) {
 		Namespace       string `json:"namespace"`
 		Replicas        int    `json:"replicas"`
 	})
-
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		return
-	}
+	_ = c.ShouldBindJSON(&params)
 	replicas := model.Int32Ptr(int32(params.Replicas))
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.StatefulSet.ModifyStatefulReplicas(params.Namespace, params.StatefulSetName, replicas, uuid)
+	err := service.StatefulSet.ModifyStatefulReplicas(params.Namespace, params.StatefulSetName, replicas, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": errors.New("更新副本数失败" + err.Error()),
+			"msg": "有状态服务 " + params.StatefulSetName + " 更新副本数失败",
 		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "更新副本数成功",
+		"msg": "有状态服务 " + params.StatefulSetName + "更新副本数成功",
 	})
-
 }

@@ -2,11 +2,10 @@ package service
 
 import (
 	"context"
-	"errors"
-	"github.com/wonderivan/logger"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubeops/utils"
 )
 
 var StorageClass storageClass
@@ -47,8 +46,8 @@ func (sc *storageClass) fromCells(cells []DataCell) []storagev1.StorageClass {
 func (sc *storageClass) GetStorageClassList(storageName string, Limit, Page int, uuid int) (*storageClassResp, error) {
 	storageClasses, err := K8s.Clientset[uuid].StorageV1().StorageClasses().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("获取存储类列表失败 " + err.Error())
-		return nil, errors.New("获取存储类列表失败 " + err.Error())
+		utils.Logger.Error("Failed to Get the StorageClasses list,reason: " + err.Error())
+		return nil, err
 	}
 
 	//组装数据
@@ -89,11 +88,12 @@ func (sc *storageClass) GetStorageClassList(storageName string, Limit, Page int,
 func (sc *storageClass) GetStorageClassDetail(storageClassName string, uuid int) (*storagev1.StorageClass, error) {
 	storageClass, err := K8s.Clientset[uuid].StorageV1().StorageClasses().Get(context.TODO(), storageClassName, metav1.GetOptions{})
 	if err != nil {
-		logger.Info("获取存储类详情失败 " + err.Error())
-		return nil, errors.New("获取存储类详情失败 " + err.Error())
+		utils.Logger.Error("Failed to Get the StorageClasses " + storageClassName + " detail,reason: " + err.Error())
+		return nil, err
 	}
 	storageClass.APIVersion = "storage.k8s.io/v1"
 	storageClass.Kind = "StorageClass"
+	utils.Logger.Info("Get StorageClasses " + storageClassName + "success")
 	return storageClass, nil
 }
 
@@ -101,9 +101,10 @@ func (sc *storageClass) GetStorageClassDetail(storageClassName string, uuid int)
 func (sc *storageClass) DelStorageClass(storageClassName string, uuid int) error {
 	err := K8s.Clientset[uuid].StorageV1().StorageClasses().Delete(context.TODO(), storageClassName, metav1.DeleteOptions{})
 	if err != nil {
-		logger.Info("删除存储类失败 " + err.Error())
-		return errors.New("删除存储类失败 " + err.Error())
+		utils.Logger.Error("Failed to Delete the StorageClasses " + storageClassName + " ,reason: " + err.Error())
+		return err
 	}
+	utils.Logger.Info("Delete StorageClasses " + storageClassName + " success")
 	return nil
 }
 
@@ -111,8 +112,9 @@ func (sc *storageClass) DelStorageClass(storageClassName string, uuid int) error
 func (sc *storageClass) UpdateStorageClass(storageClass *storagev1.StorageClass, uuid int) error {
 	_, err := K8s.Clientset[uuid].StorageV1().StorageClasses().Update(context.TODO(), storageClass, metav1.UpdateOptions{})
 	if err != nil {
-		logger.Info("更新存储类失败 " + err.Error())
-		return errors.New("更新存储类失败 " + err.Error())
+		utils.Logger.Error("Failed to Update the StorageClasses " + storageClass.Name + " ,reason: " + err.Error())
+		return err
 	}
+	utils.Logger.Info("Update StorageClasses " + storageClass.Name + " success")
 	return nil
 }

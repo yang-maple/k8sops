@@ -20,10 +20,11 @@
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
-                <el-select v-model="namespace" filterable placeholder="命名空间（默认ALL）" @visible-change="getnsselect()"
-                    @change="getIngress()" clearable>
-                    <el-option v-for="item in nslist" :key="item.namespace" :label="item.label" :value="item.namespace"
-                        style="width:100%" />
+                <el-select v-model="namespace" filterable placeholder="命名空间（默认ALL）" @change="getIngress()" clearable>
+                    <el-option-group v-for="group in nslist" :key="group.label" :label="group.label">
+                        <el-option v-for="item in group.options" :key="item.namespace" :label="item.label"
+                            :value="item.namespace" />
+                    </el-option-group>
                 </el-select>
             </div>
         </el-col>
@@ -130,34 +131,39 @@
     </div>
 
     <el-dialog v-model="dialogcreatens" title="创建资源" center>
-        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="25%" status-icon>
-            <el-form-item label="名称" prop="name">
+        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="25%">
+            <el-form-item label="资源名称" prop="name">
                 <el-input v-model="ruleForm.name"></el-input>
             </el-form-item>
             <el-form-item label="命名空间" prop="namespace">
-                <el-select v-model="ruleForm.namespace" placeholder="请选择命名空间" @visible-change="getnsselect()">
-                    <el-option v-for="item in nslist" :key="item.namespace" :label="item.label" :value="item.namespace"
-                        v-show="item.label != 'All'" />
+                <el-select v-model="ruleForm.namespace" placeholder="请选择命名空间" fit-input-width>
+                    <el-option v-for="item in nslist[1].options" :key="item.namespace" :label="item.label"
+                        :value="item.namespace" />
                 </el-select>
             </el-form-item>
-            <el-form-item label="标签" prop="labels">
+            <el-form-item label="资源标签" prop="labels">
                 <el-input v-model="ruleForm.labels" placeholder="`请输入如下格式 {'a':'b'}`"></el-input>
             </el-form-item>
-            <el-form-item label="Class" prop="Class">
-                <el-select v-model="ruleForm.ingress_class_name" placeholder="请选择Class">
+            <el-form-item label="控制器" prop="ingress_class_name">
+                <el-select v-model="ruleForm.ingress_class_name" placeholder="请选择路由控制器">
                     <el-option v-for="item in ingressclasslist" :key="item.value" :label="item.label" :value="item.value" />
                 </el-select>
             </el-form-item>
-            <el-form-item label="Host" prop="port_name">
+            <el-form-item label="访问域名" prop="port_name">
                 <el-input v-model="ruleForm.rules[0].host"></el-input>
             </el-form-item>
-            <el-form-item label="Path">
+            <el-form-item label="访问路径" prop="rules[0].http_ingress_rule_values[0].path">
                 <el-input v-model="ruleForm.rules[0].http_ingress_rule_values[0].path"></el-input>
             </el-form-item>
-            <el-form-item label="svcname">
+            <el-form-item label="路径类型" prop="rules[0].http_ingress_rule_values[0].path_type">
+                <el-select v-model="ruleForm.rules[0].http_ingress_rule_values[0].path_type" placeholder="请选择路径类型">
+                    <el-option v-for="item in path_type" :key="item.value" :label="item.label" :value="item.value" />
+                </el-select>
+            </el-form-item>
+            <el-form-item label="服务名称" prop="rules[0].http_ingress_rule_values[0].service_name">
                 <el-input v-model="ruleForm.rules[0].http_ingress_rule_values[0].service_name"></el-input>
             </el-form-item>
-            <el-form-item label="svcport">
+            <el-form-item label="服务端口" prop="rules[0].http_ingress_rule_values[0].service_port">
                 <el-input v-model.number="ruleForm.rules[0].http_ingress_rule_values[0].service_port"></el-input>
             </el-form-item>
             <el-form-item>
@@ -215,6 +221,20 @@ export default {
                     "label": 'nginx-example'
                 }
             ],
+            path_type: [
+                {
+                    "value": 'ImplementationSpecific',
+                    "label": 'ImplementationSpecific'
+                },
+                {
+                    "value": 'Exact',
+                    "label": 'Exact'
+                },
+                {
+                    "value": 'Prefix',
+                    "label": 'Prefix'
+                },
+            ],
             ruleForm: {
                 name: null,
                 namespace: null,
@@ -226,8 +246,9 @@ export default {
                         http_ingress_rule_values: [
                             {
                                 path: null,
+                                path_type: null,
                                 service_name: null,
-                                service_port: null
+                                service_port: null,
                             }
                         ]
                     }
@@ -236,10 +257,12 @@ export default {
             rules: {
                 name: [
                     { required: true, message: '请输入资源名称', trigger: 'change' },
-                    { min: 3, max: 10, message: '长度在 3 到 15 个字符', trigger: 'change' }
                 ],
                 namespace: [
                     { required: true, message: '请选择命名空间', trigger: 'change' }
+                ],
+                ingress_class_name: [
+                    { required: true, message: '请选择路由类型', trigger: 'change' }
                 ],
                 resource: [
                     { message: '请选择一种协议', trigger: 'change' }
@@ -247,11 +270,25 @@ export default {
                 type: [
                     { required: true, message: '请选择一种服务类型', trigger: 'change' }
                 ],
+                'rules[0].http_ingress_rule_values[0].path': [
+                    { required: true, message: '请输入服务访问路径', trigger: 'change' }
+                ],
+                'rules[0].http_ingress_rule_values[0].path_type': [
+                    { required: true, message: '请选择路径类型', trigger: 'change' }
+                ],
+                'rules[0].http_ingress_rule_values[0].service_name': [
+                    { required: true, message: '请输入服务名称', trigger: 'change' }
+                ],
+                'rules[0].http_ingress_rule_values[0].service_port': [
+                    { required: true, message: '请输入服务访问端口', trigger: 'change' },
+                    { type: 'number', min: 1, max: 65535, message: '请输入1-65535数字' }
+                ]
             }
         }
     },
     created() {
         this.getIngress()
+        this.getnsselect()
     },
     methods: {
         getIngress() {
@@ -289,7 +326,7 @@ export default {
                     message: res.msg,
                     type: 'success'
                 });
-
+                this.dialogcreatens = false
             }).catch((res) => {
                 this.$message({
                     showClose: true,
@@ -307,15 +344,32 @@ export default {
         },
         getnsselect() {
             if (this.nslist == "") {
-                this.nslist.push({ 'namespace': '', 'label': "All" })
+                this.nslist.push({
+                    label: '',
+                    options: [
+                        {
+                            namespace: '',
+                            label: '全部空间',
+                        },
+                    ],
+                })
                 this.$ajax({
                     method: 'get',
                     url: '/namespaces/list',
                 }).then((res) => {
+                    this.nslist.push({
+                        label: '',
+                        options: [],
+                    })
                     res.data.item.forEach(v => {
-                        this.nslist.push({ 'namespace': v.name, 'label': v.name })
+                        this.nslist[1].options.push({ 'namespace': v.name, 'label': v.name })
                     })
                 }).catch((res) => {
+                    this.$message({
+                        showClose: true,
+                        message: "获取名称空间失败",
+                        type: 'error'
+                    });
                     console.log(res.data)
                 })
             }
@@ -430,11 +484,18 @@ export default {
         submitForm(formName) {
             this.$refs[formName].validate((valid) => {
                 if (valid) {
-                    this.dialogcreatens = false
-                    if (this.ruleForm.labels != null) {
-                        this.ruleForm.labels = JSON.parse(this.ruleForm.labels)
+                    try {
+                        if (this.ruleForm.labels != null) {
+                            this.ruleForm.labels = JSON.parse(this.ruleForm.labels)
+                        }
+                        this.createIngress()
+                    } catch (error) {
+                        this.$message({
+                            showClose: true,
+                            message: '请填写正确格式，例如: {"a":"b"}',
+                            type: 'error'
+                        });
                     }
-                    this.createIngress()
                 } else {
                     return false;
                 }
@@ -518,8 +579,6 @@ export default {
     margin-right: 10px;
 }
 
-
-
 .demo-pagination-block {
 
     margin-top: 5px;
@@ -532,13 +591,6 @@ export default {
 }
 
 
-.el-dialog {
-    .el-select {
-        .el-input {
-            width: 180px;
-        }
-    }
-}
 
 .el-form-item__content .el-input {
     width: 400px;

@@ -3,7 +3,6 @@ package utils
 import (
 	"errors"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/wonderivan/logger"
 	"time"
 )
 
@@ -32,7 +31,7 @@ func (*jwtToken) ParseToken(tokenString string, secret string) (claims *CustomCl
 		return []byte(secret), nil
 	})
 	if err != nil {
-		logger.Error("Token parse failed" + err.Error())
+		Logger.Error("Token parse failed" + err.Error())
 		//处理 token 的各种报错
 		var ve *jwt.ValidationError
 		if errors.As(err, &ve) {

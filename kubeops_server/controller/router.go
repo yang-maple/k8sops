@@ -60,7 +60,7 @@ func (router *router) InitApiRouter(r *gin.Engine) {
 	nodeV1 := r.Group("/v1/api/node")
 	{
 		nodeV1.GET("/list", Node.GetNodeList)
-		nodeV1.GET("/detail", Node.GetNodeDeTal)
+		nodeV1.GET("/detail", Node.GetNodeDetail)
 		nodeV1.POST("/schedule", Node.SetNodeSchedule)
 	}
 	pvV1 := r.Group("/v1/api/pv")

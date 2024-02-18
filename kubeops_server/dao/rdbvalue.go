@@ -16,7 +16,7 @@ type rdbValue struct{}
 func (rdb *rdbValue) SetValue(key, value string, expiration time.Duration) error {
 	err := db.Rdb.Set(context.Background(), key, value, expiration*time.Second).Err()
 	if err != nil {
-		return errors.New("redis set value error")
+		return err
 	}
 	return nil
 }
@@ -27,9 +27,9 @@ func (rdb *rdbValue) GetValue(key string) (value string, err error) {
 	if errors.Is(err, redis.Nil) {
 		return "", errors.New("key does not exist")
 	} else if err != nil {
-		return "", errors.New("redis get value error:" + err.Error())
+		return "", err
 	}
-	return value, err
+	return value, nil
 }
 
 // DelValue 删除缓存

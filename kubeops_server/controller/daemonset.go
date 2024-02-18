@@ -1,9 +1,7 @@
 package controller
 
 import (
-	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/wonderivan/logger"
 	appsv1 "k8s.io/api/apps/v1"
 	"kubeops/service"
 	"net/http"
@@ -24,28 +22,19 @@ func (d *daemonSet) GetDaemonList(c *gin.Context) {
 		Limit      int    `form:"limit"`
 		Page       int    `form:"page"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	data, err := service.DaemonSet.GetDsList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
-		logger.Info("获取 Daemon set 失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg":  "获取Daemon set失败",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg":  "获取守护进程列表失败",
 			"data": nil,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":  "获取数据成功",
+		"msg":  "获取守护进程列表成功",
 		"data": data,
 	})
 }
@@ -57,24 +46,17 @@ func (d *daemonSet) GetDaemonDetail(c *gin.Context) {
 		Namespace  string `form:"namespace"`
 	})
 
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"err": errors.New("绑定参数失败" + err.Error()),
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	Ds, err := service.DaemonSet.GetDsDetail(params.Namespace, params.DaemonName, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"err": errors.New("获取Daemon set 失败" + err.Error()),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"err": "守护进程 " + params.DaemonName + " 获取数据失败",
 		})
 		return
 	} else {
 		c.JSON(http.StatusOK, gin.H{
-			"msg":  "获取成功",
+			"msg":  "守护进程 " + params.DaemonName + " 获取数据成功",
 			"data": Ds,
 		})
 	}
@@ -86,24 +68,17 @@ func (d *daemonSet) DelDaemon(c *gin.Context) {
 		DaemonName string `form:"daemon_name"`
 		Namespace  string `form:"namespace"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": errors.New("绑定参数失败" + err.Error()),
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.DaemonSet.DelDs(params.Namespace, params.DaemonName, uuid)
+	err := service.DaemonSet.DelDs(params.Namespace, params.DaemonName, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": errors.New("删除失败" + err.Error()),
+			"msg": "守护进程 " + params.DaemonName + " 删除失败:" + err.Error(),
 		})
 		return
 	} else {
 		c.JSON(http.StatusOK, gin.H{
-			"msg": "删除成功",
+			"msg": "守护进程 " + params.DaemonName + " 删除成功",
 		})
 	}
 
@@ -111,31 +86,20 @@ func (d *daemonSet) DelDaemon(c *gin.Context) {
 
 // UpdateDaemon 更新实例
 func (d *daemonSet) UpdateDaemon(c *gin.Context) {
-
 	params := new(struct {
 		Namespace string            `json:"namespace"`
 		Data      *appsv1.DaemonSet `json:"data"`
 	})
-
-	err := c.ShouldBindJSON(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": errors.New("绑定参数失败" + err.Error()),
-		})
-		return
-	}
+	_ = c.ShouldBindJSON(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.DaemonSet.UpdateDs(params.Namespace, params.Data, uuid)
+	err := service.DaemonSet.UpdateDs(params.Namespace, params.Data, uuid)
 	if err != nil {
-		logger.Info("更新失败" + err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "更新失败" + err.Error(),
+			"msg": "守护进程 " + params.Data.Name + " 更新失败" + err.Error(),
 		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "更新成功",
+		"msg": "守护进程 " + params.Data.Name + " 更新成功",
 	})
-
 }

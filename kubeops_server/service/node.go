@@ -4,12 +4,11 @@ package service
 // 获取node 详情
 import (
 	"context"
-	"errors"
 	"fmt"
-	"github.com/wonderivan/logger"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubeops/model"
+	"kubeops/utils"
 	"strconv"
 )
 
@@ -72,8 +71,8 @@ const (
 func (n *node) GetNodeList(uuid int) (nodeList *NodeList, err error) {
 	nodeLists, err := K8s.Clientset[uuid].CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("获取Node 失败" + err.Error())
-		return nil, errors.New("获取Node 失败" + err.Error())
+		utils.Logger.Error("Failed to Get the Nodes list,reason: " + err.Error())
+		return nil, err
 	}
 	item := make([]nodeInfo, 0, len(nodeLists.Items))
 	for _, v := range nodeLists.Items {
@@ -90,7 +89,7 @@ func (n *node) GetNodeList(uuid int) (nodeList *NodeList, err error) {
 			NodeIp:         v.Status.Addresses[0].Address,
 			CpuTotal:       float62(v.Status.Allocatable.Cpu().AsApproximateFloat64()),
 			MemoryTotal:    v.Status.Allocatable.Memory().Value() / MBMemory,
-			Pods:           len(*n.GetNodePods(v.Name, uuid)),
+			Pods:           len(*GetNodePods(v.Name, uuid)),
 			CreateTime:     v.CreationTimestamp.Time.Format("2006-01-02 15:04:05"),
 			KubeletVersion: v.Status.NodeInfo.KubeletVersion,
 		})
@@ -102,16 +101,17 @@ func (n *node) GetNodeList(uuid int) (nodeList *NodeList, err error) {
 	}, nil
 }
 
-// GetNodeDetail  获取namespace 详情
+// GetNodeDetail  获取node 详情
 func (n *node) GetNodeDetail(NodeName string, uuid int) (details *NodeDetail, err error) {
 	//获取deploy
 	detail, err := K8s.Clientset[uuid].CoreV1().Nodes().Get(context.TODO(), NodeName, metav1.GetOptions{})
 	if err != nil {
-		logger.Info("获取Node 详情失败" + err.Error())
-		return nil, errors.New("获取Node 详情失败" + err.Error())
+		utils.Logger.Error("Failed to Get the Nodes " + NodeName + " detail,reason: " + err.Error())
+		return nil, err
 	}
-	pods := n.GetNodePods(NodeName, uuid)
+	pods := GetNodePods(NodeName, uuid)
 	memory, _ := strconv.ParseFloat(fmt.Sprintf("%.2f", float64(detail.Status.Allocatable.Name(corev1.ResourceMemory, "").Value())/float64(1024*1024*1024)), 64)
+	utils.Logger.Info("Get Nodes " + NodeName + "success")
 	return &NodeDetail{
 		Detail:          detail,
 		Pods:            *pods,
@@ -121,12 +121,12 @@ func (n *node) GetNodeDetail(NodeName string, uuid int) (details *NodeDetail, er
 	}, nil
 }
 
-// GetNodePods 获取node 详情
-func (n *node) GetNodePods(NodeName string, uuid int) (detail *[]poddetail) {
+// GetNodePods 统计Pod 数量
+func GetNodePods(NodeName string, uuid int) (detail *[]poddetail) {
 	//获取pod list
 	podList, err := K8s.Clientset[uuid].CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("获取Node 详情失败" + err.Error())
+		utils.Logger.Error("Failed to count the number of pods" + err.Error())
 		return nil
 	}
 	nodePods := make([]poddetail, 0)
@@ -138,12 +138,12 @@ func (n *node) GetNodePods(NodeName string, uuid int) (detail *[]poddetail) {
 			}
 			if pods.Status.Phase != corev1.PodCompleted {
 				nodePods = append(nodePods, poddetail{
-					Name:    pods.Name,
-					Image:   containers,
-					Labels:  pods.Labels,
-					Status:  pods.Status.Phase,
-					Restart: pods.Status.ContainerStatuses[0].RestartCount,
-					PodAge:  model.GetAge(pods.CreationTimestamp.Unix()),
+					Name:   pods.Name,
+					Image:  containers,
+					Labels: pods.Labels,
+					Status: pods.Status.Phase,
+					//Restart: pods.Status.ContainerStatuses[0].RestartCount,
+					PodAge: model.GetAge(pods.CreationTimestamp.Unix()),
 				})
 			}
 
@@ -156,15 +156,16 @@ func (n *node) GetNodePods(NodeName string, uuid int) (detail *[]poddetail) {
 func (n *node) SetNodeSchedule(name string, status bool, uuid int) (err error) {
 	node, err := K8s.Clientset[uuid].CoreV1().Nodes().Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
-		logger.Info("获取节点失败" + err.Error())
+		utils.Logger.Error("Failed to get node status" + err.Error())
 		return err
 	}
 	node.Spec.Unschedulable = status
 	_, err = K8s.Clientset[uuid].CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
 	if err != nil {
-		logger.Info("调度设置失败" + err.Error())
+		utils.Logger.Error("Failed to set node " + name + " status Unschedulable = " + strconv.FormatBool(status) + " :" + err.Error())
 		return err
 	}
+	utils.Logger.Info("Succeed to set node " + name + " status Unschedulable = " + strconv.FormatBool(status))
 	return nil
 }
 

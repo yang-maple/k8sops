@@ -1,9 +1,7 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/wonderivan/logger"
 	corev1 "k8s.io/api/core/v1"
 	"kubeops/service"
 	"net/http"
@@ -24,25 +22,18 @@ func (p *pod) GetPods(c *gin.Context) {
 		Limit      int    `form:"limit"`
 		Page       int    `form:"page"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "绑定参数失败",
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	data, err := service.Pod.GetPods(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "获取plist失败" + err.Error(),
+			"msg": "获取容器组列表失败",
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":  "获取数据成功",
+		"msg":  "获取容器组列表成功",
 		"data": data,
 	})
 
@@ -54,26 +45,18 @@ func (p *pod) GetPodsDetail(c *gin.Context) {
 		Namespace string `form:"namespace"`
 		PodName   string `form:"pod_name"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	data, err := service.Pod.GetPodDetail(params.PodName, params.Namespace, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "获取失败" + err.Error(),
+			"msg":  "容器组 " + params.PodName + " 获取数据失败",
 			"data": nil,
 		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"msg":  "获取成功",
+		"msg":  "容器组 " + params.PodName + " 获取数据成功",
 		"data": data,
 	})
 }
@@ -84,27 +67,19 @@ func (p *pod) DeletePod(c *gin.Context) {
 		Namespace string `form:"namespace"`
 		PodName   string `form:"pod_name"`
 	})
-	err := c.ShouldBind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	if params.Namespace == "" {
 		params.Namespace = "default"
 	}
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.Pod.DelPod(params.PodName, params.Namespace, uuid)
+	err := service.Pod.DelPod(params.PodName, params.Namespace, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "删除失败" + err.Error(),
+			"msg": "容器组 " + params.PodName + " 删除失败" + err.Error(),
 		})
 	} else {
 		c.JSON(http.StatusOK, gin.H{
-			"msg": "删除成功",
+			"msg": "容器组 " + params.PodName + " 删除成功",
 		})
 	}
 }
@@ -115,24 +90,16 @@ func (p *pod) UpdatePod(c *gin.Context) {
 		Namespace string     `json:"namespace"`
 		Data      corev1.Pod `json:"data"`
 	})
-	err := c.ShouldBindJSON(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBindJSON(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.Pod.UpdatePod(&params.Data, params.Namespace, uuid)
+	err := service.Pod.UpdatePod(&params.Data, params.Namespace, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "更新失败" + err.Error(),
+			"msg": "容器组 " + params.Data.Name + " 更新失败" + err.Error(),
 		})
 	} else {
 		c.JSON(http.StatusOK, gin.H{
-			"msg": "更新成功",
+			"msg": "容器组 " + params.Data.Name + " 更新成功",
 		})
 	}
 }
@@ -144,24 +111,16 @@ func (p *pod) GetContainerList(c *gin.Context) {
 		PodName   string `form:"pod_name"`
 	})
 
-	err := c.ShouldBind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	containers, err := service.Pod.GetContainer(params.PodName, params.Namespace, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "获取容器信息失败" + err.Error(),
+			"msg": "容器组 " + params.PodName + " 获取容器列表失败",
 		})
 	} else {
 		c.JSON(http.StatusOK, gin.H{
-			"msg":  "获取容器信息成功",
+			"msg":  "容器组 " + params.PodName + " 获取容器列表成功",
 			"item": containers,
 		})
 	}
@@ -175,24 +134,16 @@ func (p *pod) GetContainerLog(c *gin.Context) {
 		PodName       string `form:"pod_name"`
 		ContainerName string `form:"container_name"`
 	})
-	err := c.ShouldBind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	log, err := service.Pod.GetContainerLog(params.PodName, params.ContainerName, params.Namespace, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "获取日志失败" + err.Error(),
+			"msg": "容器组 " + params.PodName + " 获取日志失败" + err.Error(),
 		})
 	} else {
 		c.JSON(http.StatusOK, gin.H{
-			"msg":  "获取日志成功",
+			"msg":  "容器组 " + params.PodName + " 获取日志成功",
 			"data": log,
 		})
 	}
@@ -203,14 +154,13 @@ func (p *pod) GetContainerLog(c *gin.Context) {
 func (p *pod) GetPodNumber(c *gin.Context) {
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	total, err := service.Pod.CountPod(uuid)
-	fmt.Println("total:", total)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "获取失败" + err.Error(),
+			"msg": "统计每个命名空间下的容器组数量失败",
 		})
 	} else {
 		c.JSON(http.StatusOK, gin.H{
-			"msg":  "获取数据成功",
+			"msg":  "统计每个命名空间下的容器组数量成功",
 			"data": total,
 		})
 	}

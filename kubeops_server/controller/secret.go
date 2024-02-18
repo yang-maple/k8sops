@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/wonderivan/logger"
 	corev1 "k8s.io/api/core/v1"
 	"kubeops/service"
 	"net/http"
@@ -21,27 +20,19 @@ func (s *secret) GetSecretList(c *gin.Context) {
 		Limit      int    `form:"limit"`
 		Page       int    `form:"page"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	data, err := service.Secrets.GetSecretList(params.FilterName, params.Namespace, params.Limit, params.Page, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "获取Secret失败" + err.Error(),
+			"msg":  "获取保密字典列表失败",
 			"data": nil,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":  "获取数据成功",
+		"msg":  "获取保密字典列表成功",
 		"data": data,
 	})
 }
@@ -52,27 +43,19 @@ func (s *secret) GetSecretDetail(c *gin.Context) {
 		SecretName string `form:"secret_name"`
 		Namespace  string `form:"namespace"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	detail, err := service.Secrets.GetSecretDetail(params.Namespace, params.SecretName, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "获取Secret 详情失败" + err.Error(),
+			"msg":  "保密字典 " + params.SecretName + " 获取数据失败",
 			"data": nil,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":  "获取数据成功",
+		"msg":  "保密字典 " + params.SecretName + " 获取数据成功",
 		"data": detail,
 	})
 }
@@ -83,26 +66,19 @@ func (s *secret) DelSecret(c *gin.Context) {
 		SecretName string `form:"secret_name"`
 		Namespace  string `form:"namespace"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.Secrets.DelSecret(params.Namespace, params.SecretName, uuid)
+	err := service.Secrets.DelSecret(params.Namespace, params.SecretName, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "删除 Secret 失败" + err.Error(),
+			"msg":  "保密字典 " + params.SecretName + " 删除失败" + err.Error(),
 			"data": nil,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "删除 Secret 成功",
+		"msg": "保密字典 " + params.SecretName + " 删除成功",
 	})
 }
 
@@ -111,27 +87,19 @@ func (s *secret) CreateSecret(c *gin.Context) {
 	params := new(struct {
 		Data *service.CreateSecret `json:"data"`
 	})
-	err := c.ShouldBindJSON(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBindJSON(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.Secrets.CreateSecret(params.Data, uuid)
+	err := service.Secrets.CreateSecret(params.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "创建 Secret 失败" + err.Error(),
+			"msg":  "保密字典 " + params.Data.Name + " 创建失败" + err.Error(),
 			"data": nil,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "创建 Services 成功",
+		"msg": "保密字典 " + params.Data.Name + " 创建成功",
 	})
 }
 
@@ -141,25 +109,17 @@ func (s *secret) UpdateSecret(c *gin.Context) {
 		Namespace string         `json:"namespace"`
 		Data      *corev1.Secret `json:"data"`
 	})
-	err := c.ShouldBindJSON(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBindJSON(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.Secrets.UpdateSecret(params.Namespace, params.Data, uuid)
+	err := service.Secrets.UpdateSecret(params.Namespace, params.Data, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "更新 Secret 失败" + err.Error(),
+			"msg": "保密字典 " + params.Data.Name + " 更新失败" + err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "更新 Secret 成功",
+		"msg": "保密字典 " + params.Data.Name + " 更新成功",
 	})
 }

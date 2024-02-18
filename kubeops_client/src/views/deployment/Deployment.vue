@@ -21,8 +21,7 @@
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
-                <el-select v-model="namespace" filterable placeholder="命名空间（默认ALL）" @visible-change="getnsselect()"
-                    @change="getDeployment()" clearable>
+                <el-select v-model="namespace" filterable placeholder="命名空间（默认ALL）" @change="getDeployment()" clearable>
                     <el-option-group v-for="group in nslist" :key="group.label" :label="group.label">
                         <el-option v-for="item in group.options" :key="item.namespace" :label="item.label"
                             :value="item.namespace" />
@@ -164,44 +163,41 @@
         </template>
     </el-dialog>
     <el-dialog v-model="dialogcreatens" title="创建资源" center>
-        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="25%" status-icon>
+        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="25%">
             <el-form-item label="名称" prop="name">
                 <el-input v-model="ruleForm.name"></el-input>
             </el-form-item>
             <el-form-item label="命名空间" prop="namespace">
-                <el-select v-model="ruleForm.namespace" placeholder="请选择命名空间" @visible-change="getnsselect()">
-                    <el-option-group v-for="group in  nslist " :key="group.label">
-                        <el-option v-for=" item  in  group.options " :key="item.namespace" :value="item.namespace"
-                            v-show="item.label != 'ALL'" />
-                    </el-option-group>
+                <el-select v-model="ruleForm.namespace" placeholder="请选择命名空间">
+                    <el-option v-for="item in nslist[1].options" :key="item.namespace" :label="item.label"
+                        :value="item.namespace" />
                 </el-select>
             </el-form-item>
-            <el-form-item label="标签">
+            <el-form-item label="标签" prop="labels">
                 <el-input v-model="ruleForm.labels" placeholder="`请输入如下格式 {'a':'b'}`"></el-input>
             </el-form-item>
-            <el-form-item label="副本">
+            <el-form-item label="副本" prop="replicas">
                 <el-input-number v-model="ruleForm.replicas" :min="1" :max="99" />
             </el-form-item>
-            <el-form-item label="容器名称" prop="container_name">
+            <el-form-item label="容器名称" prop="container.container_name">
                 <el-input v-model="ruleForm.container.container_name"></el-input>
             </el-form-item>
-            <el-form-item label="镜像" prop="image">
+            <el-form-item label="镜像" prop="container.image">
                 <el-input v-model="ruleForm.container.image"></el-input>
             </el-form-item>
-            <el-form-item label="Cpu限制">
-                <el-input v-model="ruleForm.container.cpu" placeholder="单位为 m"></el-input>
+            <!-- <el-form-item label="Cpu需求">
+                <el-input v-model="ruleForm.container.cpu" placeholder="单位为 m"></el-input>m
             </el-form-item>
-            <el-form-item label="Memory限制">
-                <el-input v-model="ruleForm.container.memory" placeholder="单位为 Mi"></el-input>
-            </el-form-item>
-
-            <el-form-item label="端口名称">
+            <el-form-item label="Memory需求">
+                <el-input v-model="ruleForm.container.memory" placeholder="单位为 Mi"></el-input>Mi
+            </el-form-item> -->
+            <el-form-item label="端口名称" prop="container.container_port.port_name">
                 <el-input v-model="ruleForm.container.container_port.port_name"></el-input>
             </el-form-item>
-            <el-form-item label="端口">
-                <el-input type="number" v-model.number="ruleForm.container.container_port.container_port"></el-input>
+            <el-form-item label="端口" prop="container.container_port.container_port">
+                <el-input v-model.number="ruleForm.container.container_port.container_port"></el-input>
             </el-form-item>
-            <el-form-item label="协议" prop="resource">
+            <el-form-item label="协议" prop="container.container_port.protocol">
                 <el-radio-group v-model="ruleForm.container.container_port.protocol">
                     <el-radio label="TCP"></el-radio>
                     <el-radio label="UDP"></el-radio>
@@ -211,13 +207,14 @@
             <el-form-item label="健康检查" prop="delivery">
                 <el-switch v-model="ruleForm.health_check"></el-switch>
             </el-form-item>
-            <el-form-item label="路径" v-show="ruleForm.health_check == true">
+            <el-form-item label="路径" v-show="ruleForm.health_check == true"
+                :prop="ruleForm.health_check ? 'health_path' : 'nocheck'">
                 <el-input v-model="ruleForm.health_path"></el-input>
             </el-form-item>
             <el-form-item>
                 <el-button type="primary" @click="submitForm('ruleForm')">立即创建</el-button>
                 <el-button @click="resetForm('ruleForm')">立即重置</el-button>
-                <el-button type="danger" @click="dialogcreatens = false">
+                <el-button type="danger" @click="dialogcreatens = false, resetForm('ruleForm')">
                     取消
                 </el-button>
             </el-form-item>
@@ -260,41 +257,60 @@ export default {
             ruleForm: {
                 name: '',
                 namespace: '',
-                replicas: 0,
+                replicas: 1,
                 labels: null,
                 container:
                 {
                     container_name: '',
                     image: '',
-                    cpu: null,
-                    memory: null,
+                    cpu: '0m',
+                    memory: '0Mi',
                     container_port:
                     {
                         port_name: '',
                         container_port: null,
                         protocol: '',
                     }
-                }
+                },
+                health_check: false,
+                health_path: '',
             },
             rules: {
                 name: [
                     { required: true, message: '请输入资源名称', trigger: 'blur' },
-                    { min: 3, max: 15, message: '长度在 3 到 15 个字符', trigger: 'blur' }
                 ],
                 namespace: [
                     { required: true, message: '请选择命名空间', trigger: 'change' }
                 ],
+                labels: [
+                    { required: true, message: '请输入标签', trigger: 'blur' },
+                ],
                 replica: [
                     { required: true, message: '请输入副本数量', trigger: 'change' }
                 ],
-                resource: [
-                    { message: '请选择一种协议', trigger: 'change' }
+                'container.container_name': [
+                    { required: true, message: '请输入容器名称', trigger: 'blur' },
                 ],
+                'container.image': [
+                    { required: true, message: '请输入镜像名称', trigger: 'blur' },
+                ],
+                'container.container_port.container_port': [
+                    { required: true, message: '请输入端口', trigger: 'change' },
+                    { type: 'number', min: 1, max: 65535, message: '端口范围为1-65535', trigger: 'change' },
+                ],
+                'container.container_port.protocol': [
+                    { required: true, message: '请选择一种协议', trigger: 'change' },
+                ],
+                health_path: [
+                    { required: true, message: '请输入健康检查路径', trigger: 'blur' },
+                ],
+                nocheck: [],
             }
         }
     },
     created() {
         this.getDeployment()
+        this.getnsselect()
     },
     methods: {
         getDeployment() {
@@ -349,7 +365,7 @@ export default {
                     options: [
                         {
                             namespace: '',
-                            label: 'ALL',
+                            label: '全部空间',
                         },
                     ],
                 })
@@ -365,6 +381,11 @@ export default {
                         this.nslist[1].options.push({ 'namespace': v.name, 'label': v.name })
                     })
                 }).catch((res) => {
+                    this.$message({
+                        showClose: true,
+                        message: "获取名称空间失败",
+                        type: 'error'
+                    });
                     console.log(res.data)
                 })
             }
@@ -546,8 +567,16 @@ export default {
         submitForm(formName) {
             this.$refs[formName].validate((valid) => {
                 if (valid) {
-                    this.ruleForm.labels = JSON.parse(this.ruleForm.labels);
-                    this.createDeployment()
+                    try {
+                        this.ruleForm.labels = JSON.parse(this.ruleForm.labels);
+                        this.createDeployment()
+                    } catch (error) {
+                        this.$message({
+                            showClose: true,
+                            message: '请填写正确格式，例如: {"a":"b"}',
+                            type: 'error'
+                        });
+                    }
                 } else {
                     return false;
                 }
@@ -652,14 +681,6 @@ export default {
 
 .el-tabs--border-card>.el-tabs__content {
     padding: 0px;
-}
-
-.el-dialog {
-    .el-select {
-        .el-input {
-            width: 180px;
-        }
-    }
 }
 
 .dotClass {

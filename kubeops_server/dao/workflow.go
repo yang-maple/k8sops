@@ -3,7 +3,6 @@ package dao
 import (
 	"errors"
 	"fmt"
-	"github.com/wonderivan/logger"
 	"kubeops/db"
 	"kubeops/model"
 )
@@ -29,7 +28,6 @@ func (w *workflow) GetWorkflowList(FilterName, Namespace string, Limit, Page int
 	//查询语句 limit 限制条数 offset设置起始位置 order排序
 	tx := db.GORM.Where("name like ?", "%"+FilterName+"%").Limit(Limit).Offset(startSet).Order("id desc").Find(&workflowList)
 	if tx.Error != nil && tx.Error.Error() != "record not found" {
-		logger.Info("获取workflowList失败" + err.Error())
 		return nil, errors.New("获取workflowList失败" + err.Error())
 	}
 	return &WorkflowResp{
@@ -44,7 +42,6 @@ func (w *workflow) GetByIdDetail(id int) (workflow *model.Workflow, err error) {
 	tx := db.GORM.Where("id = ?", id).Find(workflow)
 
 	if tx.Error != nil && tx.Error.Error() != "record not found" {
-		logger.Info("获取workflow 数据详情失败没查询到该条记录" + err.Error())
 		return nil, errors.New("获取workflow 单条数据详情失败 没查询到该条记录" + err.Error())
 	} else if tx.RowsAffected == 0 {
 		return nil, errors.New("未查询到该条记录")
@@ -58,7 +55,6 @@ func (w *workflow) GetById(id int) (data *model.Workflow, err error) {
 	tx := db.GORM.Where("id = ?", id).First(&workflow)
 	fmt.Println(&workflow)
 	if tx.Error != nil && tx.Error.Error() != "record not found" {
-		logger.Info("获取workflow 单条数据失败" + err.Error())
 		return nil, errors.New("获取workflow 单条数据失败" + err.Error())
 	}
 	return &workflow, nil
@@ -68,7 +64,6 @@ func (w *workflow) GetById(id int) (data *model.Workflow, err error) {
 func (w *workflow) Add(workflow *model.Workflow) (err error) {
 	tx := db.GORM.Create(workflow)
 	if tx.Error != nil && tx.Error.Error() != "record not found" {
-		logger.Info("创建workflow 数据失败" + err.Error())
 		return errors.New("创建workflow 数据失败" + err.Error())
 	}
 	return err
@@ -81,7 +76,6 @@ func (w *workflow) DeleteById(id int) (err error) {
 
 	tx := db.GORM.Where("id = ?", id).Delete(&model.Workflow{})
 	if tx.Error != nil && tx.Error.Error() != "record not found" {
-		logger.Info("删除workflow 数据失败" + err.Error())
 		return errors.New("删除workflow 数据失败" + err.Error())
 	}
 	return nil

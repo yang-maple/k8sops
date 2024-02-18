@@ -153,7 +153,7 @@
         </template>
     </el-dialog>
     <el-dialog v-model="dialogpassword" title="重置密码" center style="width: 400px;">
-        <el-form :model="passwordForm" status-icon :rules="rules" ref="passwordForm" label-width="100px">
+        <el-form :model="passwordForm" :rules="rules" ref="passwordForm" label-width="100px">
             <el-form-item label="旧密码" prop="oldpasswd">
                 <el-input v-model="passwordForm.oldpasswd"></el-input>
             </el-form-item>

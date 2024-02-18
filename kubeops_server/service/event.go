@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"github.com/wonderivan/logger"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kubeops/utils"
 	"sort"
 )
 
@@ -29,7 +29,7 @@ type eventInfo struct {
 func (e *event) ListEvent(uuid int, types string, namespaces string) (info *EventResp, err error) {
 	events, err := K8s.Clientset[uuid].CoreV1().Events(namespaces).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("event list error" + err.Error())
+		utils.Logger.Error("Failed to Get the Events list,reason: " + err.Error())
 		return nil, err
 	}
 	//定义新的[]info 遍历event 循环写入info

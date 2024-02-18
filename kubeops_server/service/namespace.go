@@ -2,11 +2,10 @@ package service
 
 import (
 	"context"
-	"errors"
-	"github.com/wonderivan/logger"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubeops/model"
+	"kubeops/utils"
 )
 
 type namespace struct{}
@@ -50,8 +49,8 @@ func (n *namespace) fromCells(cells []DataCell) []corev1.Namespace {
 func (n *namespace) GetNsList(Name string, Limit, Page int, uuid int) (namespacesList *NsList, err error) {
 	nsList, err := K8s.Clientset[uuid].CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("获取namespaces-list 失败" + err.Error())
-		return nil, errors.New("获取namespaces-list 失败" + err.Error())
+		utils.Logger.Error("Failed to Get the Namespaces list,reason: " + err.Error())
+		return nil, err
 	}
 
 	//组装数据
@@ -93,11 +92,12 @@ func (n *namespace) GetNsDetail(NsName string, uuid int) (*NamespaceDetail, erro
 	//获取deploy
 	details, err := K8s.Clientset[uuid].CoreV1().Namespaces().Get(context.TODO(), NsName, metav1.GetOptions{})
 	if err != nil {
-		logger.Info("获取Namespace 详情失败" + err.Error())
-		return nil, errors.New("获取Namespace 详情失败" + err.Error())
+		utils.Logger.Error("Failed to Get the Namespaces " + NsName + " detail,reason: " + err.Error())
+		return nil, err
 	}
 	details.Kind = "Namespace"
 	details.APIVersion = "v1"
+	utils.Logger.Info("Get Namespaces " + NsName + "success")
 	return &NamespaceDetail{
 		Detail: details,
 		Age:    model.GetAge(details.CreationTimestamp.Unix()),
@@ -108,9 +108,10 @@ func (n *namespace) GetNsDetail(NsName string, uuid int) (*NamespaceDetail, erro
 func (n *namespace) DelNs(NsName string, uuid int) (err error) {
 	err = K8s.Clientset[uuid].CoreV1().Namespaces().Delete(context.TODO(), NsName, metav1.DeleteOptions{})
 	if err != nil {
-		logger.Info("删除实例失败" + err.Error())
-		return errors.New("删除实例失败" + err.Error())
+		utils.Logger.Error("Failed to Delete the Namespaces " + NsName + " detail,reason: " + err.Error())
+		return err
 	}
+	utils.Logger.Info("Delete Namespaces " + NsName + "success")
 	return nil
 }
 
@@ -123,19 +124,20 @@ func (n *namespace) CreateNs(NsName string, uuid int) (err error) {
 	}
 	_, err = K8s.Clientset[uuid].CoreV1().Namespaces().Create(context.TODO(), namespaceConfig, metav1.CreateOptions{})
 	if err != nil {
-		logger.Info("namespace 创建失败" + err.Error())
-		return errors.New("namespace 创建失败" + err.Error())
+		utils.Logger.Error("Failed to Create ConfigMap " + NsName + ",reason:" + err.Error())
+		return err
 	}
-
+	utils.Logger.Info("Create Namespaces " + NsName + "success")
 	return nil
 }
 
 // UpdateNs  更新
-func (n *namespace) UpdateNs(deploy *corev1.Namespace, uuid int) (err error) {
-	_, err = K8s.Clientset[uuid].CoreV1().Namespaces().Update(context.TODO(), deploy, metav1.UpdateOptions{})
+func (n *namespace) UpdateNs(ns *corev1.Namespace, uuid int) (err error) {
+	_, err = K8s.Clientset[uuid].CoreV1().Namespaces().Update(context.TODO(), ns, metav1.UpdateOptions{})
 	if err != nil {
-		logger.Info("NameSpaces 更新失败" + err.Error())
-		return errors.New("NameSpaces 更新失败" + err.Error())
+		utils.Logger.Error("Failed to Update the Namespaces " + ns.Name + " detail,reason: " + err.Error())
+		return err
 	}
+	utils.Logger.Info("Update Namespaces " + ns.Name + "success")
 	return nil
 }

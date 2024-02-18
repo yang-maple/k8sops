@@ -4,12 +4,11 @@ package service
 // 获取node 详情
 import (
 	"context"
-	"errors"
-	"github.com/wonderivan/logger"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubeops/model"
+	"kubeops/utils"
 )
 
 type persistenvolume struct{}
@@ -40,14 +39,16 @@ type pvDetail struct {
 }
 
 type CreatePVConfig struct {
-	Name       string                              `json:"name"`
-	Labels     map[string]string                   `json:"labels"`
-	Storage    string                              `json:"storage"`
-	AccessMode []corev1.PersistentVolumeAccessMode `json:"access_mode"`
-	VolumeMode *corev1.PersistentVolumeMode        `json:"volume_mode"`
-	Type       string                              `json:"type"`
-	Path       string                              `json:"path"`
-	Server     string                              `json:"server"`
+	Name        string                               `json:"name"`
+	Labels      map[string]string                    `json:"labels"`
+	Storage     string                               `json:"storage"`
+	AccessMode  []corev1.PersistentVolumeAccessMode  `json:"access_mode"`
+	VolumeMode  *corev1.PersistentVolumeMode         `json:"volume_mode"`
+	RecycleMode corev1.PersistentVolumeReclaimPolicy `json:"recycle_mode"`
+	ClassName   string                               `json:"class_name"`
+	Type        string                               `json:"type"`
+	Path        string                               `json:"path"`
+	Server      string                               `json:"server"`
 }
 
 func (p *persistenvolume) toCells(pvs []corev1.PersistentVolume) []DataCell {
@@ -70,7 +71,7 @@ func (p *persistenvolume) fromCells(cells []DataCell) []corev1.PersistentVolume 
 func (p *persistenvolume) GetPvList(pvName string, Limit, Page int, uuid int) (*pvList, error) {
 	pvs, err := K8s.Clientset[uuid].CoreV1().PersistentVolumes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("获取PersistentVolume 失败" + err.Error())
+		utils.Logger.Error("Failed to Get the PersistentVolumes list,reason: " + err.Error())
 		return nil, err
 	}
 
@@ -118,11 +119,12 @@ func (p *persistenvolume) GetPvDetail(PvName string, uuid int) (*pvDetail, error
 	//获取deploy
 	details, err := K8s.Clientset[uuid].CoreV1().PersistentVolumes().Get(context.TODO(), PvName, metav1.GetOptions{})
 	if err != nil {
-		logger.Info("获取PersistentVolume 详情失败" + err.Error())
-		return nil, errors.New("获取PersistentVolume 详情失败" + err.Error())
+		utils.Logger.Error("Failed to Get the PersistentVolumes " + PvName + " detail,reason: " + err.Error())
+		return nil, err
 	}
 	details.Kind = "PersistentVolume"
 	details.APIVersion = "v1"
+	utils.Logger.Info("Get PersistentVolumes " + PvName + "success")
 	return &pvDetail{
 		Detail: details,
 		Age:    model.GetAge(details.CreationTimestamp.Unix()),
@@ -133,9 +135,10 @@ func (p *persistenvolume) GetPvDetail(PvName string, uuid int) (*pvDetail, error
 func (p *persistenvolume) DelPv(PvName string, uuid int) (err error) {
 	err = K8s.Clientset[uuid].CoreV1().PersistentVolumes().Delete(context.TODO(), PvName, metav1.DeleteOptions{})
 	if err != nil {
-		logger.Info("删除 PersistentVolumes 详情失败" + err.Error())
-		return errors.New("删除 PersistentVolumes 详情失败" + err.Error())
+		utils.Logger.Error("Failed to Delete the PersistentVolumes " + PvName + " detail,reason: " + err.Error())
+		return err
 	}
+	utils.Logger.Info("Delete PersistentVolumes " + PvName + "success")
 	return nil
 }
 
@@ -152,8 +155,8 @@ func (p *persistenvolume) CreatePv(data *CreatePVConfig, uuid int) (err error) {
 			},
 			AccessModes:                   data.AccessMode,
 			ClaimRef:                      nil,
-			PersistentVolumeReclaimPolicy: "",
-			StorageClassName:              "",
+			PersistentVolumeReclaimPolicy: data.RecycleMode,
+			StorageClassName:              data.ClassName,
 			MountOptions:                  nil,
 			VolumeMode:                    data.VolumeMode,
 			NodeAffinity:                  nil,
@@ -165,19 +168,18 @@ func (p *persistenvolume) CreatePv(data *CreatePVConfig, uuid int) (err error) {
 			Server: data.Server,
 			Path:   data.Path,
 		}
-		createPv.Spec.StorageClassName = "nfs-client"
 	case "HostPATH":
 		createPv.Spec.HostPath = &corev1.HostPathVolumeSource{
 			Path: data.Path,
 			Type: nil,
 		}
-		createPv.Spec.StorageClassName = "standard"
 	}
 	_, err = K8s.Clientset[uuid].CoreV1().PersistentVolumes().Create(context.TODO(), createPv, metav1.CreateOptions{})
 	if err != nil {
-		logger.Info("创建 PersistentVolume 失败" + err.Error())
-		return errors.New("创建 PersistentVolume 失败" + err.Error())
+		utils.Logger.Error("Failed to Create PersistentVolumes " + data.Name + ",reason:" + err.Error())
+		return err
 	}
+	utils.Logger.Info("Create PersistentVolumes " + data.Name + "success")
 	return nil
 }
 
@@ -185,9 +187,10 @@ func (p *persistenvolume) CreatePv(data *CreatePVConfig, uuid int) (err error) {
 func (p *persistenvolume) UpdatePv(deploy *corev1.PersistentVolume, uuid int) (err error) {
 	_, err = K8s.Clientset[uuid].CoreV1().PersistentVolumes().Update(context.TODO(), deploy, metav1.UpdateOptions{})
 	if err != nil {
-		logger.Info("PersistentVolume 更新失败" + err.Error())
-		return errors.New("PersistentVolume 更新失败" + err.Error())
+		utils.Logger.Error("Failed to Update PersistentVolumes " + deploy.Name + ",reason:" + err.Error())
+		return err
 	}
+	utils.Logger.Info("Update PersistentVolumes " + deploy.Name + "success")
 	return nil
 }
 

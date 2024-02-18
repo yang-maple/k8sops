@@ -3,7 +3,6 @@ package controller
 import (
 	"github.com/ghodss/yaml"
 	"github.com/gin-gonic/gin"
-	"github.com/wonderivan/logger"
 	"kubeops/model"
 	"kubeops/service"
 	"net/http"
@@ -27,7 +26,6 @@ func (u *upload) uploadYamlFile(c *gin.Context) {
 	form, _ := c.MultipartForm()
 	files := form.File["yamlfile"]
 	for _, file := range files {
-		logger.Info(file.Filename)
 		// 上传文件至指定目录
 		extname := path.Ext(file.Filename)
 		exifile := map[string]bool{
@@ -40,7 +38,7 @@ func (u *upload) uploadYamlFile(c *gin.Context) {
 				if err != nil {
 					c.JSON(http.StatusBadRequest, gin.H{
 						"code": 400,
-						"msg":  "上传失败",
+						"msg":  "文件上传失败",
 					})
 					return
 				}
@@ -48,10 +46,9 @@ func (u *upload) uploadYamlFile(c *gin.Context) {
 			dst := path.Join(dir, file.Filename)
 			err := c.SaveUploadedFile(file, dst)
 			if err != nil {
-				logger.Info(err.Error())
 				c.JSON(http.StatusBadRequest, gin.H{
 					"code": 400,
-					"msg":  "上传失败" + err.Error(),
+					"msg":  "文件上传失败" + err.Error(),
 				})
 				return
 			}
@@ -60,7 +57,7 @@ func (u *upload) uploadYamlFile(c *gin.Context) {
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"code": 400,
-					"msg":  err.Error(),
+					"msg":  "资源创建失败" + err.Error(),
 				})
 				return
 			}
@@ -72,7 +69,7 @@ func (u *upload) uploadYamlFile(c *gin.Context) {
 		}
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": 400,
-			"msg":  "上传文件格式不正确",
+			"msg":  "上传文件格式不正确，请上传yaml文件",
 		})
 	}
 }
@@ -83,14 +80,10 @@ func (u *upload) createYaml(c *gin.Context) {
 	params := new(struct {
 		YamlContent string `json:"yamlContent"`
 	})
-	err := c.ShouldBindJSON(&params)
-	if err != nil {
-		logger.Info(err)
-	}
+	_ = c.ShouldBindJSON(&params)
 	// 将json 格式转化为yaml
 	yamlStr, err := yaml.JSONToYAML([]byte(params.YamlContent))
 	if err != nil {
-		logger.Info("yaml 格式无效")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": 400,
 			"msg":  "yaml 格式无效",
@@ -103,7 +96,7 @@ func (u *upload) createYaml(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"code": 400,
-			"msg":  err.Error(),
+			"msg":  "资源创建失败" + err.Error(),
 		})
 		return
 	}

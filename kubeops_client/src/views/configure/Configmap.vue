@@ -4,14 +4,14 @@
             <el-card shadow="always" style="width: 100%;">
                 <span>
                     <div>
-                        <svg class="icon-secret" aria-hidden="true">
-                            <use xlink:href="#icon-a-nav_secretkey-copy"></use>
+                        <svg class="icon-configmap" aria-hidden="true">
+                            <use xlink:href="#icon-configmap"></use>
                         </svg>
                         <span
-                            style="font-size: 24px; color: #242e42;text-shadow: 0 4px 8px rgba(36,46,66,.1);font-weight: 600;">保密字典</span>
+                            style="font-size: 24px; color: #242e42;text-shadow: 0 4px 8px rgba(36,46,66,.1);font-weight: 600;">配置字典</span>
                         <br>
                         <span
-                            style="font-size: 12px;color: #79879c!important">保密字典（Secret）是一种包含少量敏感信息的资源对象，例如密码、令牌、保密字典等，以键值对形式保存并且可以在容器组中使用。</span>
+                            style="font-size: 12px;color: #79879c!important">配置字典（ConfigMap）常用于存储工作负载所需的配置信息，许多应用程序会从配置文件、命令行参数或环境变量中读取配置信息。</span>
                     </div>
                 </span>
             </el-card>
@@ -20,8 +20,7 @@
     <el-row>
         <el-col :span="4">
             <div class="header-grid-content">
-                <el-select v-model="namespace" placeholder="命名空间（默认ALL）" @visible-change="getnsselect()"
-                    @change="getSecret()">
+                <el-select v-model="namespace" placeholder="命名空间（默认ALL）" @change="getConfigmap()">
                     <el-option-group v-for="group in nslist" :key="group.label" :label="group.label">
                         <el-option v-for="item in group.options" :key="item.namespace" :label="item.label"
                             :value="item.namespace" />
@@ -31,17 +30,17 @@
         </el-col>
         <el-col :span="16">
             <div class="header-grid-content">
-                <el-input v-model="filter_name" placeholder="请输入搜索资源的名称" clearable @keyup.enter="getSecret()"
-                    @clear="getSecret()">
+                <el-input v-model="filter_name" placeholder="请输入搜索资源的名称" clearable @clear="getConfigmap()"
+                    @keyup.enter="getConfigmap()">
                     <template #prepend>
-                        <el-button icon="Search" @click="getSecret()" />
+                        <el-button icon="Search" @click="getConfigmap()" />
                     </template>
                 </el-input>
             </div>
         </el-col>
         <el-col :span="4">
             <div class="header-grid-content" style="text-align: right;">
-                <el-button type="info" @click="getSecret()" round>
+                <el-button type="info" @click="getConfigmap()" round>
                     <el-icon>
                         <Refresh />
                     </el-icon>
@@ -53,13 +52,13 @@
         </el-col>
     </el-row>
     <div class="table-bg-purple">
-        <el-table :data="secretItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small"
+        <el-table :data="configmapItem" :header-cell-style="{ background: '#e6e7e9' }" style="width: 100%" size="small"
             empty-text="抱歉，暂无数据">
-            <el-table-column label="名称" width="300">
+            <el-table-column label="名称" width="400">
                 <template #default="scope">
                     <div style="display: flex; align-items: center">
-                        <svg class="icon-table-secret" aria-hidden="true">
-                            <use xlink:href="#icon-a-nav_secretkey-copy"></use>
+                        <svg class="icon-table-cm" aria-hidden="true">
+                            <use xlink:href="#icon-configmap"></use>
                         </svg>
                         <el-text style="margin-left:3px" size="small">{{
                             scope.row.name
@@ -67,7 +66,7 @@
                     </div>
                 </template>
             </el-table-column>
-            <el-table-column label="命名空间" prop="namespace" width="100" />
+            <el-table-column label="命名空间" prop="namespace" width="200" />
             <el-table-column label="标签">
                 <template #default="scope">
                     <div v-for="(v, k, index) in scope.row.labels " :key="k">
@@ -77,23 +76,20 @@
                         </div>
                     </div>
                     <div v-if="scope.row.labels == null">---</div>
-                    <div
-                        v-if="scope.row.labels != null && Object.keys(scope.row.labels).length > 3 && Object.keys(scope.row.labels).length > 3">
-                        <el-button size="small" type="primary" link @click="showLabels(scope.$index)">{{
-                            maxitem[scope.$index] == 3 ?
-                            '展开' : '收起'
-                        }}</el-button>
-                    </div>
+                    <div v-if="scope.row.labels != null && Object.keys(scope.row.labels).length > 3"><el-button size="small"
+                            type="primary" link @click="showLabels(scope.$index)">{{
+                                maxitem[scope.$index] == 3 ?
+                                '展开' : '收起'
+                            }}</el-button></div>
                 </template>
             </el-table-column>
-            <el-table-column label="类型" prop="type" />
-            <el-table-column label="修改" prop="immutable" width="50" align="center">
+            <el-table-column label="修改" prop="modify" width="50" align="center">
                 <template #default="scope">
-                    <span slot="reference" v-if="scope.row.immutable != true">
-                        <el-tooltip placement="top"><template #content> 允许修改 </template>
+                    <span slot="reference" v-if="scope.row.modify != true">
+                        <el-tooltip placement="top"><template #content> 支持修改 </template>
                             <i class="dotClass" style="background-color: springgreen"></i></el-tooltip>
                     </span>
-                    <span slot="reference" v-if="scope.row.immutable == true">
+                    <span slot="reference" v-if="scope.row.modify == true">
                         <el-tooltip placement="top"><template #content> 禁止修改 </template>
                             <i class="dotClass" style="background-color: red"></i></el-tooltip>
                     </span>
@@ -113,7 +109,7 @@
                                 <el-dropdown-item icon="Edit"
                                     @click="dialogFormVisible = true, handleEdit(scope.row.namespace, scope.row.name)">编辑</el-dropdown-item>
                                 <el-dropdown-item icon="Delete"
-                                    @click="messageboxOperate(scope.row, 'delete')">删除</el-dropdown-item>
+                                    @click="messageboxOperate(scope.row, '删除')">删除</el-dropdown-item>
                             </el-dropdown-menu>
                         </template>
                     </el-dropdown>
@@ -137,7 +133,6 @@
             </template>
         </el-dialog>
         <el-row>
-
             <el-col :span="1.5">
                 <div class="demo-pagination-block">
                     <el-text type="info">Total:{{ total }}</el-text>
@@ -153,30 +148,57 @@
         </el-row>
     </div>
 
-    <el-dialog v-model="dialogcreatens" title="创建资源" center>
-        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="25%" status-icon>
-            <el-form-item label="名称" prop="name">
+    <el-dialog v-model="dialogcreatens" title="创建资源" center class="create_config_dialog">
+        <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="15%">
+            <el-form-item label="资源名称" prop="name">
                 <el-input v-model="ruleForm.name"></el-input>
             </el-form-item>
             <el-form-item label="命名空间" prop="namespace">
-                <el-select v-model="ruleForm.namespace" placeholder="Select" @visible-change="getnsselect()">
-                    <el-option-group v-for="group in  nslist " :key="group.label">
-                        <el-option v-for=" item  in  group.options " :key="item.namespace" :value="item.namespace"
-                            v-show="item.label != 'ALL'" />
-                    </el-option-group>
+                <el-select v-model="ruleForm.namespace" placeholder=" ">
+                    <el-option v-for="item in nslist[1].options" :key="item.namespace" :label="item.label"
+                        :value="item.namespace" />
                 </el-select>
             </el-form-item>
-            <el-form-item label="标签" prop="labels">
-                <el-input v-model="ruleForm.labels"></el-input>
-            </el-form-item>
-            <el-form-item label="数据" prop="data">
-                <el-input v-model="ruleForm.data" type="textarea" style="width: 400px;" :rows="4"></el-input>
+            <el-form-item label="数据字典">
+                <div class="data" v-for="(value, key) in dataConfig" :key="key">
+                    <el-row :gutter="2" style="margin-bottom: 10px">
+                        <el-col :span="1">
+                            <el-text>键</el-text>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-input v-model="value.key" :disabled="value.status" />
+                        </el-col>
+                        <el-col :span="1">
+                            <el-text>值</el-text>
+                        </el-col>
+                        <el-col :span="14">
+                            <el-input type="textarea" autosize :disabled="value.status" v-model="value.value"
+                                style="width: 120%" />
+                        </el-col>
+                        <el-col :span="2">
+                            <el-button type="primary" size="small" @click="value.status = !value.status">
+                                <template #default="scope">
+                                    <el-icon :size="12">
+                                        <component :is="value.status?'Edit':'Check'" />
+                                    </el-icon>
+                                </template>
+                            </el-button>
+                        </el-col>
+                        <el-col :span="2" style="margin-left: 5px">
+                            <el-button size="small" type="danger" @click="dataConfig.splice(key, 1)">
+                                <template #default="scope">
+                                    <el-icon :size="12">
+                                        <Delete />
+                                    </el-icon>
+                                </template>
+                            </el-button>
+                        </el-col>
+                    </el-row>
+                </div>
+                <el-button type="info" style="width: 90%;" @click="addData">添加</el-button>
             </el-form-item>
             <el-form-item label="禁止修改">
-                <el-switch v-model="ruleForm.immutable" />
-            </el-form-item>
-            <el-form-item label="类型">
-                <el-input v-model="ruleForm.secretType" disabled placeholder="Opaque" />
+                <el-switch v-model="ruleForm.modify" />
             </el-form-item>
             <el-form-item>
                 <el-button type="primary" @click="submitForm('ruleForm')">立即创建</el-button>
@@ -202,11 +224,12 @@ export default {
     data() {
         return {
             maxitem: [],
-            iscollapse: true,
             detailnamespace: null,
             dialogFormVisible: false,
             dialogcreatens: false,
-            secretItem: [],
+            configmapItem: [],
+            dataKey: 3,
+            dataConfig: [],
             filter_name: '',
             namespace: '',
             limit: 10,
@@ -221,6 +244,7 @@ export default {
             },
             activeName: 'json',
             nslist: [],
+            selectns: [],
             total: 0,
             storage_type: 'Gi',
             page_size: [1, 10, 20, 50, 100],
@@ -237,37 +261,28 @@ export default {
             ruleForm: {
                 name: null,
                 namespace: '',
-                labels: null,
                 data: null,
-                immutable: false,
-                secretType: 'Opaque',
+                modify: false,
             },
             rules: {
                 name: [
                     { required: true, message: '请输入资源名称', trigger: 'blur' },
-                    { min: 3, max: 10, message: '长度在 3 到 10 个字符', trigger: 'blur' }
                 ],
                 namespace: [
                     { required: true, message: '请选择命名空间', trigger: 'change' }
                 ],
-                resource: [
-                    { message: '请选择一种协议', trigger: 'change' }
-                ],
-                data: [
-                    { required: true, message: '数据不能为空', trigger: 'blur' }
-                ],
-
             }
         }
     },
     created() {
-        this.getSecret()
+        this.getConfigmap()
+        this.getnsselect()
     },
     methods: {
-        getSecret() {
+        getConfigmap() {
             this.$ajax({
                 method: 'get',
-                url: '/secret/list',
+                url: '/cm/list',
                 params: {
                     filter_name: this.filter_name,
                     namespace: this.namespace,
@@ -276,21 +291,22 @@ export default {
                 }
             }).then((res) => {
                 this.total = res.data.total
-                this.secretItem = res.data.item
+                this.configmapItem = res.data.item
                 for (let i = 0; i < res.data.item.length; i++) {
                     this.maxitem.push(3)
                 }
             }).catch((res) => {
                 this.$message({
+                    showClose: true,
                     message: res.msg,
                     type: 'error'
                 });
                 console.log(res);
             })
         },
-        createSecret() {
+        createConfigmap() {
             this.$ajax.post(
-                '/secret/create',
+                '/cm/create',
                 {
                     data: this.ruleForm
                 },
@@ -300,18 +316,19 @@ export default {
                     message: res.msg,
                     type: 'success'
                 });
-                this.reload()
             }).catch((res) => {
                 this.$message({
                     message: res.msg,
                     type: 'error'
                 });
             })
+            this.reload()
         },
         Refresh() {
             setTimeout(() => {
                 this.reload()
-            }, 2000)
+            }, 1000)
+
         },
         getnsselect() {
             if (this.nslist == "") {
@@ -320,7 +337,7 @@ export default {
                     options: [
                         {
                             namespace: '',
-                            label: 'ALL',
+                            label: '全部空间',
                         },
                     ],
                 })
@@ -335,8 +352,12 @@ export default {
                     res.data.item.forEach(v => {
                         this.nslist[1].options.push({ 'namespace': v.name, 'label': v.name })
                     })
-                    console.log(this.nslist)
                 }).catch((res) => {
+                    this.$message({
+                        showClose: true,
+                        message: "获取名称空间失败",
+                        type: 'error'
+                    });
                     console.log(res.data)
                 })
             }
@@ -344,18 +365,18 @@ export default {
         handleSizeChange(limit) {
             this.limit = limit
             this.page = 1
-            this.getSecret()
+            this.getConfigmap()
         },
         handleCurrentChange(page) {
             this.page = page
-            this.getSecret()
+            this.getConfigmap()
         },
         handleEdit(namespace, name) {
             this.$ajax({
                 method: 'get',
-                url: '/secret/detail',
+                url: '/cm/detail',
                 params: {
-                    secret_name: name,
+                    configmap_name: name,
                     namespace: namespace
                 }
             }).then((res) => {
@@ -375,14 +396,13 @@ export default {
         handleDelete(namespace, name) {
             this.$ajax({
                 method: 'delete',
-                url: '/secret/delete',
+                url: '/cm/delete',
                 params: {
                     namespace: namespace,
-                    secret_name: name
+                    configmap_name: name
                 }
             }
             ).then((res) => {
-
                 this.$message({
                     showClose: true,
                     message: res.msg,
@@ -414,18 +434,18 @@ export default {
                 return
             }
             this.$ajax.put(
-                '/secret/update',
+                '/cm/update',
                 {
                     namespace: namespace,
                     data: datajson
                 },
             ).then((res) => {
-                this.dialogFormVisible = false,
-                    this.$message({
-                        showClose: true,
-                        message: res.msg,
-                        type: 'success'
-                    });
+                this.dialogFormVisible = false
+                this.$message({
+                    showClose: true,
+                    message: res.msg,
+                    type: 'success'
+                });
                 this.reload()
             }).catch((res) => {
                 this.$message({
@@ -452,11 +472,15 @@ export default {
         submitForm(formName) {
             this.$refs[formName].validate((valid) => {
                 if (valid) {
-                    if (this.ruleForm.labels != null) {
-                        this.ruleForm.labels = JSON.parse(this.ruleForm.labels)
+                    if (this.dataConfig.length != 0) {
+                        let datas = {};
+                        this.dataConfig.forEach(v => {
+                            datas[v.key] = v.value
+                        })
+                        this.ruleForm.data = datas
                     }
-                    this.ruleForm.data = JSON.parse(this.ruleForm.data);
-                    this.createSecret()
+                    console.log(this.ruleForm)
+                    this.createConfigmap()
                 } else {
                     return false;
                 }
@@ -464,6 +488,7 @@ export default {
         },
         resetForm(formName) {
             this.$refs[formName].resetFields();
+            this.dataConfig = [];
         },
         yamlFormat() {
             if (this.aceConfig.lang == "yaml") {
@@ -492,7 +517,14 @@ export default {
             } else {
                 this.maxitem[index] = 3
             }
-        }
+        },
+        addData() {
+            this.dataConfig.push({
+                key: '',
+                value: '',
+                status: false,
+            })
+        },
     }
 }
 </script>
@@ -546,6 +578,7 @@ export default {
     margin-right: 10px;
 }
 
+
 .demo-pagination-block {
     margin-top: 5px;
     margin-bottom: 5px;
@@ -565,29 +598,32 @@ export default {
     padding: 0px;
 }
 
-.el-dialog {
-    .el-select {
+.create_config_dialog {
+    .el-form-item__content .el-input {
+        width: 550px;
+    }
+
+    .data {
         .el-input {
-            width: 180px;
+            width: 100%;
         }
     }
 }
 
-.el-form-item__content .el-input {
-    width: 400px;
-}
 
-.icon-secret {
+.icon-configmap {
     width: 2.5em;
     height: 2.5em;
+    color: #8a8a8a;
     vertical-align: -0.7em;
     fill: currentColor;
     overflow: hidden;
 }
 
-.icon-table-secret {
+.icon-table-cm {
     width: 1.5em;
     height: 1.5em;
+    color: #8a8a8a;
     vertical-align: -0.5em;
     fill: currentColor;
     overflow: hidden;

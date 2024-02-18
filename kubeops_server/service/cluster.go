@@ -64,7 +64,7 @@ func (clt *cluster) List(uuid int) (item *clusterList, err error) {
 	//获取用户集群列表
 	value, err := dao.Cluster.ListCluster(uuid)
 	if err != nil {
-		utils.Logger.Error("Failed to get the cluster,reason: " + err.Error())
+		utils.Logger.Error("Failed to get the Cluster,reason: " + err.Error())
 		return nil, err
 	}
 	clusters := make([]clusterInfo, 0, len(*value))
@@ -157,13 +157,14 @@ func (clt *cluster) Delete(name string, userid int) error {
 // UpdateCluster 更新集群信息
 func (clt *cluster) UpdateCluster(Id uint, cluster, clusterType string, uuid int) error {
 	//更改数据库文件名称
-	dir, oldFileName, err := dao.Cluster.UpdateCluster(Id, cluster, clusterType)
+	dir, oldFileName, err := dao.Cluster.UpdateCluster(Id, cluster, clusterType, uuid)
 	if err != nil {
 		utils.Logger.Error("Failed to update the data cluster information ,reason: " + err.Error())
 		return err
 	}
 	newFileName := dir + "/" + cluster + "_" + clusterType + ".conf"
 	//更改存储文件名称
+	fmt.Println(oldFileName, newFileName)
 	err = os.Rename(oldFileName, newFileName)
 	if err != nil {
 		utils.Logger.Error("Failed to update the data cluster name ,reason: " + err.Error())

@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/wonderivan/logger"
 	yamlv3 "gopkg.in/yaml.v3"
 	"io"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -17,6 +16,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
+	"kubeops/utils"
 	"os"
 )
 
@@ -36,13 +36,13 @@ func (u *upload) UploadFile(dst string, uuid int) (msg string, err error) {
 	//读取文件内容
 	filebytes, err := os.ReadFile(dst)
 	if err != nil {
-		logger.Info("读取文件失败" + err.Error())
+		utils.Logger.Error("Failed to read the file,reason: " + err.Error())
 		return "", err
 	}
 	//传入文件内容，创建资源
 	msg, err = Upload.CreateYaml(filebytes, uuid)
 	if err != nil {
-		logger.Info("创建资源失败" + err.Error())
+		utils.Logger.Error("Failed to create a resource,reason: " + err.Error())
 		return "", err
 	}
 	//执行完成删除文件
@@ -57,7 +57,7 @@ func (u *upload) CreateYaml(fileBytes []byte, uuid int) (msg string, err error) 
 	var result map[string]interface{}
 	err = yamlv3.Unmarshal(fileBytes, &result)
 	if err != nil {
-		logger.Info("yaml 格式无效")
+		utils.Logger.Error("The yaml format is invalid" + err.Error())
 		return "", errors.New("yaml 格式无效")
 	}
 	// 定义资源变量
@@ -67,12 +67,12 @@ func (u *upload) CreateYaml(fileBytes []byte, uuid int) (msg string, err error) 
 	// 创建客户端连接
 	conf, err := clientcmd.BuildConfigFromFlags("", *K8s.ConfigDir[uuid])
 	if err != nil {
-		logger.Info("创建ConfigClient失败" + err.Error())
+		utils.Logger.Error("Failed to create a ConfigClient" + err.Error())
 		return "", err
 	}
 	dd, err := dynamic.NewForConfig(conf)
 	if err != nil {
-		logger.Info("创建DynamicClient客户端失败" + err.Error())
+		utils.Logger.Error("Failed to create a DynamicClient" + err.Error())
 		return "", err
 	}
 	//缓存100 读取数据
@@ -90,21 +90,21 @@ func (u *upload) CreateYaml(fileBytes []byte, uuid int) (msg string, err error) 
 		obj, gvk, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(rawObj.Raw, nil, nil)
 		unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 		if err != nil {
-			logger.Info("转换失败" + err.Error())
+			utils.Logger.Error("The conversion failed" + err.Error())
 			return "", errors.New("转换失败" + err.Error())
 		}
 		// 获取APIGroupResources 用于获取RESTMapping
 		unstructuredObj := &unstructured.Unstructured{Object: unstructuredMap}
 		gr, err := restmapper.GetAPIGroupResources(K8s.Clientset[uuid].Discovery())
 		if err != nil {
-			logger.Info("获取APIGroupResources失败" + err.Error())
+			utils.Logger.Error("Failed to get APIGroupResources " + err.Error())
 			return "", errors.New("获取APIGroupResources失败" + err.Error())
 		}
 		// 获取RESTMapping 用于获取ResourceInterface
 		mapper := restmapper.NewDiscoveryRESTMapper(gr)
 		mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 		if err != nil {
-			logger.Info("获取RESTMapping失败" + err.Error())
+			utils.Logger.Error("Failed to get RESTMapping" + err.Error())
 			return "", errors.New("获取RESTMapping失败" + err.Error())
 		}
 		// 使用 ResourceInterface 创建资源
@@ -119,12 +119,12 @@ func (u *upload) CreateYaml(fileBytes []byte, uuid int) (msg string, err error) 
 		}
 		obj2, err := dri.Create(context.Background(), unstructuredObj, metav1.CreateOptions{})
 		if err != nil {
-			logger.Info("创建资源失败" + err.Error())
-			return "", errors.New("创建资源失败" + err.Error())
+			utils.Logger.Error("Failed to create a resource" + err.Error())
+			return "", err
 		}
 		resource.kind = obj2.GetKind()
 		resource.name = obj2.GetName()
 		resource.namespace = obj2.GetNamespace()
-		logger.Info("%s/%s is created", obj2.GetKind(), obj2.GetName())
+		utils.Logger.Info(fmt.Sprintf(" %s / %s created in %s", obj2.GetKind(), obj2.GetName(), obj2.GetNamespace()))
 	}
 }

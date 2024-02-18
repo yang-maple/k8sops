@@ -3,7 +3,6 @@ package controller
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/mojocn/base64Captcha"
-	"github.com/wonderivan/logger"
 	"image/color"
 	"kubeops/service"
 	"net/http"
@@ -48,13 +47,11 @@ func (l *login) CaptchaImage(c *gin.Context) {
 	//获取图片id,url
 	id, b64s, _, err := captcha.Generate()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"code": 0,
-			"msg":  err.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": err.Error(),
 		})
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"code":      1,
 		"imageUrl":  b64s,
 		"captchaId": id,
 		"msg":       "success",
@@ -64,10 +61,7 @@ func (l *login) CaptchaImage(c *gin.Context) {
 // VerifyInfo 验证登陆信息
 func (l *login) VerifyInfo(c *gin.Context) {
 	params := new(service.LoginInfo)
-	err := c.ShouldBindJSON(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-	}
+	_ = c.ShouldBindJSON(&params)
 	//判断验证码是否正确 不正确直接返回
 	if !store.Verify(params.CaptchaId, params.VerifyValue, true) {
 		c.JSON(http.StatusBadRequest, gin.H{

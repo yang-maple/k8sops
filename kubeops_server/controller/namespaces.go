@@ -1,9 +1,7 @@
 package controller
 
 import (
-	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/wonderivan/logger"
 	corev1 "k8s.io/api/core/v1"
 	"kubeops/service"
 	"net/http"
@@ -20,26 +18,18 @@ func (n *namespace) GetNsList(c *gin.Context) {
 		Limit      int    `form:"limit"`
 		Page       int    `form:"page"`
 	})
-	err := c.ShouldBind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败" + err.Error(),
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	data, err := service.Namespace.GetNsList(params.FilterName, params.Limit, params.Page, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "获取namespaces失败" + err.Error(),
+			"msg": "获取命名空间列表失败",
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":  "获取数据成功",
+		"msg":  "获取命名空间列表成功",
 		"data": data,
 	})
 }
@@ -48,26 +38,18 @@ func (n *namespace) GetNsDetail(c *gin.Context) {
 	params := new(struct {
 		NamespaceName string `form:"namespace_name"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg":  "绑定参数失败",
-			"data": nil,
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
 	data, err := service.Namespace.GetNsDetail(params.NamespaceName, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "获取namespaces失败" + err.Error(),
+			"msg": "获取  " + params.NamespaceName + " 失败",
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg":  "获取数据成功",
+		"msg":  "获取  " + params.NamespaceName + "数据成功",
 		"data": data,
 	})
 }
@@ -76,25 +58,18 @@ func (n *namespace) DelNs(c *gin.Context) {
 	params := new(struct {
 		NamespaceName string `form:"namespace_name"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "绑定参数失败",
-		})
-		return
-	}
+	_ = c.ShouldBind(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.Namespace.DelNs(params.NamespaceName, uuid)
+	err := service.Namespace.DelNs(params.NamespaceName, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "名称空间" + params.NamespaceName + "删除失败" + " " + err.Error(),
+			"msg": "命名空间 " + params.NamespaceName + " 删除失败" + " " + err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "名称空间" + params.NamespaceName + "删除成功",
+		"msg": "命名空间 " + params.NamespaceName + " 删除成功",
 	})
 }
 
@@ -102,24 +77,17 @@ func (n *namespace) CreateNs(c *gin.Context) {
 	params := new(struct {
 		NamespaceName string `json:"namespace_name"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": "绑定参数失败",
-		})
-		return
-	}
+	_ = c.ShouldBindJSON(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.Namespace.CreateNs(params.NamespaceName, uuid)
+	err := service.Namespace.CreateNs(params.NamespaceName, uuid)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"msg": params.NamespaceName + "创建失败" + " " + err.Error(),
+			"msg": "命名空间 " + params.NamespaceName + " 创建失败" + " " + err.Error(),
 		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "创建成功",
+		"msg": "命名空间 " + params.NamespaceName + " 创建成功",
 	})
 }
 
@@ -127,24 +95,17 @@ func (n *namespace) UpdateNs(c *gin.Context) {
 	params := new(struct {
 		Data *corev1.Namespace `json:"data"`
 	})
-	err := c.Bind(&params)
-	if err != nil {
-		logger.Info("绑定参数失败" + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": errors.New("绑定参数失败" + err.Error()),
-		})
-		return
-	}
+	_ = c.ShouldBindJSON(&params)
 	uuid, _ := strconv.Atoi(c.Request.Header.Get("Uuid"))
-	err = service.Namespace.UpdateNs(params.Data, uuid)
+	err := service.Namespace.UpdateNs(params.Data, uuid)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"msg": "更新失败" + " " + err.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "命名空间 " + params.Data.Name + " 更新失败" + err.Error(),
 		})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "更新成功",
+		"msg": "命名空间 " + params.Data.Name + " 更新成功",
 	})
 
 }

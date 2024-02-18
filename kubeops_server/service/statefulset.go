@@ -2,11 +2,10 @@ package service
 
 import (
 	"context"
-	"errors"
-	"github.com/wonderivan/logger"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubeops/model"
+	"kubeops/utils"
 )
 
 // 定义空结构体
@@ -59,8 +58,8 @@ func (s *statefulSet) fromCells(cells []DataCell) []appsv1.StatefulSet {
 func (s *statefulSet) GetStatefulList(StsName, Namespace string, Limit, Page int, uuid int) (stsResp *StsResp, err error) {
 	statefulList, err := K8s.Clientset[uuid].AppsV1().StatefulSets(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("获取 statefulList 失败" + err.Error())
-		return nil, errors.New("获取 statefulList 失败" + err.Error())
+		utils.Logger.Error("Failed to Get the StatefulSets list,reason: " + err.Error())
+		return nil, err
 	}
 	selectData := &dataselector{
 		GenericDataList: s.toCells(statefulList.Items),
@@ -108,11 +107,12 @@ func (s *statefulSet) GetStatefulDetail(Namespace, StsName string, uuid int) (de
 	//获取deploy
 	detail, err = K8s.Clientset[uuid].AppsV1().StatefulSets(Namespace).Get(context.TODO(), StsName, metav1.GetOptions{})
 	if err != nil {
-		logger.Info("获取 stateful set 详情失败" + err.Error())
-		return nil, errors.New("获取 stateful set 详情失败" + err.Error())
+		utils.Logger.Error("Failed to Get the StatefulSets " + StsName + " detail,reason: " + err.Error())
+		return nil, err
 	}
 	detail.Kind = "StatefulSet"
 	detail.APIVersion = "apps/v1"
+	utils.Logger.Info("Get StatefulSets " + StsName + "success")
 	return detail, nil
 }
 
@@ -120,9 +120,10 @@ func (s *statefulSet) GetStatefulDetail(Namespace, StsName string, uuid int) (de
 func (s *statefulSet) DelStateful(Namespace, StsName string, uuid int) (err error) {
 	err = K8s.Clientset[uuid].AppsV1().StatefulSets(Namespace).Delete(context.TODO(), StsName, metav1.DeleteOptions{})
 	if err != nil {
-		logger.Info("删除实例失败" + err.Error())
-		return errors.New("删除实例失败" + err.Error())
+		utils.Logger.Error("Failed to Delete the StatefulSets " + StsName + " ,reason: " + err.Error())
+		return err
 	}
+	utils.Logger.Info("Delete StatefulSets " + StsName + " success")
 	return nil
 }
 
@@ -130,26 +131,27 @@ func (s *statefulSet) DelStateful(Namespace, StsName string, uuid int) (err erro
 func (s *statefulSet) UpdateDelStateful(Namespace string, Sts *appsv1.StatefulSet, uuid int) (err error) {
 	_, err = K8s.Clientset[uuid].AppsV1().StatefulSets(Namespace).Update(context.TODO(), Sts, metav1.UpdateOptions{})
 	if err != nil {
-		logger.Info("StatefulSets 更新失败" + err.Error())
-		return errors.New("StatefulSets 更新失败" + err.Error())
+		utils.Logger.Error("Failed to Delete the StatefulSets " + Sts.Name + " ,reason: " + err.Error())
+		return err
 	}
-
+	utils.Logger.Info("Delete StatefulSets " + Sts.Name + " success")
 	return nil
 }
 
-// ModifyStatefulReplicas 修改deployment 副本数
+// ModifyStatefulReplicas 修改StatefulSets 副本数
 func (s *statefulSet) ModifyStatefulReplicas(Namespace, StsName string, Replicas *int32, uuid int) (err error) {
 	stateful, err := K8s.Clientset[uuid].AppsV1().StatefulSets(Namespace).Get(context.TODO(), StsName, metav1.GetOptions{})
 	if err != nil {
-		logger.Info("获取 Stateful 数据失败" + err.Error())
-		return errors.New("Stateful 详情失败" + err.Error())
+		utils.Logger.Error("Failed to modify the number of copies of " + StsName + " ,reason: " + err.Error())
+		return err
 	}
 	stateful.Spec.Replicas = Replicas
 	_, err = K8s.Clientset[uuid].AppsV1().StatefulSets(Namespace).Update(context.TODO(), stateful, metav1.UpdateOptions{})
 	if err != nil {
-		logger.Info("更新副本数失败" + err.Error())
-		return errors.New("更新副本数失败" + err.Error())
+		utils.Logger.Error("Failed to modify the number of copies of " + StsName + " ,reason: " + err.Error())
+		return err
 	}
+	utils.Logger.Info("Changed the number of copies of " + StsName + " successfully")
 	return nil
 }
 
@@ -157,8 +159,8 @@ func (s *statefulSet) ModifyStatefulReplicas(Namespace, StsName string, Replicas
 func (s *statefulSet) StatefulCount(Namespace string, uuid int) (*CountStateful, error) {
 	statefulList, err := K8s.Clientset[uuid].AppsV1().StatefulSets(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("获取 statefulList 失败" + err.Error())
-		return nil, errors.New("获取 statefulList 失败" + err.Error())
+		utils.Logger.Error("Failed to count the number of stators", err.Error())
+		return nil, err
 	}
 	count := 0
 	for _, v := range statefulList.Items {

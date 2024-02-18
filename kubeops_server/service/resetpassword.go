@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"github.com/wonderivan/logger"
 	"kubeops/dao"
 	"kubeops/utils"
 )
@@ -15,7 +14,7 @@ type resetPassword struct{}
 func (rs *resetPassword) VerifyIdentity(email string) (err error) {
 	// 判断用户是否存在
 	if err := dao.ResetPassword.VerifyIdentity(email); err != nil {
-		logger.Info("未注册" + err.Error())
+		utils.Logger.Error("The email address is not registered")
 		return err
 	}
 	//组装数据，生成随机数
@@ -26,15 +25,16 @@ func (rs *resetPassword) VerifyIdentity(email string) (err error) {
 	// 将随机数缓存至redis
 	err = dao.RdbValue.SetValue(verity.Email, verity.Value, 90)
 	if err != nil {
-		logger.Info("redis缓存失败" + err.Error())
+		utils.Logger.Error("Failed to cache the random number to Redis" + err.Error())
 		return err
 	}
 	// 随机数验证码发送邮件
 	err = utils.Emails(email, utils.FormatEmailBody("view/verfityidentify.html", verity), "KubeOps找回密码")
 	if err != nil {
-		logger.Info("邮件发送失败" + err.Error())
+		utils.Logger.Error("Failed to send an email to " + email + " :" + err.Error())
 		return err
 	}
+	utils.Logger.Info("The verification code has been sent to " + email)
 	return nil
 }
 
@@ -43,20 +43,21 @@ func (rs *resetPassword) FindPasswd(email, verifyCode, password string) (err err
 	//读取缓存中的验证码
 	value, err := dao.RdbValue.GetValue(email + "_rsp")
 	if err != nil {
-		logger.Info("redis读缓存失败" + err.Error())
+		utils.Logger.Error("Failed to read cached nonce in Redis,reason: " + err.Error())
 		return err
 	}
 	if value != verifyCode {
-		logger.Info("验证码错误" + err.Error())
+		utils.Logger.Error("The verification code is incorrect")
 		return errors.New("验证码错误")
 	}
 	//重置密码
 	if err := dao.ResetPassword.FindPasswd(email, password); err != nil {
-		logger.Info("重置密码失败" + err.Error())
+		utils.Logger.Error("Failed to reset the password" + err.Error())
 		return err
 	}
 	//重置成功后删除缓存中的验证码
 	_ = dao.RdbValue.DelValue(email + "_rsp")
+	utils.Logger.Info("The password has been reset successfully")
 	return nil
 
 }
@@ -66,8 +67,9 @@ func (rs *resetPassword) ResetPasswd(Id uint, OldPasswd, NewPasswd string) (err 
 	//数据库验证密码
 	err = dao.ResetPassword.ResetPasswd(Id, OldPasswd, NewPasswd)
 	if err != nil {
-		logger.Error(err.Error())
+		utils.Logger.Error("Failed to reset the password" + err.Error())
 		return err
 	}
+	utils.Logger.Info("The password has been reset successfully")
 	return nil
 }

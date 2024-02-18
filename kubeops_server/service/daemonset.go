@@ -2,11 +2,10 @@ package service
 
 import (
 	"context"
-	"errors"
-	"github.com/wonderivan/logger"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubeops/model"
+	"kubeops/utils"
 )
 
 var DaemonSet daemonSet
@@ -62,7 +61,7 @@ func (d *daemonSet) GetDsList(DsName, Namespace string, Limit, Page int, uuid in
 	//获取deployment 的所有清单列表
 	daemonList, err := K8s.Clientset[uuid].AppsV1().DaemonSets(Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("获取 daemonSetList 失败" + err.Error())
+		utils.Logger.Error("Failed to Get the DaemonSet list,reason: " + err.Error())
 		return nil, err
 	}
 	//组装数据
@@ -102,19 +101,20 @@ func (d *daemonSet) GetDsList(DsName, Namespace string, Limit, Page int, uuid in
 	return &DsResp{
 		Total: total,
 		Item:  item,
-	}, err
+	}, nil
 }
 
 // GetDsDetail  获取详情
 func (d *daemonSet) GetDsDetail(Namespace, DsName string, uuid int) (detail *appsv1.DaemonSet, err error) {
-	//获取deploy
+	//获取daemonSet
 	detail, err = K8s.Clientset[uuid].AppsV1().DaemonSets(Namespace).Get(context.TODO(), DsName, metav1.GetOptions{})
 	if err != nil {
-		logger.Info("获取deployment 详情失败" + err.Error())
-		return nil, errors.New("获取deployment 详情失败" + err.Error())
+		utils.Logger.Error("Failed to Get the DaemonSets " + DsName + " detail,reason: " + err.Error())
+		return nil, err
 	}
 	detail.Kind = "DaemonSet"
 	detail.APIVersion = "apps/v1"
+	utils.Logger.Info("Get DaemonSets " + DsName + "success")
 	return detail, nil
 }
 
@@ -122,9 +122,10 @@ func (d *daemonSet) GetDsDetail(Namespace, DsName string, uuid int) (detail *app
 func (d *daemonSet) DelDs(Namespace, DsName string, uuid int) (err error) {
 	err = K8s.Clientset[uuid].AppsV1().DaemonSets(Namespace).Delete(context.TODO(), DsName, metav1.DeleteOptions{})
 	if err != nil {
-		logger.Info("删除实例失败" + err.Error())
-		return errors.New("删除实例失败" + err.Error())
+		utils.Logger.Error("Failed to Delete DaemonSets" + DsName + "reason: " + err.Error())
+		return err
 	}
+	utils.Logger.Info("Delete DaemonSets " + DsName + "success")
 	return nil
 }
 
@@ -132,10 +133,10 @@ func (d *daemonSet) DelDs(Namespace, DsName string, uuid int) (err error) {
 func (d *daemonSet) UpdateDs(Namespace string, ds *appsv1.DaemonSet, uuid int) (err error) {
 	_, err = K8s.Clientset[uuid].AppsV1().DaemonSets(Namespace).Update(context.TODO(), ds, metav1.UpdateOptions{})
 	if err != nil {
-		logger.Info("daemonSet 更新失败" + err.Error())
-		return errors.New("daemonSet 更新失败" + err.Error())
+		utils.Logger.Error("Failed to Update DaemonSets" + ds.Name + ",reason:" + err.Error())
+		return err
 	}
-
+	utils.Logger.Info("Update DaemonSets " + ds.Name + "success")
 	return nil
 }
 
@@ -143,7 +144,7 @@ func (d *daemonSet) UpdateDs(Namespace string, ds *appsv1.DaemonSet, uuid int) (
 func (d *daemonSet) DaemonCount(namespace string, uuid int) (*CountDaemon, error) {
 	dsList, err := K8s.Clientset[uuid].AppsV1().DaemonSets(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		logger.Info("获取 daemonSetList 失败" + err.Error())
+		utils.Logger.Error("Failed to Get the DaemonSet list,reason: " + err.Error())
 		return nil, err
 	}
 	count := 0
@@ -156,5 +157,5 @@ func (d *daemonSet) DaemonCount(namespace string, uuid int) (*CountDaemon, error
 		Ready:    count,
 		NotReady: len(dsList.Items) - count,
 		Total:    len(dsList.Items),
-	}, err
+	}, nil
 }
